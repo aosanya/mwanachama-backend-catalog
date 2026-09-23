@@ -2,140 +2,209 @@
   "operations": {
     "open_entry": {
       "method": "GET", "path": "/entries/{slug}", "call": "OpenEntry", "action": "catalog.entry.open",
-      "args": [{"from": "path", "as": "slug"}, {"from": "query", "as": "k"}],
+      "title": "Open entry",
+      "description": "Read one entry as a public reader. A public entry opens with no key, a private one only with a live share key, and a pending entry, an unknown slug and a wrong key are all the same 'not found'.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry to open."},
+               {"from": "query", "as": "k", "description": "A share link's key, needed only for a private entry."}],
       "returns": [{"body": true}]
     },
     "record_page_view": {
       "method": "POST", "path": "/page-views", "call": "RecordPageView", "action": "catalog.page_view.record",
       "status": 204,
-      "args": [{"from": "body", "as": "page"}, {"from": "body", "as": "slug"}],
+      "title": "Record page view",
+      "description": "Add one to a page's running total. A view of one entry counts only against a slug that exists.",
+      "args": [{"from": "body", "as": "page", "required": true, "field": "PageView.page"},
+               {"from": "body", "as": "slug", "description": "The entry that was loaded. Empty for the index page."}],
       "returns": [{"body": true}]
     },
 
     "list_entries": {
       "method": "GET", "path": "/entries", "call": "ListEntries", "action": "catalog.entry.list",
+      "title": "List entries",
+      "description": "List the entry cards matching the filter, ordered by name. A card never carries the document, so read one entry to see it.",
       "args": [{"from": "query", "whole": true}],
       "returns": [{"body": true}]
     },
     "get_entry": {
       "method": "GET", "path": "/entries/{slug}/admin", "call": "GetEntry", "action": "catalog.entry.read",
-      "args": [{"from": "path", "as": "slug"}],
+      "title": "Read entry",
+      "description": "Read one entry whatever its visibility, document included. This is the operator's read, not the reader's.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry to read."}],
       "returns": [{"body": true}]
     },
     "upsert_entry": {
       "method": "PUT", "path": "/entries/{slug}", "call": "UpsertEntry", "action": "catalog.entry.upsert",
-      "args": [{"from": "body", "whole": true}, {"from": "path", "as": "slug", "into": "Slug"}],
+      "title": "Write entry",
+      "description": "Create the entry at this slug or replace the document and card of the one already there. Replacing the document of an approved entry returns it to pending, so never re-send a document that has not changed. Visibility is not set here.",
+      "args": [{"from": "body", "whole": true},
+               {"from": "path", "as": "slug", "into": "Slug", "description": "The entry to write. Fixed at creation."}],
       "returns": [{"body": true}]
     },
     "delete_entry": {
       "method": "DELETE", "path": "/entries/{slug}", "call": "DeleteEntry", "action": "catalog.entry.delete",
       "status": 204,
-      "args": [{"from": "path", "as": "slug"}],
+      "title": "Delete entry",
+      "description": "Soft-delete one entry. It stops being readable and its row stays.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry to delete."}],
       "returns": [{"body": true}]
     },
     "set_visibility": {
       "method": "POST", "path": "/entries/{slug}/visibility", "call": "SetVisibility", "action": "catalog.entry.set_visibility",
-      "args": [{"from": "path", "as": "slug"}, {"from": "body", "as": "visibility"}],
+      "title": "Set visibility",
+      "description": "Move an entry between pending, public and private. Leaving pending stamps the approval time and returning to it clears it; leaving private retires every live share key.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry to move."},
+               {"from": "body", "as": "visibility", "required": true, "field": "Entry.visibility"}],
       "returns": [{"body": true}]
     },
     "get_private": {
       "method": "GET", "path": "/entries/{slug}/private", "call": "GetPrivate", "action": "catalog.entry.read_private",
-      "args": [{"from": "path", "as": "slug"}],
+      "title": "Read private notes",
+      "description": "Read the operator-only notes on one entry. No reader ever sees these.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry whose notes to read."}],
       "returns": [{"body": true}]
     },
     "put_private": {
       "method": "PUT", "path": "/entries/{slug}/private", "call": "PutPrivate", "action": "catalog.entry.write_private",
-      "args": [{"from": "body", "whole": true}, {"from": "path", "as": "slug", "into": "Slug"}],
+      "title": "Write private notes",
+      "description": "Write the operator-only notes on one entry. An omitted or empty field leaves the stored value alone, so the rank can be changed without re-sending the readme.",
+      "args": [{"from": "body", "whole": true},
+               {"from": "path", "as": "slug", "into": "Slug", "description": "The entry whose notes to write."}],
       "returns": [{"body": true}]
     },
     "list_share_links": {
       "method": "GET", "path": "/entries/{slug}/links", "call": "ListShareLinks", "action": "catalog.share_link.list",
-      "args": [{"from": "path", "as": "slug"}],
+      "title": "List share links",
+      "description": "Every key issued for one entry, newest first, retired ones included.",
+      "args": [{"from": "path", "as": "slug", "description": "The entry whose keys to list."}],
       "returns": [{"body": true}]
     },
     "issue_share_link": {
       "method": "POST", "path": "/entries/{slug}/links", "call": "IssueShareLink", "action": "catalog.share_link.issue",
       "status": 201,
-      "args": [{"from": "path", "as": "slug"}, {"from": "body", "as": "label"}, {"from": "body", "as": "by"}],
+      "title": "Issue share link",
+      "description": "Mint a key that opens one private entry. The raw key is returned here and nowhere else — only its hash is stored — so hand it on before discarding the result.",
+      "args": [{"from": "path", "as": "slug", "description": "The private entry the key opens."},
+               {"from": "body", "as": "label", "field": "ShareLink.label"},
+               {"from": "body", "as": "by", "field": "ShareLink.created_by"}],
       "returns": [{"as": "link"}, {"as": "key", "once": true}]
     },
     "retire_share_link": {
       "method": "POST", "path": "/links/{linkID}/retire", "call": "RetireShareLink", "action": "catalog.share_link.retire",
-      "args": [{"from": "path", "as": "linkID"}],
+      "title": "Retire share link",
+      "description": "Stop a key opening its entry, keeping the row so a rotation leaves a trail of what was handed out.",
+      "args": [{"from": "path", "as": "linkID", "description": "The share link to retire."}],
       "returns": [{"body": true}]
     },
 
     "list_suggestions": {
       "method": "GET", "path": "/suggestions", "call": "ListSuggestions", "action": "catalog.suggestion.list",
-      "args": [{"from": "query", "as": "status", "repeated": true}],
+      "title": "List suggestions",
+      "description": "Proposals in the given statuses, best priority first. No status means all of them.",
+      "args": [{"from": "query", "as": "status", "repeated": true, "field": "Suggestion.status"}],
       "returns": [{"body": true}]
     },
     "file_suggestion": {
       "method": "POST", "path": "/suggestions", "call": "FileSuggestion", "action": "catalog.suggestion.file",
       "status": 201,
+      "title": "File suggestion",
+      "description": "Propose something worth adding to the catalog. It always lands proposed, and a slug that is already an entry or already proposed is refused.",
       "args": [{"from": "body", "whole": true}],
       "returns": [{"body": true}]
     },
     "get_suggestion": {
       "method": "GET", "path": "/suggestions/{suggestionID}", "call": "GetSuggestion", "action": "catalog.suggestion.read",
-      "args": [{"from": "path", "as": "suggestionID"}],
+      "title": "Read suggestion",
+      "description": "Read one proposal.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal to read."}],
       "returns": [{"body": true}]
     },
     "decide_suggestion": {
       "method": "POST", "path": "/suggestions/{suggestionID}/decide", "call": "DecideSuggestion", "action": "catalog.suggestion.decide",
-      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "status"}, {"from": "body", "as": "priority"}],
+      "title": "Decide suggestion",
+      "description": "Move a proposal between proposed, approved and rejected, optionally reordering it. Approving a stalled proposal clears its failed attempts. This cannot set 'built' — fulfilling it does that.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal to decide."},
+               {"from": "body", "as": "status", "required": true, "field": "Suggestion.status"},
+               {"from": "body", "as": "priority", "description": "A new priority. Zero leaves the stored one."}],
       "returns": [{"body": true}]
     },
     "record_suggestion_attempt": {
       "method": "POST", "path": "/suggestions/{suggestionID}/attempt", "call": "RecordSuggestionAttempt", "action": "catalog.suggestion.record_attempt",
-      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "run_id"}, {"from": "body", "as": "comment"}],
+      "title": "Record failed attempt",
+      "description": "Count a build that did not finish and keep the reason as a comment. Enough failed attempts stall the proposal.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal that was attempted."},
+               {"from": "body", "as": "run_id", "description": "The run that tried."},
+               {"from": "body", "as": "comment", "required": true, "description": "Why it did not finish. An attempt with no reason is refused."}],
       "returns": [{"body": true}]
     },
     "fulfil_suggestion": {
       "method": "POST", "path": "/suggestions/{suggestionID}/fulfil", "call": "FulfilSuggestion", "action": "catalog.suggestion.fulfil",
-      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "slug"}, {"from": "body", "as": "run_id"}, {"from": "body", "as": "note"}],
+      "title": "Fulfil suggestion",
+      "description": "Record that an entry answers a proposal and mark it built.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal that was answered."},
+               {"from": "body", "as": "slug", "required": true, "description": "The entry that answers it."},
+               {"from": "body", "as": "run_id", "description": "The run that built it."},
+               {"from": "body", "as": "note", "description": "What the entry does about the proposal."}],
       "returns": [{"body": true}]
     },
     "list_suggestion_comments": {
       "method": "GET", "path": "/suggestions/{suggestionID}/comments", "call": "ListSuggestionComments", "action": "catalog.suggestion_comment.list",
-      "args": [{"from": "path", "as": "suggestionID"}],
+      "title": "List suggestion comments",
+      "description": "Every note on a proposal, oldest first, failed attempts included.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal whose notes to list."}],
       "returns": [{"body": true}]
     },
     "comment_on_suggestion": {
       "method": "POST", "path": "/suggestions/{suggestionID}/comments", "call": "CommentOnSuggestion", "action": "catalog.suggestion_comment.create",
       "status": 201,
-      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "author"}, {"from": "body", "as": "body"}],
+      "title": "Comment on suggestion",
+      "description": "Add a note to a proposal that is not about a failed build attempt.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal to comment on."},
+               {"from": "body", "as": "author", "required": true, "field": "SuggestionComment.author"},
+               {"from": "body", "as": "body", "required": true, "field": "SuggestionComment.body"}],
       "returns": [{"body": true}]
     },
     "list_suggestion_matches": {
       "method": "GET", "path": "/suggestions/{suggestionID}/matches", "call": "ListSuggestionMatches", "action": "catalog.suggestion_match.list",
-      "args": [{"from": "path", "as": "suggestionID"}],
+      "title": "List suggestion matches",
+      "description": "The entries that answered a proposal.",
+      "args": [{"from": "path", "as": "suggestionID", "description": "The proposal whose answers to list."}],
       "returns": [{"body": true}]
     },
 
     "list_runs": {
       "method": "GET", "path": "/runs", "call": "ListRuns", "action": "catalog.run.list",
-      "args": [{"from": "query", "as": "limit"}],
+      "title": "List runs",
+      "description": "Run reports, newest first.",
+      "args": [{"from": "query", "as": "limit", "description": "How many reports to return. Zero means all of them."}],
       "returns": [{"body": true}]
     },
     "record_run": {
       "method": "POST", "path": "/runs", "call": "RecordRun", "action": "catalog.run.record",
       "status": 201,
+      "title": "Record run",
+      "description": "Store one run's report: which run it was, how much it filed, and what it found.",
       "args": [{"from": "body", "whole": true}],
       "returns": [{"body": true}]
     },
     "get_setting": {
       "method": "GET", "path": "/settings/{key}", "call": "GetSetting", "action": "catalog.setting.read",
-      "args": [{"from": "path", "as": "key"}],
+      "title": "Read setting",
+      "description": "Read one run-time knob.",
+      "args": [{"from": "path", "as": "key", "description": "The setting to read."}],
       "returns": [{"body": true}]
     },
     "put_setting": {
       "method": "PUT", "path": "/settings/{key}", "call": "PutSetting", "action": "catalog.setting.write",
-      "args": [{"from": "path", "as": "key"}, {"from": "body", "as": "value"}],
+      "title": "Write setting",
+      "description": "Write one run-time knob.",
+      "args": [{"from": "path", "as": "key", "description": "The setting to write."},
+               {"from": "body", "as": "value", "field": "Setting.value"}],
       "returns": [{"body": true}]
     },
     "list_page_views": {
       "method": "GET", "path": "/page-views", "call": "ListPageViews", "action": "catalog.page_view.list",
+      "title": "List page views",
+      "description": "Every counted page, most viewed first.",
       "returns": [{"body": true}]
     }
   },

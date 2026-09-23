@@ -71,3 +71,37 @@ is decoded.
 `ErrInvalidDocPath` is deliberately *not* in the table, because it was not in
 the old ones either — it currently falls through to 500 although it is a
 caller error. Worth a row of its own rather than a silent change here.
+
+## The same table, as MCP tools
+
+`routes.Tools(cm)` returns the operations as tools for an AI agent, built by
+the dispatcher's
+[`Tools`](../../../mwanachama-backend-shared/documentation/2.%20design/dispatcher.md)
+from `catalog.operations.json`. Nothing here is hand-written: 24 tools, one per
+gated operation, named from the action with its dots turned into underscores —
+`catalog.entry.upsert` becomes `catalog_entry_upsert`.
+
+**The two reader operations are not tools.** `operatorOnly` drops whatever
+`AnonymousActions` names, so `catalog.entry.open` and
+`catalog.page_view.record` — a storefront's two anonymous acts — have no tool.
+An agent holding a credential reads with `catalog_entry_read`, which does not
+need a share key and does not pretend to be a visitor; counting a page view it
+did not cause would be a lie in the table.
+
+**The prose a model reads is the blueprint's.** `routes.Fields()` walks
+`catalog.Blueprint()` and hands the dispatcher each field's description, whether
+it is required, and an enum's permitted values, keyed by the Go type that
+carries it. So the description of `doc` in a tool's schema is the same sentence
+the column was declared with, and adding a field to the blueprint describes it
+in every tool that writes it, with no second edit.
+
+Read-only is derived rather than listed: a primary key, any `timestamp`, and
+four fields the store owns outright (`Entry.visibility`, `Entry.deleted`,
+`Suggestion.status`, `Suggestion.attempts`). `UpsertEntry` overwrites all four,
+so offering them to a model would invite it to believe a value it sent was
+kept. Visibility has a tool of its own, and it borrows the same declared values
+through `"field": "Entry.visibility"`.
+
+`TestEveryDescribedFieldIsOneItsTypeCarries` holds the role→Go type map to the
+types themselves, because that map is the one hand-written thing left in this
+path and a rename would otherwise cost only the prose, silently.
