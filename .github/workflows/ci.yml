@@ -6,16 +6,29 @@ on:
   pull_request:
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: mwanachama-backend-catalog
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: mwanachama-backend-catalog
+
+      # go.mod replaces mwanachama-backend-shared with ../mwanachama-backend-shared,
+      # so CI has to reproduce the sibling layout this module is developed in.
+      - uses: actions/checkout@v4
+        with:
+          repository: aosanya/mwanachama-backend-shared
+          path: mwanachama-backend-shared
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version-file: mwanachama-backend-catalog/go.mod
+          cache-dependency-path: mwanachama-backend-catalog/go.sum
 
       - name: Formatting
         run: |
