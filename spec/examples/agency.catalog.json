@@ -4,130 +4,529 @@
   "instance": "agency",
   "objects": [
     {
-      "name": "entry",
+      "name": "agency",
+      "description": "A mined organizational archetype: the document an operator would import to run a business of this shape.",
+      "role": "entry",
       "table": "agencies",
       "fields": [
-        { "name": "id", "type": "string", "primary": true },
-        { "name": "slug", "type": "string", "required": true, "unique": true, "immutable": true, "matches": "slug" },
-        { "name": "name", "type": "string", "required": true },
-        { "name": "summary", "type": "text" },
-        { "name": "doc", "type": "json" },
-        { "name": "visibility", "type": "enum", "values": ["pending", "public", "private"], "default": "pending" },
-        { "name": "submitted_by", "type": "string" },
-        { "name": "approved_at", "type": "timestamp" },
-        { "name": "created_at", "type": "timestamp" },
-        { "name": "updated_at", "type": "timestamp" },
-        { "name": "deleted", "type": "bool" }
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers.",
+          "primary": true
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "Stable URL key for this agency. Fixed at creation \u2014 the private notes and share links hang off it.",
+          "required": true,
+          "unique": true,
+          "immutable": true,
+          "matches": "slug"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "description": "The agency's human-readable title, shown on its card.",
+          "required": true
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "description": "One-paragraph description for the card, so a listing never parses the document."
+        },
+        {
+          "name": "doc",
+          "type": "json",
+          "description": "The whole agency document \u2014 its roles, goals, objectives, workflows and RACI. Queried in place by path rather than parsed per row."
+        },
+        {
+          "name": "visibility",
+          "type": "enum",
+          "description": "Who may read the document: nothing outside review sees a pending one, and a private one needs a live share key.",
+          "default": "pending",
+          "values": [
+            "pending",
+            "public",
+            "private"
+          ]
+        },
+        {
+          "name": "submitted_by",
+          "type": "string",
+          "description": "What wrote this revision \u2014 a run, or a person."
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamp",
+          "description": "When it last left pending. Cleared whenever the document changes, because the reviewed thing no longer exists."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When the row was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "description": "When the row was last written."
+        },
+        {
+          "name": "deleted",
+          "type": "bool",
+          "description": "Soft delete. A deleted row is invisible to every read."
+        }
       ],
       "indexes": [
-        { "name": "visibility", "fields": ["visibility"] },
-        { "name": "sector", "path": { "field": "doc", "path": "_template.sector" }, "not_deleted": true },
-        { "name": "archetype", "path": { "field": "doc", "path": "_template.archetype" }, "not_deleted": true }
+        {
+          "name": "visibility",
+          "description": "Filters the review queue and the public listing.",
+          "fields": [
+            "visibility"
+          ]
+        },
+        {
+          "name": "sector",
+          "description": "The storefront's sector filter, run on every index page.",
+          "path": {
+            "field": "doc",
+            "path": "_template.sector"
+          },
+          "not_deleted": true
+        },
+        {
+          "name": "archetype",
+          "description": "Finds every agency built from one archetype, for dedup during a mining run.",
+          "path": {
+            "field": "doc",
+            "path": "_template.archetype"
+          },
+          "not_deleted": true
+        }
       ]
     },
     {
-      "name": "entry_private",
+      "name": "agency_private",
+      "description": "What the operator knows about an agency and no storefront reader may see.",
+      "role": "entry_private",
       "table": "agency_privates",
       "fields": [
-        { "name": "slug", "type": "string", "primary": true },
-        { "name": "readme", "type": "text" },
-        { "name": "sales", "type": "text" },
-        { "name": "module_configs", "type": "json" },
-        { "name": "appeal", "type": "text" },
-        { "name": "rank", "type": "int" },
-        { "name": "updated_at", "type": "timestamp" }
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "The agency these notes belong to. One row per agency.",
+          "primary": true
+        },
+        {
+          "name": "readme",
+          "type": "text",
+          "description": "The operator-facing description of the archetype."
+        },
+        {
+          "name": "sales",
+          "type": "text",
+          "description": "The prospect list and open bids, as Markdown. Empty for a first-party agency, which has nobody to sell it to."
+        },
+        {
+          "name": "module_configs",
+          "type": "json",
+          "description": "Per-module configuration for this entry, keyed by module code. Never leaves the operator surface."
+        },
+        {
+          "name": "appeal",
+          "type": "text",
+          "description": "One line saying why this ranks where it does."
+        },
+        {
+          "name": "rank",
+          "type": "int",
+          "description": "Position in the running order, lowest first. Zero means unranked and sorts last."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "description": "When these notes were last written."
+        }
       ],
-      "indexes": [{ "name": "rank", "fields": ["rank"] }]
+      "indexes": [
+        {
+          "name": "rank",
+          "description": "Orders the catalog for the showcase.",
+          "fields": [
+            "rank"
+          ]
+        }
+      ]
     },
     {
       "name": "share_link",
+      "description": "One key that opens a private agency. An agency may have many, so a rotation can overlap.",
+      "role": "share_link",
       "table": "share_links",
       "fields": [
-        { "name": "id", "type": "string", "primary": true },
-        { "name": "slug", "type": "string", "required": true },
-        { "name": "key_hash", "type": "string", "required": true, "unique": true },
-        { "name": "label", "type": "string" },
-        { "name": "status", "type": "enum", "values": ["active", "retired"], "default": "active" },
-        { "name": "created_by", "type": "string" },
-        { "name": "created_at", "type": "timestamp" },
-        { "name": "retired_at", "type": "timestamp" }
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers.",
+          "primary": true
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "The agency this key opens.",
+          "required": true
+        },
+        {
+          "name": "key_hash",
+          "type": "string",
+          "description": "SHA-256 of the raw key, hex-encoded. The raw key is returned once at issue and never stored.",
+          "required": true,
+          "unique": true
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "description": "Optional note about who this link went to."
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "description": "Whether the key still opens its entry. Retired links are kept rather than deleted, so a rotation leaves a trail.",
+          "default": "active",
+          "values": [
+            "active",
+            "retired"
+          ]
+        },
+        {
+          "name": "created_by",
+          "type": "string",
+          "description": "Who issued it."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was issued."
+        },
+        {
+          "name": "retired_at",
+          "type": "timestamp",
+          "description": "When it stopped working. Empty while active."
+        }
       ],
-      "indexes": [{ "name": "slug_status", "fields": ["slug", "status"] }]
+      "indexes": [
+        {
+          "name": "slug_status",
+          "description": "Finds the live keys for one agency, which is what a read checks.",
+          "fields": [
+            "slug",
+            "status"
+          ]
+        }
+      ]
     },
     {
       "name": "suggestion",
+      "description": "A proposal that some archetype is worth mining, filed cheaply and waiting on a person before anything is built.",
+      "role": "suggestion",
       "table": "suggestions",
       "fields": [
-        { "name": "id", "type": "string", "primary": true },
-        { "name": "slug", "type": "string", "required": true, "unique": true, "matches": "slug" },
-        { "name": "title", "type": "string", "required": true },
-        { "name": "why", "type": "text" },
-        { "name": "source", "type": "enum", "values": ["run", "owner", "stray"], "default": "run" },
-        { "name": "status", "type": "enum", "values": ["proposed", "approved", "rejected", "built", "stalled"], "default": "proposed" },
-        { "name": "priority", "type": "int", "default": "100" },
-        { "name": "attempts", "type": "int" },
-        { "name": "proposal", "type": "json" },
-        { "name": "run_id", "type": "string" },
-        { "name": "created_at", "type": "timestamp" },
-        { "name": "decided_at", "type": "timestamp" }
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers.",
+          "primary": true
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "The slug the agency would take. Checked against the catalog before filing, so the same archetype is never queued twice.",
+          "required": true,
+          "unique": true,
+          "matches": "slug"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "What the archetype would be called.",
+          "required": true
+        },
+        {
+          "name": "why",
+          "type": "text",
+          "description": "The case for building it."
+        },
+        {
+          "name": "source",
+          "type": "enum",
+          "description": "What filed it.",
+          "default": "run",
+          "values": [
+            "run",
+            "owner",
+            "stray"
+          ]
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "description": "Where it has got to. Only fulfilling it may set 'built'; the tenth failed attempt stalls it.",
+          "default": "proposed",
+          "values": [
+            "proposed",
+            "approved",
+            "rejected",
+            "built",
+            "stalled"
+          ]
+        },
+        {
+          "name": "priority",
+          "type": "int",
+          "description": "Queue position, lowest first. The gap either side leaves room to reorder without renumbering.",
+          "default": "100"
+        },
+        {
+          "name": "attempts",
+          "type": "int",
+          "description": "How many builds have failed. Cleared when an approval sends a stalled row back for another ten."
+        },
+        {
+          "name": "proposal",
+          "type": "json",
+          "description": "The sketch \u2014 goals, roles and objectives \u2014 that a build starts from. Anything domain-shaped, such as a sector, lives here."
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run that filed it."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was filed."
+        },
+        {
+          "name": "decided_at",
+          "type": "timestamp",
+          "description": "When it was approved or rejected. Empty while proposed."
+        }
       ],
-      "indexes": [{ "name": "status_priority", "fields": ["status", "priority"] }]
+      "indexes": [
+        {
+          "name": "status_priority",
+          "description": "The routine's queue: approved proposals, best priority first.",
+          "fields": [
+            "status",
+            "priority"
+          ]
+        }
+      ]
     },
     {
       "name": "suggestion_comment",
+      "description": "One note on a proposal: a run saying what is left after a failed build, or a person saying why they decided as they did.",
+      "role": "suggestion_comment",
       "table": "suggestion_comments",
       "fields": [
-        { "name": "id", "type": "string", "primary": true },
-        { "name": "suggestion_id", "type": "string", "required": true },
-        { "name": "author", "type": "enum", "values": ["run", "admin"], "default": "run" },
-        { "name": "run_id", "type": "string" },
-        { "name": "attempt", "type": "int" },
-        { "name": "body", "type": "text", "required": true },
-        { "name": "created_at", "type": "timestamp" }
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers.",
+          "primary": true
+        },
+        {
+          "name": "suggestion_id",
+          "type": "string",
+          "description": "The proposal this note is about.",
+          "required": true
+        },
+        {
+          "name": "author",
+          "type": "enum",
+          "description": "Which side wrote it.",
+          "default": "run",
+          "values": [
+            "run",
+            "admin"
+          ]
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run that wrote it, when a run did."
+        },
+        {
+          "name": "attempt",
+          "type": "int",
+          "description": "Which build attempt this came out of. Zero for a note that is not about an attempt."
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "description": "The note itself. An attempt without one tells the next run nothing.",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was written."
+        }
       ],
-      "indexes": [{ "name": "suggestion_created", "fields": ["suggestion_id", "created_at"] }]
+      "indexes": [
+        {
+          "name": "suggestion_created",
+          "description": "Reads one proposal's notes in order.",
+          "fields": [
+            "suggestion_id",
+            "created_at"
+          ]
+        }
+      ]
     },
     {
       "name": "suggestion_match",
+      "description": "Records that one agency answers one proposal.",
+      "role": "suggestion_match",
       "table": "suggestion_matches",
       "fields": [
-        { "name": "suggestion_id", "type": "string", "primary": true },
-        { "name": "slug", "type": "string", "primary": true },
-        { "name": "run_id", "type": "string" },
-        { "name": "note", "type": "text" },
-        { "name": "met_at", "type": "timestamp" }
+        {
+          "name": "suggestion_id",
+          "type": "string",
+          "description": "The proposal that was met.",
+          "primary": true
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "The agency that meets it.",
+          "primary": true
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run that built it."
+        },
+        {
+          "name": "note",
+          "type": "text",
+          "description": "What the run said about the match."
+        },
+        {
+          "name": "met_at",
+          "type": "timestamp",
+          "description": "When the match was recorded."
+        }
       ],
-      "indexes": [{ "name": "slug", "fields": ["slug"] }]
+      "indexes": [
+        {
+          "name": "slug",
+          "description": "Finds the proposals one agency answered.",
+          "fields": [
+            "slug"
+          ]
+        }
+      ]
     },
     {
-      "name": "run",
+      "name": "mining_run",
+      "description": "One run of the routine that fills the catalog, and its own report of what it did.",
+      "role": "run",
       "table": "mining_runs",
       "fields": [
-        { "name": "id", "type": "string", "primary": true },
-        { "name": "run_id", "type": "string" },
-        { "name": "submitted_by", "type": "string" },
-        { "name": "templates_filed", "type": "int" },
-        { "name": "summary", "type": "text" },
-        { "name": "created_at", "type": "timestamp" }
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers.",
+          "primary": true
+        },
+        {
+          "name": "run_id",
+          "type": "string",
+          "description": "The run's own identifier, as the routine knows it."
+        },
+        {
+          "name": "submitted_by",
+          "type": "string",
+          "description": "What reported it."
+        },
+        {
+          "name": "templates_filed",
+          "type": "int",
+          "description": "How many agencies the run wrote."
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "description": "The run's own report of what it did."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was recorded."
+        }
       ],
-      "indexes": [{ "name": "created", "fields": ["created_at"] }]
+      "indexes": [
+        {
+          "name": "created",
+          "description": "Lists runs newest first.",
+          "fields": [
+            "created_at"
+          ]
+        }
+      ]
     },
     {
       "name": "setting",
+      "description": "One run-time knob the routine reads, such as the rule it ranks the catalog by. A key/value store because knobs are added faster than a schema should change.",
+      "role": "setting",
       "table": "settings",
       "fields": [
-        { "name": "key", "type": "string", "primary": true },
-        { "name": "value", "type": "text" },
-        { "name": "updated_at", "type": "timestamp" }
+        {
+          "name": "key",
+          "type": "string",
+          "description": "The setting's name.",
+          "primary": true
+        },
+        {
+          "name": "value",
+          "type": "text",
+          "description": "Its current value."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "description": "When it was last written."
+        }
       ]
     },
     {
       "name": "page_view",
+      "description": "A running count for one storefront page.",
+      "role": "page_view",
       "table": "page_views",
       "fields": [
-        { "name": "page", "type": "enum", "values": ["index", "entry"], "primary": true },
-        { "name": "slug", "type": "string", "primary": true },
-        { "name": "views", "type": "int" }
+        {
+          "name": "page",
+          "type": "enum",
+          "description": "Which kind of page was viewed: the front page, or one agency's.",
+          "primary": true,
+          "values": [
+            "index",
+            "entry"
+          ]
+        },
+        {
+          "name": "slug",
+          "type": "string",
+          "description": "The agency viewed. Empty for the front page.",
+          "primary": true
+        },
+        {
+          "name": "views",
+          "type": "int",
+          "description": "Running total. There are no per-day rows, so nothing here answers a question about a trend."
+        }
       ]
     }
   ]

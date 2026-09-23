@@ -69,6 +69,11 @@ type Field struct {
 	Name string    `json:"name"`
 	Type FieldType `json:"type"`
 
+	// Description says what this field is for, in the domain's own words.
+	// Required: a column nobody can explain is the one that rots, and the
+	// spec is the only place the explanation would live.
+	Description string `json:"description"`
+
 	// Primary marks the primary key. An object needs at least one; several
 	// make a composite key in declared order.
 	Primary bool `json:"primary,omitempty"`
@@ -97,7 +102,12 @@ type Field struct {
 // both: Path indexes a document path, which is how a domain makes its own
 // vocabulary fast without the module learning it.
 type Index struct {
-	Name   string   `json:"name"`
+	Name string `json:"name"`
+
+	// Description says what query this index is for. Optional, but an index
+	// without a reason is the one nobody dares drop.
+	Description string `json:"description,omitempty"`
+
 	Fields []string `json:"fields,omitempty"`
 
 	// Path is a dotted path inside a json field, e.g.
@@ -119,8 +129,23 @@ type PathRef struct {
 }
 
 // Object is one declared thing, and one table.
+//
+// Name and Table are the domain's own words — an agency, a title. Role is
+// the module's, and is how a rule finds the object it operates on: the
+// visibility check needs to know which object is the "entry" whatever the
+// domain calls it. An object with no Role is the domain's own, and no rule
+// in the module touches it.
 type Object struct {
 	Name string `json:"name"`
+
+	// Description says what this object is, in the domain's own words.
+	// Required, for the same reason a field's is.
+	Description string `json:"description"`
+
+	// Role names this object in the module's vocabulary — "entry",
+	// "share_link", "suggestion". Optional: an object without one is
+	// storage the domain asked for and nothing else.
+	Role string `json:"role,omitempty"`
 
 	// Table is the table's name within the instance. The instance prefix is
 	// added by [Spec.TableFor].
@@ -186,6 +211,7 @@ func (s *Spec) Validate() error {
 
 	seenObject := map[string]bool{}
 	seenTable := map[string]bool{}
+	seenRole := map[string]string{}
 	for _, o := range s.Objects {
 		if !NamePattern.MatchString(o.Name) {
 			add("object %q is not a usable name", o.Name)
@@ -195,6 +221,23 @@ func (s *Spec) Validate() error {
 			add("object %q is declared twice", o.Name)
 		}
 		seenObject[o.Name] = true
+
+		if strings.TrimSpace(o.Description) == "" {
+			add("object %q has no description", o.Name)
+		}
+
+		if o.Role != "" {
+			if !NamePattern.MatchString(o.Role) {
+				add("object %q: role %q is not a usable name", o.Name, o.Role)
+			}
+			// Two objects claiming one role would leave a rule with no way
+			// to know which of them it operates on.
+			if first, taken := seenRole[o.Role]; taken {
+				add("objects %q and %q both claim the role %q", first, o.Name, o.Role)
+			} else {
+				seenRole[o.Role] = o.Name
+			}
+		}
 
 		table := o.Table
 		if table == "" {
@@ -238,6 +281,10 @@ func (o Object) validate() []string {
 			add("object %q: field %q is declared twice", o.Name, f.Name)
 		}
 		seen[f.Name] = true
+
+		if strings.TrimSpace(f.Description) == "" {
+			add("object %q: field %q has no description", o.Name, f.Name)
+		}
 
 		if !fieldTypes[f.Type] {
 			add("object %q: field %q has unknown type %q", o.Name, f.Name, f.Type)
@@ -318,4 +365,33 @@ func (s *Spec) Object(name string) (Object, bool) {
 		}
 	}
 	return Object{}, false
+}
+
+// ByRole returns the object playing one of the module's roles — how a rule
+// reaches its table without knowing what the domain calls it.
+func (s *Spec) ByRole(role string) (Object, bool) {
+	for _, o := range s.Objects {
+		if o.Role == role {
+			return o, true
+		}
+	}
+	return Object{}, false
+}
+
+// RequireRoles reports every role the module needs that this spec does not
+// fill. A module calls it once, when the spec loads: a rule that cannot find
+// its object should stop the process starting, not fail a request later.
+func (s *Spec) RequireRoles(roles ...string) error {
+	var missing []string
+	for _, r := range roles {
+		if _, ok := s.ByRole(r); !ok {
+			missing = append(missing, r)
+		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		return fmt.Errorf("spec: domain %q fills no object for the role(s) %s",
+			s.Domain, strings.Join(missing, ", "))
+	}
+	return nil
 }

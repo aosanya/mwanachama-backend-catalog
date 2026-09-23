@@ -72,21 +72,78 @@ func TestTwoDomainsCoexist(t *testing.T) {
 		t.Errorf("tables =\n  %v\nwant\n  %v", got, want)
 	}
 
-	// The same object is a different table in each domain, and the library
-	// has one the agency does not.
-	e, _ := agency.Object("entry")
-	if agency.TableFor(e) != "agency_agencies" {
-		t.Errorf("agency entry table = %q", agency.TableFor(e))
+	// Each domain calls the object by its own noun; the module finds it by
+	// role. This is the join that lets one rule serve both.
+	for _, tc := range []struct {
+		s         *spec.Spec
+		wantName  string
+		wantTable string
+	}{
+		{agency, "agency", "agency_agencies"},
+		{library, "title", "library_titles"},
+	} {
+		o, ok := tc.s.ByRole("entry")
+		if !ok {
+			t.Fatalf("%s: no object fills the entry role", tc.s.Domain)
+		}
+		if o.Name != tc.wantName {
+			t.Errorf("%s: entry is called %q, want %q", tc.s.Domain, o.Name, tc.wantName)
+		}
+		if tc.s.TableFor(o) != tc.wantTable {
+			t.Errorf("%s: entry table = %q, want %q", tc.s.Domain, tc.s.TableFor(o), tc.wantTable)
+		}
 	}
-	e, _ = library.Object("entry")
-	if library.TableFor(e) != "library_titles" {
-		t.Errorf("library entry table = %q", library.TableFor(e))
+
+	// An object with no role is the domain's own, and no rule touches it.
+	c, ok := library.Object("copy")
+	if !ok {
+		t.Fatal("library declares a copy object the agency does not")
 	}
-	if _, ok := library.Object("copy"); !ok {
-		t.Error("library declares a copy object the agency does not")
+	if c.Role != "" {
+		t.Errorf("copy has role %q, want none — it is the library's own", c.Role)
 	}
 	if _, ok := agency.Object("copy"); ok {
 		t.Error("the agency should not have a copy object")
+	}
+}
+
+// The module states the roles its rules need. A domain that fills none of
+// them should stop the process starting, not fail a request later.
+func TestRequireRoles(t *testing.T) {
+	needed := []string{"entry", "entry_private", "share_link", "suggestion",
+		"suggestion_comment", "suggestion_match", "run", "setting", "page_view"}
+
+	for _, path := range []string{"examples/agency.catalog.json", "examples/library.catalog.json"} {
+		s := load(t, path)
+		if err := s.RequireRoles(needed...); err != nil {
+			t.Errorf("%s: %v", path, err)
+		}
+	}
+
+	thin := load(t, "examples/agency.catalog.json")
+	err := thin.RequireRoles(append(needed, "loan", "reservation")...)
+	if err == nil {
+		t.Fatal("a missing role was accepted")
+	}
+	for _, want := range []string{"loan", "reservation"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("err = %v, want it to name %q", err, want)
+		}
+	}
+}
+
+// Two objects claiming one role would leave a rule with no way to know
+// which of them it operates on.
+func TestValidate_RefusesADuplicateRole(t *testing.T) {
+	body := `{"module":"catalog","domain":"d","instance":"i","objects":[
+	  {"name":"a","role":"entry","fields":[{"name":"x","type":"string","primary":true}]},
+	  {"name":"b","role":"entry","fields":[{"name":"x","type":"string","primary":true}]}]}`
+	_, err := spec.Parse([]byte(body))
+	if err == nil {
+		t.Fatal("two objects claimed the entry role and the spec loaded")
+	}
+	if !strings.Contains(err.Error(), "both claim the role") {
+		t.Errorf("err = %v", err)
 	}
 }
 
@@ -227,6 +284,70 @@ func TestRequiredFieldsHaveNoDefault(t *testing.T) {
 			line = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(line), ","))
 			if strings.Contains(line, "not null") && strings.Contains(line, "default") {
 				t.Errorf("column is both required and defaulted: %q", line)
+			}
+		}
+	}
+}
+
+// A declared object or field nobody can explain is the one that rots, and
+// the spec is the only place the explanation would live.
+func TestValidate_RequiresDescriptions(t *testing.T) {
+	for _, tc := range []struct{ name, body, want string }{
+		{"object without one",
+			`{"module":"catalog","domain":"d","instance":"i","objects":[
+			  {"name":"a","table":"a","fields":[{"name":"x","type":"string","description":"d","primary":true}]}]}`,
+			`object "a" has no description`},
+		{"field without one",
+			`{"module":"catalog","domain":"d","instance":"i","objects":[
+			  {"name":"a","description":"d","table":"a","fields":[{"name":"x","type":"string","primary":true}]}]}`,
+			`field "x" has no description`},
+		{"a blank one does not count",
+			`{"module":"catalog","domain":"d","instance":"i","objects":[
+			  {"name":"a","description":"   ","table":"a","fields":[{"name":"x","type":"string","description":"d","primary":true}]}]}`,
+			`object "a" has no description`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := spec.Parse([]byte(tc.body))
+			if err == nil {
+				t.Fatal("spec loaded, want a refusal")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("err = %v, want it to mention %q", err, tc.want)
+			}
+		})
+	}
+}
+
+// Every object and field in the shipped examples says something, rather
+// than restating its own name.
+//
+// The floor is a sentence — three words — not a character count: "Who
+// issued it." is a complete description and a length threshold would reject
+// it while passing twenty characters of padding.
+func TestExamplesAreDescribed(t *testing.T) {
+	sentence := func(s string) bool { return len(strings.Fields(s)) >= 3 }
+	restates := func(desc, name string) bool {
+		d := strings.ToLower(strings.Trim(desc, " ."))
+		return d == strings.ReplaceAll(name, "_", " ") || d == name
+	}
+
+	for _, path := range []string{"examples/agency.catalog.json", "examples/library.catalog.json"} {
+		s := load(t, path)
+		for _, o := range s.Objects {
+			if !sentence(o.Description) {
+				t.Errorf("%s: object %q is not described in a sentence: %q", path, o.Name, o.Description)
+			}
+			if restates(o.Description, o.Name) {
+				t.Errorf("%s: object %q only restates its name", path, o.Name)
+			}
+			for _, f := range o.Fields {
+				if !sentence(f.Description) {
+					t.Errorf("%s: %s.%s is not described in a sentence: %q",
+						path, o.Name, f.Name, f.Description)
+				}
+				if restates(f.Description, f.Name) {
+					t.Errorf("%s: %s.%s only restates its name", path, o.Name, f.Name)
+				}
 			}
 		}
 	}
