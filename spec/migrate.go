@@ -128,7 +128,11 @@ func (s *Spec) createIndexes(o Object, dialect string) []string {
 		var on string
 		switch {
 		case idx.Path != nil:
-			on = "(" + docPathExpr(idx.Path.Field, idx.Path.Path, dialect) + ")"
+			// Postgres needs the expression in its own parentheses inside
+			// the index's — `on t ((expr))`, not `on t (expr)`, which is a
+			// syntax error. SQLite accepts one pair, so a unit test on
+			// SQLite alone will not catch a missing one.
+			on = "((" + docPathExpr(idx.Path.Field, idx.Path.Path, dialect) + "))"
 		default:
 			on = "(" + strings.Join(idx.Fields, ", ") + ")"
 		}

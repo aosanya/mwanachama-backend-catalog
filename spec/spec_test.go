@@ -352,3 +352,31 @@ func TestExamplesAreDescribed(t *testing.T) {
 		}
 	}
 }
+
+// Postgres requires an expression index's expression in its own
+// parentheses: `on t ((expr))`. A single pair is a syntax error there and
+// accepted by SQLite, so only an explicit assertion catches it — this test
+// exists because the real database rejected the generated DDL while every
+// SQLite test passed.
+func TestExpressionIndexesAreDoubleParenthesised(t *testing.T) {
+	for _, path := range []string{"examples/agency.catalog.json", "examples/library.catalog.json"} {
+		s := load(t, path)
+		for _, dialect := range []string{"postgres", "sqlite"} {
+			for _, stmt := range s.DDL(dialect) {
+				if !strings.Contains(stmt, "create index") && !strings.Contains(stmt, "create unique index") {
+					continue
+				}
+				// An expression index is one whose target is not a bare
+				// column list; both dialects spell the expression with a
+				// function or operator in it.
+				isExpr := strings.Contains(stmt, "#>>") || strings.Contains(stmt, "json_extract")
+				if !isExpr {
+					continue
+				}
+				if !strings.Contains(stmt, "((") {
+					t.Errorf("%s/%s: expression index is not double-parenthesised:\n  %s", path, dialect, stmt)
+				}
+			}
+		}
+	}
+}
