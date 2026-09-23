@@ -3,7 +3,7 @@ module github.com/aosanya/mwanachama-backend-catalog
 go 1.25.0
 
 require (
-	github.com/aosanya/mwanachama-backend-shared v0.0.0-00010101000000-000000000000
+	github.com/aosanya/mwanachama-backend-shared v0.0.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/uuid v1.6.0
 	gorm.io/driver/postgres v1.6.2

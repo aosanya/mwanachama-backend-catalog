@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 		dialect = os.Args[2]
 	}
 
-	s, err := spec.Load(os.Args[1])
+	s, err := catalog.LoadSpec(os.Args[1])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

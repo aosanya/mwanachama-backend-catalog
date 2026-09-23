@@ -85,13 +85,11 @@ func mustCreate(t *testing.T, cm CatalogManager, ctx context.Context) {
 	}
 }
 
-// withExtraVisibility returns the example spec with one more state declared
-// on whichever field the entry's visibility is.
 func withExtraVisibility(t *testing.T, extra string) *spec.Spec {
 	t.Helper()
 	var doc map[string]any
-	if err := json.Unmarshal([]byte(exampleSpecJSON(t)), &doc); err != nil {
-		t.Fatalf("read spec: %v", err)
+	if err := json.Unmarshal([]byte(blueprintSource()), &doc); err != nil {
+		t.Fatalf("read blueprint: %v", err)
 	}
 	for _, o := range doc["objects"].([]any) {
 		obj := o.(map[string]any)
@@ -107,11 +105,11 @@ func withExtraVisibility(t *testing.T, extra string) *spec.Spec {
 	}
 	raw, err := json.Marshal(doc)
 	if err != nil {
-		t.Fatalf("rewrite spec: %v", err)
+		t.Fatalf("rewrite blueprint: %v", err)
 	}
-	s, err := spec.Parse(raw)
+	s, err := loadThrough(t, string(raw))
 	if err != nil {
-		t.Fatalf("parse mutated spec: %v", err)
+		t.Fatalf("load the example through the mutated blueprint: %v", err)
 	}
 	return s
 }

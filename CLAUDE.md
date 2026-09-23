@@ -45,15 +45,36 @@ ask whether a librarian would recognise it.
 The tables come from a JSON spec, not from Go structs — see
 `developer/documentation/2. design/architecture-spec-driven-modules.md`.
 
-- `spec/` — the spec types, loader, validation and migrator. `spec.Load`
-  refuses a bad spec at startup; `spec.Migrate` creates a table per declared
-  object and its indexes, idempotently.
+- `catalog.blueprint.json` — **the module's nine objects, declared once**.
+  Embedded into the root package and reached through `catalog.Blueprint()`,
+  `catalog.LoadSpec(path)` and `catalog.ParseSpec(raw)`. Load a domain spec
+  through those, never through `spec.Load`, or its roled objects arrive
+  with no fields.
+- `spec/` — the spec types, loader, validation, blueprint merge and migrator.
+  `spec.Load` refuses a bad spec at startup; `spec.Migrate` creates a table
+  per declared object and its indexes, idempotently.
 - `spec/examples/agency.catalog.json` and `library.catalog.json` — the same
   module under two domains. `TestTwoDomainsCoexist` migrates both into one
   database.
 - A domain's own vocabulary becomes an index by path
   (`_template.sector`, `identifiers.isbn`) without this module learning the
   word.
+
+**A domain names objects; it does not re-declare them (CAT5).** Its spec
+supplies `instance`, the name and table each role lands in, its own indexes,
+and a **default** on a declared field — nothing else. Setting a type, a
+description or a value set on a field the module declares is refused by name
+at load, as is claiming a role the module does not declare or adding a field
+to one it does. A domain that needs a field of its own declares an object of
+its own, with no role, the way `library.catalog.json` declares `copy`. Before
+this, both example specs carried all 62 field declarations, 60 of them
+identical bar the description.
+
+**Adding a field means editing the blueprint and the Go type together**, and
+`TestEveryExampleFitsTheTypes` runs that agreement against *every* spec in
+`spec/examples/`, not just the one a test happened to load — the drift it
+closes was invisible under the domain nobody loaded. Never add a field to a
+domain spec to get it into the module.
 
 **Identifiers and paths reach the database as SQL text** — a table name
 cannot be a bound parameter — so `spec.NamePattern` and `spec.DocPathPattern`
@@ -110,13 +131,21 @@ Go change, which `TestVocabularyComesFromTheSpec` demonstrates both ways.
 membership maps and their `IsX` functions are gone.
 
 `matches` names a pattern; this module says what the name means, in
-`patterns` (`slug`, `json_object`). A spec naming one nobody supplies is an
-error, not a rule that quietly never runs.
+`patterns.go` (`slug`, `json_object`). A spec naming one nobody supplies is
+an error, not a rule that quietly never runs. The patterns live there and not
+beside a type, because a pattern reached by name from a declaration is the
+module's, not one struct's.
 
 **What stays in Go is what a spec cannot say**, and each piece lives with
 the type it is about: `PageView.SlugFitsPage` (one field's presence depends
 on another's value), and the non-negative checks on `Rank`, `Attempts` and
-`TemplatesFiled`.
+`TemplatesFiled`. `SlugFitsPage` checks presence only — the slug's *shape* is
+`matches: "slug"` on the blueprint's `page_view.slug`, applied like any other
+declared rule.
+
+`TestVocabularyMatchesTheBlueprint` holds `models/vocabulary.go` and the
+blueprint's declared `values` to exactly each other, in both directions. The
+constants were promised to agree with the spec and nothing checked it.
 
 `Check(spec, role, value)` is the same validation without a database, for a
 bulk import validating what it has read before it opens a connection.
@@ -137,14 +166,23 @@ reporting it.
   it. `NewCatalogManager(db, *spec.Spec)` is the constructor now, and the
   package's own tests run against the shipped
   `spec/examples/agency.catalog.json` rather than a test-only table set.
-- **`routes/`** — twelve hand-written handlers, rejected by the owner and
-  superseded by the spec-driven dispatcher (W14). **Do not copy this
-  package.** `routes/routes_test.go` survives as the acceptance test the
-  dispatcher must pass unchanged.
+- **`routes/`** — the twelve hand-written handlers are **deleted 2026-09-23
+  (CAT4/W14)**. The route table is declared in `catalog.operations.json` and
+  built by `mwanachama-backend-shared/dispatch`; `routes.go` is 74 lines of
+  adapter and `routes_test.go` passed it unchanged, which was the acceptance.
+  The four constructors are gone on purpose: the gate boundary they encoded
+  is now `AnonymousActions`, an allowlist of action ids, so a mount names
+  actions rather than this module's Go identifiers and anything unnamed
+  arrives gated. See [documentation/2. design/routes.md](documentation/2.%20design/routes.md).
 - **`models/`** — shrunk 2026-09-23 (CAT3): the six membership maps, their
   `IsX` functions, four `Validate` methods and a duplicate `DocPathPattern`
-  are gone. What remains is the types themselves, the constants Go compares
-  against, and the rules a spec cannot state.
+  are gone. Shrunk again the same day (CAT5): `SlugPattern` and
+  `IsJSONObject` moved to `patterns.go`, and the per-field doc comments went
+  — they were a hand-rewritten copy of the blueprint's `description`, which
+  is where that prose lives now. What remains is the types themselves, the
+  constants Go compares against, and the rules a spec cannot state.
+- **A second copy of the object set in a domain spec** — gone (CAT5). The
+  field list is the module's; see "Objects are declared, not written".
 
 What stays Go is the logic a spec cannot declare: the enumeration refusal,
 the stall counter, the write-once key, the merge-don't-erase in
@@ -181,9 +219,44 @@ Each has a test, and the first two were mutation-checked rather than trusted:
   sibling repos' `postgres`, because the Makefile target came first. See
   [[feedback_use_memory_backend_for_tests]].
 - No Go file over 300 lines; split by responsibility.
-- Route builder functions are named `<ModelType>Routes` — see
-  [[feedback_routes_name_match_model]] — until `routes/` is deleted.
+- There are no hand-written route builders left to name: an address is an
+  entry in `catalog.operations.json`, and adding one is an edit to that file
+  rather than a new Go function. [[feedback_routes_name_match_model]] still
+  governs any repo that has not adopted the dispatcher.
 - This module has **no auth model**, matching
   `mwanachama-backend-assetmanager`: a route still needs a capability gate
   wrapped around it by whatever mounts it. The role→action grant table is
   `mwanachama-backend-auth`'s (DEV-1700).
+
+## Code comments
+
+Write code with no comments. Not one-liners above a function, not section
+banners, not doc comments on exported symbols, not "why" notes next to a
+tricky line. A name, a type, or a smaller function carries it instead.
+
+Anything that genuinely needs explaining goes in this repo's `documentation/`
+folder, under the phase it belongs to (`1. requirements`, `2. design`,
+`3. implementation`, `4. qa`) — never inline.
+
+**Why:** inline prose drifts out of sync with the code, duplicates what
+`documentation/` already owns, and buries the explanation where nobody
+looking for it will search.
+
+**How to apply:**
+
+- New code ships without comments. If a line seems to need one, rename or
+  split until it doesn't.
+- Touching code that already has comments: strip the ones in the code you are
+  changing. Do not sweep untouched files unless asked.
+- If the reasoning matters, add or update the matching `documentation/` page
+  in the same change and leave nothing behind in the source.
+- Machine-read directives are not comments and stay: build tags, `//go:embed`,
+  `//go:generate`, linter pragmas (`//nolint`, `// eslint-disable-next-line`,
+  `// ignore:`), license headers, codegen "do not edit" banners, and generated
+  files as a whole.
+- Commit messages, PR descriptions, and test names carry the narration that
+  used to go in comments.
+
+This rule is repeated verbatim in every mwanachama repo's `CLAUDE.md` so that
+it reaches sessions that do not load this machine's user-level config —
+scheduled cloud routines, other machines, and other agent harnesses.

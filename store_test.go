@@ -1,7 +1,6 @@
 package mwanachamacatalog
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -86,26 +85,23 @@ func TestEncode_WritesEveryDeclaredColumn(t *testing.T) {
 	}
 }
 
-// A column with nowhere to land, or a field with no column, is refused when
-// the manager is built rather than dropping a value on every write.
 func TestNewStore_RefusesASpecThatDisagreesWithTheType(t *testing.T) {
 	for _, tc := range []struct{ name, mutate, want string }{
 		{"a column no field carries", `{"name":"invented","type":"string","description":"x"},`,
 			"which models.Entry does not carry"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			raw := exampleSpecJSON(t)
-			// Add the field to the first object, which is the entry.
+			raw := blueprintSource()
 			marker := `"fields": [`
 			i := strings.Index(raw, marker)
 			if i < 0 {
-				t.Fatal("the example spec no longer lays out fields as expected")
+				t.Fatal("the blueprint no longer lays out fields as expected")
 			}
 			mutated := raw[:i+len(marker)] + tc.mutate + raw[i+len(marker):]
 
-			s, err := spec.Parse([]byte(mutated))
+			s, err := loadThrough(t, mutated)
 			if err != nil {
-				t.Fatalf("the mutated spec should still be a valid spec: %v", err)
+				t.Fatalf("the mutated blueprint should still load the example: %v", err)
 			}
 			_, err = newStore(openTestDB(t), s, map[string]any{roleEntry: models.Entry{}})
 			if err == nil {
@@ -117,7 +113,6 @@ func TestNewStore_RefusesASpecThatDisagreesWithTheType(t *testing.T) {
 		})
 	}
 
-	// And the other direction: a type carrying something the spec forgot.
 	s := loadExampleSpec(t)
 	_, err := newStore(openTestDB(t), s, map[string]any{roleSetting: models.Entry{}})
 	if err == nil || !strings.Contains(err.Error(), "does not declare") {
@@ -125,27 +120,26 @@ func TestNewStore_RefusesASpecThatDisagreesWithTheType(t *testing.T) {
 	}
 }
 
-// The example spec is one domain's, and which domain it is does not matter
-// here — it is loaded because it is the declaration this module ships, not
-// because of what it describes.
 const examplePath = "spec/examples/agency.catalog.json"
 
 func loadExampleSpec(t *testing.T) *spec.Spec {
 	t.Helper()
-	s, err := spec.Load(examplePath)
+	s, err := LoadSpec(examplePath)
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}
 	return s
 }
 
-func exampleSpecJSON(t *testing.T) string {
+func blueprintSource() string { return string(blueprintJSON) }
+
+func loadThrough(t *testing.T, mutatedBlueprint string) (*spec.Spec, error) {
 	t.Helper()
-	raw, err := os.ReadFile(examplePath)
+	b, err := spec.ParseBlueprint([]byte(mutatedBlueprint))
 	if err != nil {
-		t.Fatalf("read spec: %v", err)
+		return nil, err
 	}
-	return string(raw)
+	return b.Load(examplePath)
 }
 
 func openTestDB(t *testing.T) *gorm.DB {

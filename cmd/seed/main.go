@@ -27,7 +27,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
 // idNamespace makes a document's id a function of its slug, so seeding
@@ -64,7 +64,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	s, err := spec.Load(*specPath)
+	s, err := catalog.LoadSpec(*specPath)
 	if err != nil {
 		fail("%v", err)
 	}

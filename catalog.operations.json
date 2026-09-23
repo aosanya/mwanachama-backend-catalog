@@ -1,0 +1,162 @@
+{
+  "operations": {
+    "open_entry": {
+      "method": "GET", "path": "/entries/{slug}", "call": "OpenEntry", "action": "catalog.entry.open",
+      "args": [{"from": "path", "as": "slug"}, {"from": "query", "as": "k"}],
+      "returns": [{"body": true}]
+    },
+    "record_page_view": {
+      "method": "POST", "path": "/page-views", "call": "RecordPageView", "action": "catalog.page_view.record",
+      "status": 204,
+      "args": [{"from": "body", "as": "page"}, {"from": "body", "as": "slug"}],
+      "returns": [{"body": true}]
+    },
+
+    "list_entries": {
+      "method": "GET", "path": "/entries", "call": "ListEntries", "action": "catalog.entry.list",
+      "args": [{"from": "query", "whole": true}],
+      "returns": [{"body": true}]
+    },
+    "get_entry": {
+      "method": "GET", "path": "/entries/{slug}/admin", "call": "GetEntry", "action": "catalog.entry.read",
+      "args": [{"from": "path", "as": "slug"}],
+      "returns": [{"body": true}]
+    },
+    "upsert_entry": {
+      "method": "PUT", "path": "/entries/{slug}", "call": "UpsertEntry", "action": "catalog.entry.upsert",
+      "args": [{"from": "body", "whole": true}, {"from": "path", "as": "slug", "into": "Slug"}],
+      "returns": [{"body": true}]
+    },
+    "delete_entry": {
+      "method": "DELETE", "path": "/entries/{slug}", "call": "DeleteEntry", "action": "catalog.entry.delete",
+      "status": 204,
+      "args": [{"from": "path", "as": "slug"}],
+      "returns": [{"body": true}]
+    },
+    "set_visibility": {
+      "method": "POST", "path": "/entries/{slug}/visibility", "call": "SetVisibility", "action": "catalog.entry.set_visibility",
+      "args": [{"from": "path", "as": "slug"}, {"from": "body", "as": "visibility"}],
+      "returns": [{"body": true}]
+    },
+    "get_private": {
+      "method": "GET", "path": "/entries/{slug}/private", "call": "GetPrivate", "action": "catalog.entry.read_private",
+      "args": [{"from": "path", "as": "slug"}],
+      "returns": [{"body": true}]
+    },
+    "put_private": {
+      "method": "PUT", "path": "/entries/{slug}/private", "call": "PutPrivate", "action": "catalog.entry.write_private",
+      "args": [{"from": "body", "whole": true}, {"from": "path", "as": "slug", "into": "Slug"}],
+      "returns": [{"body": true}]
+    },
+    "list_share_links": {
+      "method": "GET", "path": "/entries/{slug}/links", "call": "ListShareLinks", "action": "catalog.share_link.list",
+      "args": [{"from": "path", "as": "slug"}],
+      "returns": [{"body": true}]
+    },
+    "issue_share_link": {
+      "method": "POST", "path": "/entries/{slug}/links", "call": "IssueShareLink", "action": "catalog.share_link.issue",
+      "status": 201,
+      "args": [{"from": "path", "as": "slug"}, {"from": "body", "as": "label"}, {"from": "body", "as": "by"}],
+      "returns": [{"as": "link"}, {"as": "key", "once": true}]
+    },
+    "retire_share_link": {
+      "method": "POST", "path": "/links/{linkID}/retire", "call": "RetireShareLink", "action": "catalog.share_link.retire",
+      "args": [{"from": "path", "as": "linkID"}],
+      "returns": [{"body": true}]
+    },
+
+    "list_suggestions": {
+      "method": "GET", "path": "/suggestions", "call": "ListSuggestions", "action": "catalog.suggestion.list",
+      "args": [{"from": "query", "as": "status", "repeated": true}],
+      "returns": [{"body": true}]
+    },
+    "file_suggestion": {
+      "method": "POST", "path": "/suggestions", "call": "FileSuggestion", "action": "catalog.suggestion.file",
+      "status": 201,
+      "args": [{"from": "body", "whole": true}],
+      "returns": [{"body": true}]
+    },
+    "get_suggestion": {
+      "method": "GET", "path": "/suggestions/{suggestionID}", "call": "GetSuggestion", "action": "catalog.suggestion.read",
+      "args": [{"from": "path", "as": "suggestionID"}],
+      "returns": [{"body": true}]
+    },
+    "decide_suggestion": {
+      "method": "POST", "path": "/suggestions/{suggestionID}/decide", "call": "DecideSuggestion", "action": "catalog.suggestion.decide",
+      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "status"}, {"from": "body", "as": "priority"}],
+      "returns": [{"body": true}]
+    },
+    "record_suggestion_attempt": {
+      "method": "POST", "path": "/suggestions/{suggestionID}/attempt", "call": "RecordSuggestionAttempt", "action": "catalog.suggestion.record_attempt",
+      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "run_id"}, {"from": "body", "as": "comment"}],
+      "returns": [{"body": true}]
+    },
+    "fulfil_suggestion": {
+      "method": "POST", "path": "/suggestions/{suggestionID}/fulfil", "call": "FulfilSuggestion", "action": "catalog.suggestion.fulfil",
+      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "slug"}, {"from": "body", "as": "run_id"}, {"from": "body", "as": "note"}],
+      "returns": [{"body": true}]
+    },
+    "list_suggestion_comments": {
+      "method": "GET", "path": "/suggestions/{suggestionID}/comments", "call": "ListSuggestionComments", "action": "catalog.suggestion_comment.list",
+      "args": [{"from": "path", "as": "suggestionID"}],
+      "returns": [{"body": true}]
+    },
+    "comment_on_suggestion": {
+      "method": "POST", "path": "/suggestions/{suggestionID}/comments", "call": "CommentOnSuggestion", "action": "catalog.suggestion_comment.create",
+      "status": 201,
+      "args": [{"from": "path", "as": "suggestionID"}, {"from": "body", "as": "author"}, {"from": "body", "as": "body"}],
+      "returns": [{"body": true}]
+    },
+    "list_suggestion_matches": {
+      "method": "GET", "path": "/suggestions/{suggestionID}/matches", "call": "ListSuggestionMatches", "action": "catalog.suggestion_match.list",
+      "args": [{"from": "path", "as": "suggestionID"}],
+      "returns": [{"body": true}]
+    },
+
+    "list_runs": {
+      "method": "GET", "path": "/runs", "call": "ListRuns", "action": "catalog.run.list",
+      "args": [{"from": "query", "as": "limit"}],
+      "returns": [{"body": true}]
+    },
+    "record_run": {
+      "method": "POST", "path": "/runs", "call": "RecordRun", "action": "catalog.run.record",
+      "status": 201,
+      "args": [{"from": "body", "whole": true}],
+      "returns": [{"body": true}]
+    },
+    "get_setting": {
+      "method": "GET", "path": "/settings/{key}", "call": "GetSetting", "action": "catalog.setting.read",
+      "args": [{"from": "path", "as": "key"}],
+      "returns": [{"body": true}]
+    },
+    "put_setting": {
+      "method": "PUT", "path": "/settings/{key}", "call": "PutSetting", "action": "catalog.setting.write",
+      "args": [{"from": "path", "as": "key"}, {"from": "body", "as": "value"}],
+      "returns": [{"body": true}]
+    },
+    "list_page_views": {
+      "method": "GET", "path": "/page-views", "call": "ListPageViews", "action": "catalog.page_view.list",
+      "returns": [{"body": true}]
+    }
+  },
+
+  "errors": {
+    "ErrEntryNotFound": 404,
+    "ErrSuggestionNotFound": 404,
+    "ErrShareLinkNotFound": 404,
+    "ErrSettingNotFound": 404,
+    "ErrEntryExists": 409,
+    "ErrSlugImmutable": 409,
+    "ErrNotPrivate": 409,
+    "ErrSuggestionDuplicate": 409,
+    "ErrSuggestionStatus": 409,
+    "ErrInvalidEntry": 400,
+    "ErrInvalidPrivate": 400,
+    "ErrInvalidSuggestion": 400,
+    "ErrAttemptNeedsComment": 400,
+    "ErrInvalidComment": 400,
+    "ErrInvalidRun": 400,
+    "ErrInvalidSetting": 400,
+    "ErrInvalidPageView": 400
+  }
+}

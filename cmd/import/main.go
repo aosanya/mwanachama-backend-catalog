@@ -51,7 +51,7 @@ func main() {
 	if *specPath == "" {
 		fail("-spec is required")
 	}
-	s, err := spec.Load(*specPath)
+	s, err := catalog.LoadSpec(*specPath)
 	if err != nil {
 		fail("%v", err)
 	}

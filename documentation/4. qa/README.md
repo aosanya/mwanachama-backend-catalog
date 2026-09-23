@@ -62,8 +62,18 @@ run green against the live `mwanachama-2` project (PostgreSQL 17.6):
   what the review comparison had to learn.
 
 Each run mints a random instance sized to the spec's own identifier budget,
-so its tables are `pg<hex>_catalog_*`, cannot collide with the live
-`agency_*` set, and are dropped on cleanup.
+so its tables are `pg<hex>_catalog_*` and are dropped on cleanup.
+
+**That override is load-bearing, not tidiness.** Since 2026-09-23 the live
+`mwanachama-2` database holds `agency_catalog_*` — 634 entries, seeded from
+the spec, with the older bare `agency_*` tables dropped after a row-level
+parity check. Those are exactly the names
+`spec/examples/agency.catalog.json` emits unmodified, at instance `agency`
+and module `catalog`. So anything that loads the shipped spec as-is and
+points at that database is pointed at production. Override the instance, and
+never re-seed or truncate it: ten rows from a 2026-09-21 mine-agencies rescue
+run and our own `mwanachama-wakala` agency exist there and in no folder on
+disk.
 
 Three bugs so far were found by a real database rather than by the SQLite
 tests — the missing inner parentheses, a slug beginning with a digit being

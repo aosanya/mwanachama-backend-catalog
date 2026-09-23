@@ -61,7 +61,7 @@ func instanceBudget(t *testing.T, s *spec.Spec) int {
 
 func postgresSpec(t *testing.T) *spec.Spec {
 	t.Helper()
-	s, err := spec.Load(filepath.Join(".", "spec", "examples", "agency.catalog.json"))
+	s, err := catalog.LoadSpec(filepath.Join(".", "spec", "examples", "agency.catalog.json"))
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}

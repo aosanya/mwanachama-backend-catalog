@@ -198,15 +198,19 @@ func Load(path string) (*Spec, error) {
 // Parse validates a spec already in memory.
 func Parse(raw []byte) (*Spec, error) {
 	var s Spec
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&s); err != nil {
+	if err := decode(raw, &s); err != nil {
 		return nil, fmt.Errorf("spec: %w", err)
 	}
 	if err := s.Validate(); err != nil {
 		return nil, err
 	}
 	return &s, nil
+}
+
+func decode(raw []byte, into any) error {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	return dec.Decode(into)
 }
 
 // DocPathPattern is the shape a path inside a document may take. Same

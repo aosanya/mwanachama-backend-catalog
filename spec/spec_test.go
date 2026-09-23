@@ -1,6 +1,7 @@
 package spec_test
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -23,9 +24,18 @@ func open(t *testing.T) *gorm.DB {
 	return db
 }
 
+func blueprint(t *testing.T) *spec.Blueprint {
+	t.Helper()
+	b, err := spec.LoadBlueprint(filepath.Join("..", "catalog.blueprint.json"))
+	if err != nil {
+		t.Fatalf("load blueprint: %v", err)
+	}
+	return b
+}
+
 func load(t *testing.T, path string) *spec.Spec {
 	t.Helper()
-	s, err := spec.Load(path)
+	s, err := blueprint(t).Load(path)
 	if err != nil {
 		t.Fatalf("load %s: %v", path, err)
 	}

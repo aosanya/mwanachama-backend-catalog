@@ -27,7 +27,7 @@ func newManager(t *testing.T) (catalog.CatalogManager, context.Context) {
 	}
 	// The shipped spec, not a test-only one: running the suite against the
 	// declaration this module actually ships is what proves the two agree.
-	s, err := spec.Load(filepath.Join(".", "spec", "examples", "agency.catalog.json"))
+	s, err := catalog.LoadSpec(filepath.Join(".", "spec", "examples", "agency.catalog.json"))
 	if err != nil {
 		t.Fatalf("load spec: %v", err)
 	}

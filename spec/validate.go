@@ -95,11 +95,15 @@ func (s *Spec) Validate() error {
 		problems = append(problems, o.validate()...)
 	}
 
-	if len(problems) > 0 {
-		sort.Strings(problems)
-		return fmt.Errorf("spec: %s", strings.Join(problems, "; "))
+	return asError("spec", problems)
+}
+
+func asError(subject string, problems []string) error {
+	if len(problems) == 0 {
+		return nil
 	}
-	return nil
+	sort.Strings(problems)
+	return fmt.Errorf("%s: %s", subject, strings.Join(problems, "; "))
 }
 
 func (o Object) validate() []string {
@@ -107,7 +111,12 @@ func (o Object) validate() []string {
 	add := func(format string, a ...any) { problems = append(problems, fmt.Sprintf(format, a...)) }
 
 	if len(o.Fields) == 0 {
-		add("object %q declares no fields", o.Name)
+		if o.Role != "" {
+			add("object %q fills the role %q and declares no fields of its own, so it has to be read through the module's blueprint rather than loaded on its own",
+				o.Name, o.Role)
+		} else {
+			add("object %q declares no fields", o.Name)
+		}
 		return problems
 	}
 
@@ -135,6 +144,14 @@ func (o Object) validate() []string {
 		}
 		if f.Type != TypeEnum && len(f.Values) > 0 {
 			add("object %q: field %q declares values but is not an enum", o.Name, f.Name)
+		}
+		if f.Type == TypeEnum && f.Default != "" && !holds(f.Values, f.Default) {
+			add("object %q: field %q defaults to %q, which is not one of %s",
+				o.Name, f.Name, f.Default, strings.Join(f.Values, ", "))
+		}
+		if f.Default != "" && (f.Required || f.Primary) {
+			add("object %q: field %q is required and carries the default %q, and a default is exactly what would let an omitted value pass unnoticed",
+				o.Name, f.Name, f.Default)
 		}
 		if f.Primary {
 			primaries++
@@ -183,4 +200,13 @@ func (o Object) validate() []string {
 		}
 	}
 	return problems
+}
+
+func holds(values []string, s string) bool {
+	for _, v := range values {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

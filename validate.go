@@ -5,20 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aosanya/mwanachama-backend-catalog/models"
 	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
-
-// patterns are the named checks a spec's `matches` may refer to. The spec
-// names one — "slug" — and this module says what the name means, so a
-// domain can require the shape without this package learning its words.
-//
-// A pattern is applied only to a value that is there. Whether a value has
-// to be there at all is `required`, which is a separate declaration.
-var patterns = map[string]func(string) bool{
-	"slug":        models.SlugPattern.MatchString,
-	"json_object": models.IsJSONObject,
-}
 
 // The roles a caller may name when checking a value against a spec without
 // a database — see [Check]. They are the module's own words for the objects
