@@ -1,0 +1,134 @@
+{
+  "module": "catalog",
+  "domain": "agency",
+  "instance": "agency",
+  "objects": [
+    {
+      "name": "entry",
+      "table": "agencies",
+      "fields": [
+        { "name": "id", "type": "string", "primary": true },
+        { "name": "slug", "type": "string", "required": true, "unique": true, "immutable": true, "matches": "slug" },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "summary", "type": "text" },
+        { "name": "doc", "type": "json" },
+        { "name": "visibility", "type": "enum", "values": ["pending", "public", "private"], "default": "pending" },
+        { "name": "submitted_by", "type": "string" },
+        { "name": "approved_at", "type": "timestamp" },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "updated_at", "type": "timestamp" },
+        { "name": "deleted", "type": "bool" }
+      ],
+      "indexes": [
+        { "name": "visibility", "fields": ["visibility"] },
+        { "name": "sector", "path": { "field": "doc", "path": "_template.sector" }, "not_deleted": true },
+        { "name": "archetype", "path": { "field": "doc", "path": "_template.archetype" }, "not_deleted": true }
+      ]
+    },
+    {
+      "name": "entry_private",
+      "table": "agency_privates",
+      "fields": [
+        { "name": "slug", "type": "string", "primary": true },
+        { "name": "readme", "type": "text" },
+        { "name": "sales", "type": "text" },
+        { "name": "module_configs", "type": "json" },
+        { "name": "appeal", "type": "text" },
+        { "name": "rank", "type": "int" },
+        { "name": "updated_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "rank", "fields": ["rank"] }]
+    },
+    {
+      "name": "share_link",
+      "table": "share_links",
+      "fields": [
+        { "name": "id", "type": "string", "primary": true },
+        { "name": "slug", "type": "string", "required": true },
+        { "name": "key_hash", "type": "string", "required": true, "unique": true },
+        { "name": "label", "type": "string" },
+        { "name": "status", "type": "enum", "values": ["active", "retired"], "default": "active" },
+        { "name": "created_by", "type": "string" },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "retired_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "slug_status", "fields": ["slug", "status"] }]
+    },
+    {
+      "name": "suggestion",
+      "table": "suggestions",
+      "fields": [
+        { "name": "id", "type": "string", "primary": true },
+        { "name": "slug", "type": "string", "required": true, "unique": true, "matches": "slug" },
+        { "name": "title", "type": "string", "required": true },
+        { "name": "why", "type": "text" },
+        { "name": "source", "type": "enum", "values": ["run", "owner", "stray"], "default": "run" },
+        { "name": "status", "type": "enum", "values": ["proposed", "approved", "rejected", "built", "stalled"], "default": "proposed" },
+        { "name": "priority", "type": "int", "default": "100" },
+        { "name": "attempts", "type": "int" },
+        { "name": "proposal", "type": "json" },
+        { "name": "run_id", "type": "string" },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "decided_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "status_priority", "fields": ["status", "priority"] }]
+    },
+    {
+      "name": "suggestion_comment",
+      "table": "suggestion_comments",
+      "fields": [
+        { "name": "id", "type": "string", "primary": true },
+        { "name": "suggestion_id", "type": "string", "required": true },
+        { "name": "author", "type": "enum", "values": ["run", "admin"], "default": "run" },
+        { "name": "run_id", "type": "string" },
+        { "name": "attempt", "type": "int" },
+        { "name": "body", "type": "text", "required": true },
+        { "name": "created_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "suggestion_created", "fields": ["suggestion_id", "created_at"] }]
+    },
+    {
+      "name": "suggestion_match",
+      "table": "suggestion_matches",
+      "fields": [
+        { "name": "suggestion_id", "type": "string", "primary": true },
+        { "name": "slug", "type": "string", "primary": true },
+        { "name": "run_id", "type": "string" },
+        { "name": "note", "type": "text" },
+        { "name": "met_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "slug", "fields": ["slug"] }]
+    },
+    {
+      "name": "run",
+      "table": "mining_runs",
+      "fields": [
+        { "name": "id", "type": "string", "primary": true },
+        { "name": "run_id", "type": "string" },
+        { "name": "submitted_by", "type": "string" },
+        { "name": "templates_filed", "type": "int" },
+        { "name": "summary", "type": "text" },
+        { "name": "created_at", "type": "timestamp" }
+      ],
+      "indexes": [{ "name": "created", "fields": ["created_at"] }]
+    },
+    {
+      "name": "setting",
+      "table": "settings",
+      "fields": [
+        { "name": "key", "type": "string", "primary": true },
+        { "name": "value", "type": "text" },
+        { "name": "updated_at", "type": "timestamp" }
+      ]
+    },
+    {
+      "name": "page_view",
+      "table": "page_views",
+      "fields": [
+        { "name": "page", "type": "enum", "values": ["index", "entry"], "primary": true },
+        { "name": "slug", "type": "string", "primary": true },
+        { "name": "views", "type": "int" }
+      ]
+    }
+  ]
+}
