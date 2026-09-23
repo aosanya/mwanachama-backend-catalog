@@ -2,6 +2,7 @@ package mwanachamacatalog_test
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -9,6 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
+	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
 
 // A document carrying a domain-shaped field, to prove the store filters on
@@ -23,11 +25,16 @@ func newManager(t *testing.T) (catalog.CatalogManager, context.Context) {
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
 	}
-	tables := catalog.DefaultTableNames("test")
-	if err := catalog.Migrate(db, tables); err != nil {
+	// The shipped spec, not a test-only one: running the suite against the
+	// declaration this module actually ships is what proves the two agree.
+	s, err := spec.Load(filepath.Join(".", "spec", "examples", "agency.catalog.json"))
+	if err != nil {
+		t.Fatalf("load spec: %v", err)
+	}
+	if err := spec.Migrate(db, s); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	cm, err := catalog.NewCatalogManager(db, tables)
+	cm, err := catalog.NewCatalogManager(db, s)
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
 	}

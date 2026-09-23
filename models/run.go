@@ -22,9 +22,6 @@ type MiningRun struct {
 	CreatedAt string `json:"created_at"`
 }
 
-// Validate reports whether r is storable.
-func (r MiningRun) Validate() bool { return r.TemplatesFiled >= 0 }
-
 // Setting is one run-time knob the routine reads, such as the rule it ranks
 // the catalog by. A key/value store rather than columns because the routine
 // and the operator add knobs faster than a schema should change.

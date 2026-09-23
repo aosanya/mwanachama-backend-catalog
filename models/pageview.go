@@ -14,12 +14,11 @@ type PageView struct {
 	Views int64 `json:"views"`
 }
 
-// Validate reports whether v is storable: a recognized page, and a slug
-// present exactly when the page is an Entry's.
-func (v PageView) Validate() bool {
-	if !IsPageKind(v.Page) || v.Views < 0 {
-		return false
-	}
+// SlugFitsPage reports whether the slug is present exactly when the page is
+// one Entry's. A spec can declare which pages exist and what a slug looks
+// like; it cannot say that one field's presence depends on another's value,
+// so this rule stays here.
+func (v PageView) SlugFitsPage() bool {
 	if v.Page == PageKindIndex {
 		return v.Slug == ""
 	}

@@ -6,7 +6,7 @@
 // It is re-runnable. Each agency goes through UpsertEntry, so an unchanged
 // document leaves its review alone and a changed one returns to pending.
 //
-//	import -dir <agencies> -dsn <postgres-url> [-instance catalog] [-dry-run] [-limit N]
+//	import -dir <agencies> -spec <spec.json> -dsn <postgres-url> [-dry-run] [-limit N]
 //
 // With no -dsn it reads and validates every folder without writing, which is
 // the cheapest way to find a malformed document before touching a database.
@@ -28,6 +28,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
+	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
 
 type folder struct {
@@ -39,7 +40,7 @@ type folder struct {
 func main() {
 	dir := flag.String("dir", "", "directory of agency folders (required)")
 	dsn := flag.String("dsn", "", "Postgres URL; empty means validate only")
-	instance := flag.String("instance", "catalog", "table-name prefix")
+	specPath := flag.String("spec", "", "the spec whose tables to write (required)")
 	dryRun := flag.Bool("dry-run", false, "read and validate, never write")
 	limit := flag.Int("limit", 0, "import at most N agencies (0 = all)")
 	flag.Parse()
@@ -47,8 +48,15 @@ func main() {
 	if *dir == "" {
 		fail("-dir is required")
 	}
+	if *specPath == "" {
+		fail("-spec is required")
+	}
+	s, err := spec.Load(*specPath)
+	if err != nil {
+		fail("%v", err)
+	}
 
-	folders, problems := readAll(*dir, *limit)
+	folders, problems := readAll(s, *dir, *limit)
 	for _, p := range problems {
 		fmt.Fprintln(os.Stderr, "skipped:", p)
 	}
@@ -68,11 +76,10 @@ func main() {
 	if err != nil {
 		fail("connect: %v", err)
 	}
-	tables := catalog.DefaultTableNames(*instance)
-	if err := catalog.Migrate(db, tables); err != nil {
+	if err := spec.Migrate(db, s); err != nil {
 		fail("migrate: %v", err)
 	}
-	cm, err := catalog.NewCatalogManager(db, tables)
+	cm, err := catalog.NewCatalogManager(db, s)
 	if err != nil {
 		fail("manager: %v", err)
 	}
@@ -92,7 +99,7 @@ func main() {
 		}
 		written++
 	}
-	fmt.Printf("wrote %d, failed %d, into %s_*\n", written, failed, *instance)
+	fmt.Printf("wrote %d, failed %d, into %s_%s_*\n", written, failed, s.Instance, s.Module)
 	if failed > 0 || len(problems) > 0 {
 		os.Exit(1)
 	}
@@ -100,7 +107,7 @@ func main() {
 
 // readAll loads every agency folder under dir, returning what parsed and a
 // line per folder that did not.
-func readAll(dir string, limit int) ([]folder, []string) {
+func readAll(s *spec.Spec, dir string, limit int) ([]folder, []string) {
 	names, err := os.ReadDir(dir)
 	if err != nil {
 		fail("read %s: %v", dir, err)
@@ -116,7 +123,7 @@ func readAll(dir string, limit int) ([]folder, []string) {
 		if limit > 0 && len(out) >= limit {
 			break
 		}
-		f, err := readFolder(dir, n.Name())
+		f, err := readFolder(s, dir, n.Name())
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("%s: %v", n.Name(), err))
 			continue
@@ -126,7 +133,7 @@ func readAll(dir string, limit int) ([]folder, []string) {
 	return out, problems
 }
 
-func readFolder(dir, name string) (folder, error) {
+func readFolder(s *spec.Spec, dir, name string) (folder, error) {
 	path := filepath.Join(dir, name)
 	raw, err := os.ReadFile(filepath.Join(path, "agency.json"))
 	if err != nil {
@@ -150,7 +157,7 @@ func readFolder(dir, name string) (folder, error) {
 	}
 
 	slug := slugify(name)
-	if !catalogSlug(slug) {
+	if !catalogSlug(s, slug) {
 		return folder{}, fmt.Errorf("folder name yields no usable slug")
 	}
 
@@ -162,8 +169,8 @@ func readFolder(dir, name string) (folder, error) {
 		Visibility:  catalog.VisibilityPending,
 		SubmittedBy: "import",
 	}
-	if !entry.Validate() {
-		return folder{}, fmt.Errorf("entry does not validate")
+	if err := catalog.Check(s, catalog.RoleEntry, entry); err != nil {
+		return folder{}, err
 	}
 
 	configs, err := readConfigs(path)
@@ -176,8 +183,11 @@ func readFolder(dir, name string) (folder, error) {
 		Sales:         readFile(filepath.Join(path, "sales.md")),
 		ModuleConfigs: configs,
 	}
-	if !private.Validate() {
-		return folder{}, fmt.Errorf("private parts do not validate")
+	if err := catalog.Check(s, catalog.RoleEntryPrivate, private); err != nil {
+		return folder{}, err
+	}
+	if private.Rank < 0 {
+		return folder{}, fmt.Errorf("rank is negative")
 	}
 	return folder{slug: slug, entry: entry, private: private}, nil
 }
@@ -231,9 +241,11 @@ func slugify(name string) string {
 	return strings.Trim(notSlug.ReplaceAllString(strings.ToLower(name), "-"), "-")
 }
 
-func catalogSlug(s string) bool {
-	e := catalog.Entry{Slug: s, Name: "x", Doc: "{}", Visibility: catalog.VisibilityPending}
-	return e.Validate()
+// catalogSlug reports whether slug is one the catalog would accept, asking
+// the spec rather than restating its rule here.
+func catalogSlug(s *spec.Spec, slug string) bool {
+	e := catalog.Entry{Slug: slug, Name: "x", Doc: "{}", Visibility: catalog.VisibilityPending}
+	return catalog.Check(s, catalog.RoleEntry, e) == nil
 }
 
 func fail(format string, a ...any) {

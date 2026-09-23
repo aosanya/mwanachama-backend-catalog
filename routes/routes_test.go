@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 	"github.com/aosanya/mwanachama-backend-catalog/routes"
+	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
 
 const doc = `{"agency":{"name":"Test"},"_template":{"sector":"health"},"modules":[{"code":"auth","enabled":true}]}`
@@ -26,11 +28,14 @@ func newServer(t *testing.T) (http.Handler, catalog.CatalogManager, context.Cont
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	tables := catalog.DefaultTableNames("test")
-	if err := catalog.Migrate(db, tables); err != nil {
+	s, err := spec.Load(filepath.Join("..", "spec", "examples", "agency.catalog.json"))
+	if err != nil {
+		t.Fatalf("load spec: %v", err)
+	}
+	if err := spec.Migrate(db, s); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	cm, err := catalog.NewCatalogManager(db, tables)
+	cm, err := catalog.NewCatalogManager(db, s)
 	if err != nil {
 		t.Fatalf("manager: %v", err)
 	}

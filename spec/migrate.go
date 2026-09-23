@@ -118,7 +118,7 @@ func (s *Spec) createIndexes(o Object, dialect string) []string {
 	table := s.TableFor(o)
 	var out []string
 	for _, idx := range o.Indexes {
-		name := table + "_" + idx.Name + "_idx"
+		name := s.IndexFor(o, idx)
 
 		unique := ""
 		if idx.Unique {

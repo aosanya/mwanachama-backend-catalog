@@ -4,17 +4,15 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
 
-	"github.com/aosanya/mwanachama-backend-catalog/gormstore"
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
 func (m *catalogManager) links(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.ShareLinks)
+	return m.q(ctx, roleShareLink)
 }
 
 func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by string) (ShareLink, string, error) {
@@ -22,7 +20,7 @@ func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by str
 	if err != nil {
 		return ShareLink{}, "", err
 	}
-	if models.Visibility(entry.Visibility) != models.VisibilityPrivate {
+	if entry.Visibility != models.VisibilityPrivate {
 		return ShareLink{}, "", ErrNotPrivate
 	}
 
@@ -32,6 +30,7 @@ func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by str
 	}
 
 	link := models.ShareLink{
+		ID:        newID(),
 		Slug:      slug,
 		KeyHash:   models.HashKey(raw),
 		Label:     label,
@@ -39,24 +38,20 @@ func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by str
 		CreatedBy: by,
 		CreatedAt: m.now(),
 	}
-	row := gormstore.ShareLinkToRow(link)
-	if err := m.links(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, roleShareLink, link); err != nil {
 		return ShareLink{}, "", err
 	}
-	return gormstore.RowToShareLink(row), raw, nil
+	return link, raw, nil
 }
 
 func (m *catalogManager) RetireShareLink(ctx context.Context, id string) (ShareLink, error) {
-	var row gormstore.ShareLinkRow
-	err := m.links(ctx).Where("id = ?", id).Take(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ShareLink{}, ErrShareLinkNotFound
-	}
+	var link ShareLink
+	err := m.take(m.links(ctx).Where("id = ?", id), roleShareLink, &link, ErrShareLinkNotFound)
 	if err != nil {
 		return ShareLink{}, err
 	}
-	if models.LinkStatus(row.Status) == models.LinkStatusRetired {
-		return gormstore.RowToShareLink(row), nil
+	if link.Status == models.LinkStatusRetired {
+		return link, nil
 	}
 
 	now := m.now()
@@ -65,22 +60,27 @@ func (m *catalogManager) RetireShareLink(ctx context.Context, id string) (ShareL
 	}).Error; err != nil {
 		return ShareLink{}, err
 	}
-	row.Status, row.RetiredAt = string(models.LinkStatusRetired), now
-	return gormstore.RowToShareLink(row), nil
+	link.Status, link.RetiredAt = models.LinkStatusRetired, now
+	return link, nil
 }
 
 func (m *catalogManager) ListShareLinks(ctx context.Context, slug string) ([]ShareLink, error) {
 	if _, err := m.findEntry(ctx, slug); err != nil {
 		return nil, err
 	}
-	var rows []gormstore.ShareLinkRow
+	var rows []map[string]any
 	if err := m.links(ctx).Where("slug = ?", slug).
 		Order("created_at DESC, id DESC").Find(&rows).Error; err != nil {
 		return nil, err
 	}
+	o := m.st.object(roleShareLink)
 	out := make([]ShareLink, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, gormstore.RowToShareLink(r))
+		var link ShareLink
+		if err := decode(o, r, &link); err != nil {
+			return nil, err
+		}
+		out = append(out, link)
 	}
 	return out, nil
 }

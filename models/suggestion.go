@@ -1,7 +1,5 @@
 package models
 
-import "strings"
-
 // MaxSuggestionAttempts is how many times a build may fail before the
 // suggestion stalls and waits for a person. Without a ceiling a proposal
 // nothing can build would be retried by every run forever.
@@ -58,20 +56,6 @@ type Suggestion struct {
 
 	// DecidedAt is when it was approved or rejected, empty while proposed.
 	DecidedAt string `json:"decided_at,omitempty"`
-}
-
-// Validate reports whether s is storable.
-func (s Suggestion) Validate() bool {
-	if !SlugPattern.MatchString(s.Slug) || strings.TrimSpace(s.Title) == "" {
-		return false
-	}
-	if !IsSuggestionSource(s.Source) || !IsSuggestionStatus(s.Status) {
-		return false
-	}
-	if s.Attempts < 0 {
-		return false
-	}
-	return s.Proposal == "" || IsJSONObject(s.Proposal)
 }
 
 // SuggestionComment is one note on a suggestion — a run saying what is left

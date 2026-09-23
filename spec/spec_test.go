@@ -59,14 +59,19 @@ func TestTwoDomainsCoexist(t *testing.T) {
 	}
 
 	got := tables(t, db)
+	// <instance>_<module>_<table>. Both domains declare a settings and a
+	// page_views object, and it is the instance segment that keeps them
+	// apart; the module segment keeps all of them clear of whatever other
+	// module is mounted in the same database.
 	want := []string{
-		"agency_agencies", "agency_agency_privates", "agency_mining_runs",
-		"agency_page_views", "agency_settings", "agency_share_links",
-		"agency_suggestion_comments", "agency_suggestion_matches", "agency_suggestions",
-		"library_acquisition_notes", "library_copies", "library_import_runs",
-		"library_page_views", "library_preview_links", "library_purchase_requests",
-		"library_request_fulfilments", "library_request_notes", "library_settings",
-		"library_titles",
+		"agency_catalog_agencies", "agency_catalog_agency_privates", "agency_catalog_mining_runs",
+		"agency_catalog_page_views", "agency_catalog_settings", "agency_catalog_share_links",
+		"agency_catalog_suggestion_comments", "agency_catalog_suggestion_matches",
+		"agency_catalog_suggestions",
+		"library_catalog_acquisition_notes", "library_catalog_copies", "library_catalog_import_runs",
+		"library_catalog_page_views", "library_catalog_preview_links",
+		"library_catalog_purchase_requests", "library_catalog_request_fulfilments",
+		"library_catalog_request_notes", "library_catalog_settings", "library_catalog_titles",
 	}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("tables =\n  %v\nwant\n  %v", got, want)
@@ -79,8 +84,8 @@ func TestTwoDomainsCoexist(t *testing.T) {
 		wantName  string
 		wantTable string
 	}{
-		{agency, "agency", "agency_agencies"},
-		{library, "title", "library_titles"},
+		{agency, "agency", "agency_catalog_agencies"},
+		{library, "title", "library_catalog_titles"},
 	} {
 		o, ok := tc.s.ByRole("entry")
 		if !ok {
@@ -252,6 +257,79 @@ func TestValidate_RefusesNamesThatAreNotNames(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Postgres truncates an identifier at 63 bytes and says nothing, so two
+// names that agree that far are one relation. Both of these pass every other
+// check in the spec: the names are well formed and distinct, and the
+// difference between them is simply past the cut.
+//
+// The instance below is a real published slug, de-hyphenated
+// (agricultural-commodity-exchange-warehouse-receipt-system, 51 characters),
+// which is what makes this a live risk rather than a contrived one: of the
+// 634 slugs in the catalog today, 337 are over 31 characters.
+func TestValidate_RefusesIdentifiersTheDatabaseWouldMerge(t *testing.T) {
+	const long = "agriculturalcommodityexchangewarehousereceiptsystem"
+
+	t.Run("two tables", func(t *testing.T) {
+		body := `{"module":"catalog","domain":"d","instance":"` + long + `","objects":[
+		  {"name":"a","table":"entries","description":"one","fields":[{"name":"x","type":"string","description":"k","primary":true}]},
+		  {"name":"b","table":"entry_privates","description":"two","fields":[{"name":"x","type":"string","description":"k","primary":true}]}]}`
+		err := parseErr(t, body)
+		// Both halves are worth stating: that it is too long, and that the
+		// two of them land on one name.
+		for _, want := range []string{"truncates at 63", "both become"} {
+			if !strings.Contains(err.Error(), want) {
+				t.Errorf("err = %v, want it to mention %q", err, want)
+			}
+		}
+	})
+
+	// An index name is the table name plus more, so it overflows first: a
+	// spec whose tables all fit can still lose an index. A lost index is the
+	// quiet one — "create index if not exists" makes the second a no-op, and
+	// the query that reads as indexed simply is not.
+	t.Run("an index before its table", func(t *testing.T) {
+		body := `{"module":"catalog","domain":"d","instance":"` + long + `","objects":[
+		  {"name":"a","table":"t","description":"one","fields":[
+		    {"name":"x","type":"string","description":"k","primary":true},
+		    {"name":"y","type":"string","description":"a field"}],
+		   "indexes":[
+		     {"name":"status_and_priority","fields":["x"]},
+		     {"name":"status_and_position","fields":["y"]}]}]}`
+		err := parseErr(t, body)
+		if !strings.Contains(err.Error(), "index") {
+			t.Errorf("err = %v, want it to name the index", err)
+		}
+	})
+}
+
+// The instance and module segments give up the underscore, because a
+// physical name is <instance>_<module>_<table> and a separator that is legal
+// inside a segment cannot be read back apart.
+func TestValidate_RefusesAnUnderscoreInASegment(t *testing.T) {
+	for _, tc := range []struct{ name, body string }{
+		{"instance", `{"module":"catalog","domain":"d","instance":"my_shop","objects":[
+		  {"name":"a","description":"one","fields":[{"name":"x","type":"string","description":"k","primary":true}]}]}`},
+		{"module", `{"module":"my_catalog","domain":"d","instance":"shop","objects":[
+		  {"name":"a","description":"one","fields":[{"name":"x","type":"string","description":"k","primary":true}]}]}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := parseErr(t, tc.body)
+			if !strings.Contains(err.Error(), "usable name segment") {
+				t.Errorf("err = %v, want it to refuse the segment", err)
+			}
+		})
+	}
+}
+
+func parseErr(t *testing.T, body string) error {
+	t.Helper()
+	_, err := spec.Parse([]byte(body))
+	if err == nil {
+		t.Fatal("spec loaded, want a refusal")
+	}
+	return err
 }
 
 // An unknown key is a typo, and a typo that is silently ignored is a field

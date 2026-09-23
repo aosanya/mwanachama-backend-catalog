@@ -8,46 +8,43 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/aosanya/mwanachama-backend-catalog/gormstore"
 	"github.com/aosanya/mwanachama-backend-catalog/models"
+	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
 
 func nowRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
 func (m *catalogManager) entries(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.Entries)
+	return m.q(ctx, roleEntry)
 }
 
-// findEntry reads one non-deleted row by slug.
-func (m *catalogManager) findEntry(ctx context.Context, slug string) (gormstore.EntryRow, error) {
-	var row gormstore.EntryRow
-	err := m.entries(ctx).Where("slug = ? AND deleted = ?", slug, false).Take(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return gormstore.EntryRow{}, ErrEntryNotFound
-	}
-	return row, err
+// findEntry reads one non-deleted Entry by slug.
+func (m *catalogManager) findEntry(ctx context.Context, slug string) (Entry, error) {
+	var e Entry
+	err := m.take(
+		m.entries(ctx).Where("slug = ? AND deleted = ?", slug, false),
+		roleEntry, &e, ErrEntryNotFound)
+	return e, err
 }
 
 func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error) {
 	e.Visibility = models.VisibilityPending
 	e.ApprovedAt = ""
-	if !e.Validate() {
+	if err := m.checks(roleEntry, e); err != nil {
 		return Entry{}, ErrInvalidEntry
 	}
 
 	now := m.now()
-	e.ID = ""
+	e.ID = newID()
 	e.CreatedAt, e.UpdatedAt = now, now
 	e.Deleted = false
-
-	row := gormstore.EntryToRow(e)
-	if err := m.entries(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, roleEntry, e); err != nil {
 		if isUniqueViolation(err) {
 			return Entry{}, ErrEntryExists
 		}
 		return Entry{}, err
 	}
-	return gormstore.RowToEntry(row), nil
+	return e, nil
 }
 
 func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error) {
@@ -63,13 +60,13 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	// however the stored row was approved. An unchanged one leaves the
 	// review alone, which is what lets a mining run re-send an agency it
 	// already published without un-publishing it.
-	e.Visibility = models.Visibility(existing.Visibility)
+	e.Visibility = existing.Visibility
 	e.ApprovedAt = existing.ApprovedAt
-	if string(existing.Doc) != e.Doc {
+	if existing.Doc != e.Doc {
 		e.Visibility = models.VisibilityPending
 		e.ApprovedAt = ""
 	}
-	if !e.Validate() {
+	if err := m.checks(roleEntry, e); err != nil {
 		return Entry{}, ErrInvalidEntry
 	}
 
@@ -78,30 +75,33 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	e.UpdatedAt = m.now()
 	e.Deleted = false
 
-	row := gormstore.EntryToRow(e)
-	if err := m.entries(ctx).Where("id = ?", existing.ID).Save(&row).Error; err != nil {
-		return Entry{}, err
+	return e, m.replaceEntry(ctx, e)
+}
+
+// replaceEntry writes every declared column of e over the stored row. It is
+// a whole-row write rather than a patch, which is what lets a field be
+// cleared — an Entry losing its ApprovedAt because its document changed.
+func (m *catalogManager) replaceEntry(ctx context.Context, e Entry) error {
+	row, err := encode(m.st.object(roleEntry), e)
+	if err != nil {
+		return err
 	}
-	return gormstore.RowToEntry(row), nil
+	return m.entries(ctx).Where("id = ?", e.ID).Updates(row).Error
 }
 
 func (m *catalogManager) GetEntry(ctx context.Context, slug string) (Entry, error) {
-	row, err := m.findEntry(ctx, slug)
-	if err != nil {
-		return Entry{}, err
-	}
-	return gormstore.RowToEntry(row), nil
+	return m.findEntry(ctx, slug)
 }
 
 func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry, error) {
-	row, err := m.findEntry(ctx, slug)
+	e, err := m.findEntry(ctx, slug)
 	if err != nil {
 		return Entry{}, err
 	}
 
-	switch models.Visibility(row.Visibility) {
+	switch e.Visibility {
 	case models.VisibilityPublic:
-		return gormstore.RowToEntry(row), nil
+		return e, nil
 	case models.VisibilityPrivate:
 		if key == "" {
 			return Entry{}, ErrEntryNotFound
@@ -113,7 +113,7 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 		if !ok {
 			return Entry{}, ErrEntryNotFound
 		}
-		return gormstore.RowToEntry(row), nil
+		return e, nil
 	default:
 		return Entry{}, ErrEntryNotFound
 	}
@@ -127,7 +127,7 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 	if e.ID != "" && e.ID != existing.ID {
 		return Entry{}, ErrSlugImmutable
 	}
-	if !e.Validate() {
+	if err := m.checks(roleEntry, e); err != nil {
 		return Entry{}, ErrInvalidEntry
 	}
 
@@ -136,15 +136,13 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 	e.UpdatedAt = m.now()
 	e.Deleted = false
 
-	row := gormstore.EntryToRow(e)
-	if err := m.entries(ctx).Where("id = ?", existing.ID).Save(&row).Error; err != nil {
-		return Entry{}, err
-	}
-	return gormstore.RowToEntry(row), nil
+	return e, m.replaceEntry(ctx, e)
 }
 
 func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visibility) (Entry, error) {
-	if !models.IsVisibility(v) {
+	// The declared states are the spec's, so a fourth one cannot be
+	// introduced here without being declared there first.
+	if err := m.checksField(roleEntry, "visibility", string(v)); err != nil {
 		return Entry{}, ErrInvalidEntry
 	}
 	existing, err := m.findEntry(ctx, slug)
@@ -210,14 +208,18 @@ func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry
 		q = q.Limit(f.Limit)
 	}
 
-	var rows []gormstore.EntryRow
+	var rows []map[string]any
 	if err := q.Order("name").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 
+	o := m.st.object(roleEntry)
 	out := make([]Entry, 0, len(rows))
 	for _, r := range rows {
-		e := gormstore.RowToEntry(r)
+		var e Entry
+		if err := decode(o, r, &e); err != nil {
+			return nil, err
+		}
 		// A listing is the card. Carrying Doc would put 34 KB per row into
 		// every storefront index page.
 		e.Doc = ""
@@ -227,16 +229,20 @@ func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry
 }
 
 // docPathExpr builds the SQL that reads one path out of the document, in
-// the dialect in use. Neither dialect takes the path as a bound parameter,
-// which is why [models.DocFilter.Valid] restricts it to an alphabet with no
-// quote, brace or bracket in it — callers must check Valid before reaching
-// here, and ListEntries does.
+// the dialect in use.
+//
+// It defers to [spec.DocPathExpr], which is the same function the migrator
+// builds a document index with. That is the whole point of going through it:
+// an expression index only applies to a query whose expression matches it
+// exactly, so a second copy of this that drifted by a space would leave
+// every document filter doing a full scan with nothing reporting it.
+//
+// Neither dialect takes the path as a bound parameter, which is why
+// [models.DocFilter.Valid] restricts it to an alphabet with no quote, brace
+// or bracket in it — callers must check Valid before reaching here, and
+// ListEntries does.
 func docPathExpr(db *gorm.DB, d models.DocFilter) string {
-	segs := d.Segments()
-	if db.Dialector.Name() == "postgres" {
-		return `doc #>> '{` + strings.Join(segs, ",") + `}'`
-	}
-	return `json_extract(doc, '$.` + strings.Join(segs, ".") + `')`
+	return spec.DocPathExpr("doc", d.Path, db.Dialector.Name())
 }
 
 // isUniqueViolation reports whether err is a duplicate-key error. The two

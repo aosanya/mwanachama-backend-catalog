@@ -7,29 +7,25 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/aosanya/mwanachama-backend-catalog/gormstore"
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
 func (m *catalogManager) suggestions(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.Suggestions)
+	return m.q(ctx, roleSuggestion)
 }
 
 func (m *catalogManager) comments(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.SuggestionComments)
+	return m.q(ctx, roleSuggestionComment)
 }
 
 func (m *catalogManager) matches(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.SuggestionMatches)
+	return m.q(ctx, roleSuggestionMatch)
 }
 
-func (m *catalogManager) findSuggestion(ctx context.Context, id string) (gormstore.SuggestionRow, error) {
-	var row gormstore.SuggestionRow
-	err := m.suggestions(ctx).Where("id = ?", id).Take(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return gormstore.SuggestionRow{}, ErrSuggestionNotFound
-	}
-	return row, err
+func (m *catalogManager) findSuggestion(ctx context.Context, id string) (Suggestion, error) {
+	var s Suggestion
+	err := m.take(m.suggestions(ctx).Where("id = ?", id), roleSuggestion, &s, ErrSuggestionNotFound)
+	return s, err
 }
 
 func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Suggestion, error) {
@@ -42,7 +38,7 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 	if s.Source == "" {
 		s.Source = models.SuggestionSourceRun
 	}
-	if !s.Validate() {
+	if err := m.checks(roleSuggestion, s); err != nil || s.Attempts < 0 {
 		return Suggestion{}, ErrInvalidSuggestion
 	}
 
@@ -61,24 +57,19 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 		return Suggestion{}, ErrSuggestionDuplicate
 	}
 
-	s.ID = ""
+	s.ID = newID()
 	s.CreatedAt = m.now()
-	row := gormstore.SuggestionToRow(s)
-	if err := m.suggestions(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, roleSuggestion, s); err != nil {
 		if isUniqueViolation(err) {
 			return Suggestion{}, ErrSuggestionDuplicate
 		}
 		return Suggestion{}, err
 	}
-	return gormstore.RowToSuggestion(row), nil
+	return s, nil
 }
 
 func (m *catalogManager) GetSuggestion(ctx context.Context, id string) (Suggestion, error) {
-	row, err := m.findSuggestion(ctx, id)
-	if err != nil {
-		return Suggestion{}, err
-	}
-	return gormstore.RowToSuggestion(row), nil
+	return m.findSuggestion(ctx, id)
 }
 
 func (m *catalogManager) ListSuggestions(ctx context.Context, statuses ...SuggestionStatus) ([]Suggestion, error) {
@@ -90,15 +81,7 @@ func (m *catalogManager) ListSuggestions(ctx context.Context, statuses ...Sugges
 		}
 		q = q.Where("status IN ?", in)
 	}
-	var rows []gormstore.SuggestionRow
-	if err := q.Order("priority, created_at").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	out := make([]Suggestion, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, gormstore.RowToSuggestion(r))
-	}
-	return out, nil
+	return listOf[Suggestion](m, q.Order("priority, created_at"), roleSuggestion)
 }
 
 func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority int) (Suggestion, error) {
@@ -143,12 +126,12 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runID,
 	if err != nil {
 		return Suggestion{}, err
 	}
-	if models.SuggestionStatus(existing.Status) != models.SuggestionStatusApproved {
+	if existing.Status != models.SuggestionStatusApproved {
 		return Suggestion{}, ErrSuggestionStatus
 	}
 
 	attempts := existing.Attempts + 1
-	status := models.SuggestionStatus(existing.Status)
+	status := existing.Status
 	if attempts >= models.MaxSuggestionAttempts {
 		status = models.SuggestionStatusStalled
 	}
@@ -158,54 +141,55 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runID,
 		return Suggestion{}, err
 	}
 
-	note := gormstore.SuggestionCommentToRow(models.SuggestionComment{
+	note := models.SuggestionComment{
+		ID:           newID(),
 		SuggestionID: existing.ID,
 		Author:       models.CommentAuthorRun,
 		RunID:        runID,
 		Attempt:      attempts,
 		Body:         strings.TrimSpace(comment),
 		CreatedAt:    m.now(),
-	})
-	if err := m.comments(ctx).Create(&note).Error; err != nil {
+	}
+	if err := m.insert(ctx, roleSuggestionComment, note); err != nil {
 		return Suggestion{}, err
 	}
 	return m.GetSuggestion(ctx, id)
 }
 
 func (m *catalogManager) CommentOnSuggestion(ctx context.Context, id string, author CommentAuthor, body string) (SuggestionComment, error) {
-	if strings.TrimSpace(body) == "" || !models.IsCommentAuthor(author) {
-		return SuggestionComment{}, ErrInvalidComment
-	}
+	// The suggestion is read before the comment is checked, where the order
+	// used to be the other way round: suggestion_id is one of the declared
+	// required fields, so the comment cannot be checked as a whole until it
+	// has one. A comment on a suggestion that is not there is now
+	// ErrSuggestionNotFound rather than ErrInvalidComment, which is the more
+	// accurate of the two answers anyway.
 	existing, err := m.findSuggestion(ctx, id)
 	if err != nil {
 		return SuggestionComment{}, err
 	}
-	row := gormstore.SuggestionCommentToRow(models.SuggestionComment{
+	c := models.SuggestionComment{
+		ID:           newID(),
 		SuggestionID: existing.ID,
 		Author:       author,
 		Body:         strings.TrimSpace(body),
 		CreatedAt:    m.now(),
-	})
-	if err := m.comments(ctx).Create(&row).Error; err != nil {
+	}
+	if err := m.checks(roleSuggestionComment, c); err != nil {
+		return SuggestionComment{}, ErrInvalidComment
+	}
+	if err := m.insert(ctx, roleSuggestionComment, c); err != nil {
 		return SuggestionComment{}, err
 	}
-	return gormstore.RowToSuggestionComment(row), nil
+	return c, nil
 }
 
 func (m *catalogManager) ListSuggestionComments(ctx context.Context, id string) ([]SuggestionComment, error) {
 	if _, err := m.findSuggestion(ctx, id); err != nil {
 		return nil, err
 	}
-	var rows []gormstore.SuggestionCommentRow
-	if err := m.comments(ctx).Where("suggestion_id = ?", id).
-		Order("created_at, id").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	out := make([]SuggestionComment, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, gormstore.RowToSuggestionComment(r))
-	}
-	return out, nil
+	return listOf[SuggestionComment](m,
+		m.comments(ctx).Where("suggestion_id = ?", id).Order("created_at, id"),
+		roleSuggestionComment)
 }
 
 func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, note string) (Suggestion, error) {
@@ -213,7 +197,7 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, 
 	if err != nil {
 		return Suggestion{}, err
 	}
-	switch models.SuggestionStatus(existing.Status) {
+	switch existing.Status {
 	case models.SuggestionStatusApproved, models.SuggestionStatusBuilt:
 	default:
 		return Suggestion{}, ErrSuggestionStatus
@@ -227,7 +211,6 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, 
 	match := models.SuggestionMatch{
 		SuggestionID: existing.ID, Slug: slug, RunID: runID, Note: note, MetAt: m.now(),
 	}
-	row := gormstore.SuggestionMatchToRow(match)
 	var n int64
 	if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", existing.ID, slug).
 		Count(&n).Error; err != nil {
@@ -238,7 +221,7 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, 
 			Updates(map[string]any{"run_id": runID, "note": note, "met_at": match.MetAt}).Error; err != nil {
 			return Suggestion{}, err
 		}
-	} else if err := m.matches(ctx).Create(&row).Error; err != nil {
+	} else if err := m.insert(ctx, roleSuggestionMatch, match); err != nil {
 		return Suggestion{}, err
 	}
 
@@ -253,13 +236,7 @@ func (m *catalogManager) ListSuggestionMatches(ctx context.Context, id string) (
 	if _, err := m.findSuggestion(ctx, id); err != nil {
 		return nil, err
 	}
-	var rows []gormstore.SuggestionMatchRow
-	if err := m.matches(ctx).Where("suggestion_id = ?", id).Order("slug").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	out := make([]SuggestionMatch, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, gormstore.RowToSuggestionMatch(r))
-	}
-	return out, nil
+	return listOf[SuggestionMatch](m,
+		m.matches(ctx).Where("suggestion_id = ?", id).Order("slug"),
+		roleSuggestionMatch)
 }

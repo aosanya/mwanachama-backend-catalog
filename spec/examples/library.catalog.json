@@ -38,7 +38,9 @@
         {
           "name": "doc",
           "type": "json",
-          "description": "The whole bibliographic record \u2014 contributors, subjects, identifiers, edition. Queried in place by path rather than parsed per row."
+          "description": "The whole bibliographic record \u2014 contributors, subjects, identifiers, edition. Queried in place by path rather than parsed per row.",
+          "required": true,
+          "matches": "json_object"
         },
         {
           "name": "visibility",
@@ -116,7 +118,8 @@
           "name": "slug",
           "type": "string",
           "description": "The title these notes belong to. One row per title.",
-          "primary": true
+          "primary": true,
+          "matches": "slug"
         },
         {
           "name": "readme",
@@ -131,7 +134,8 @@
         {
           "name": "module_configs",
           "type": "json",
-          "description": "Per-module configuration for this entry, keyed by module code. Never leaves the operator surface."
+          "description": "Per-module configuration for this entry, keyed by module code. Never leaves the operator surface.",
+          "matches": "json_object"
         },
         {
           "name": "appeal",
@@ -175,7 +179,8 @@
           "name": "slug",
           "type": "string",
           "description": "The title this key opens.",
-          "required": true
+          "required": true,
+          "matches": "slug"
         },
         {
           "name": "key_hash",
@@ -295,7 +300,8 @@
         {
           "name": "proposal",
           "type": "json",
-          "description": "What is known about the wanted item \u2014 author, edition, supplier. Anything domain-shaped, such as a genre, lives here."
+          "description": "What is known about the wanted item \u2014 author, edition, supplier. Anything domain-shaped, such as a genre, lives here.",
+          "matches": "json_object"
         },
         {
           "name": "run_id",
@@ -401,7 +407,8 @@
           "name": "slug",
           "type": "string",
           "description": "The title that meets it.",
-          "primary": true
+          "primary": true,
+          "matches": "slug"
         },
         {
           "name": "run_id",

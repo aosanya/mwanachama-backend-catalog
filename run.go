@@ -2,37 +2,34 @@ package mwanachamacatalog
 
 import (
 	"context"
-	"errors"
 
 	"gorm.io/gorm"
 
-	"github.com/aosanya/mwanachama-backend-catalog/gormstore"
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
 func (m *catalogManager) runs(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.MiningRuns)
+	return m.q(ctx, roleRun)
 }
 
 func (m *catalogManager) settings(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.Settings)
+	return m.q(ctx, roleSetting)
 }
 
 func (m *catalogManager) views(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.PageViews)
+	return m.q(ctx, rolePageView)
 }
 
 func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun, error) {
-	if !r.Validate() {
+	if r.TemplatesFiled < 0 {
 		return MiningRun{}, ErrInvalidRun
 	}
-	r.ID = ""
+	r.ID = newID()
 	r.CreatedAt = m.now()
-	row := gormstore.MiningRunToRow(r)
-	if err := m.runs(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, roleRun, r); err != nil {
 		return MiningRun{}, err
 	}
-	return gormstore.RowToMiningRun(row), nil
+	return r, nil
 }
 
 func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, error) {
@@ -40,15 +37,7 @@ func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, 
 	if limit > 0 {
 		q = q.Limit(limit)
 	}
-	var rows []gormstore.MiningRunRow
-	if err := q.Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	out := make([]MiningRun, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, gormstore.RowToMiningRun(r))
-	}
-	return out, nil
+	return listOf[MiningRun](m, q, roleRun)
 }
 
 func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Setting, error) {
@@ -56,7 +45,6 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 		return Setting{}, ErrInvalidSetting
 	}
 	s := models.Setting{Key: key, Value: value, UpdatedAt: m.now()}
-	row := gormstore.SettingToRow(s)
 
 	var n int64
 	if err := m.settings(ctx).Where("key = ?", key).Count(&n).Error; err != nil {
@@ -69,22 +57,19 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 		}
 		return s, nil
 	}
-	if err := m.settings(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, roleSetting, s); err != nil {
 		return Setting{}, err
 	}
-	return gormstore.RowToSetting(row), nil
+	return s, nil
 }
 
 func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, error) {
-	var row gormstore.SettingRow
-	err := m.settings(ctx).Where("key = ?", key).Take(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return Setting{}, ErrSettingNotFound
-	}
+	var s Setting
+	err := m.take(m.settings(ctx).Where("key = ?", key), roleSetting, &s, ErrSettingNotFound)
 	if err != nil {
 		return Setting{}, err
 	}
-	return gormstore.RowToSetting(row), nil
+	return s, nil
 }
 
 func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug string) error {
@@ -92,7 +77,7 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 		slug = ""
 	}
 	v := models.PageView{Page: page, Slug: slug}
-	if !v.Validate() {
+	if err := m.checks(rolePageView, v); err != nil || !v.SlugFitsPage() {
 		return ErrInvalidPageView
 	}
 	// An Entry view counts only against a slug that exists, so a caller
@@ -111,8 +96,7 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 	if res.RowsAffected > 0 {
 		return nil
 	}
-	row := gormstore.PageViewToRow(models.PageView{Page: page, Slug: slug, Views: 1})
-	if err := m.views(ctx).Create(&row).Error; err != nil {
+	if err := m.insert(ctx, rolePageView, models.PageView{Page: page, Slug: slug, Views: 1}); err != nil {
 		// Another caller created the row between the update and here; the
 		// increment is theirs to have made, so retry it rather than fail.
 		if isUniqueViolation(err) {
@@ -125,13 +109,5 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 }
 
 func (m *catalogManager) ListPageViews(ctx context.Context) ([]PageView, error) {
-	var rows []gormstore.PageViewRow
-	if err := m.views(ctx).Order("views DESC, page, slug").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	out := make([]PageView, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, gormstore.RowToPageView(r))
-	}
-	return out, nil
+	return listOf[PageView](m, m.views(ctx).Order("views DESC, page, slug"), rolePageView)
 }

@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
+	"github.com/aosanya/mwanachama-backend-catalog/spec"
 )
 
 // Entry, EntryPrivate, ShareLink and their enum types are aliases of their
@@ -221,26 +222,79 @@ type CatalogManager interface {
 }
 
 type catalogManager struct {
-	db     *gorm.DB
-	tables TableNames
-	now    func() string
+	db  *gorm.DB
+	st  *store
+	now func() string
 }
 
-// NewCatalogManager builds a CatalogManager over db, reading and writing
-// the tables t names. Migrate must have run for the same db and t.
-func NewCatalogManager(db *gorm.DB, t TableNames) (CatalogManager, error) {
-	if db == nil {
-		return nil, fmt.Errorf("NewCatalogManager: db must not be nil")
+// NewCatalogManager builds a CatalogManager over db, reading and writing the
+// tables s declares. spec.Migrate must have run for the same db and s.
+//
+// The spec is checked against the types this package carries before anything
+// is served: a declared column with no field to hold it, or a field with no
+// column to land in, fails here rather than dropping a value on every write.
+func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
+	st, err := newStore(db, s, map[string]any{
+		roleEntry:             models.Entry{},
+		roleEntryPrivate:      models.EntryPrivate{},
+		roleShareLink:         models.ShareLink{},
+		roleSuggestion:        models.Suggestion{},
+		roleSuggestionComment: models.SuggestionComment{},
+		roleSuggestionMatch:   models.SuggestionMatch{},
+		roleRun:               models.MiningRun{},
+		roleSetting:           models.Setting{},
+		rolePageView:          models.PageView{},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("NewCatalogManager: %w", err)
 	}
-	for name, table := range map[string]string{
-		"Entries": t.Entries, "EntryPrivates": t.EntryPrivates, "ShareLinks": t.ShareLinks,
-		"Suggestions": t.Suggestions, "SuggestionComments": t.SuggestionComments,
-		"SuggestionMatches": t.SuggestionMatches, "MiningRuns": t.MiningRuns,
-		"Settings": t.Settings, "PageViews": t.PageViews,
-	} {
-		if table == "" {
-			return nil, fmt.Errorf("NewCatalogManager: table name %s must be set", name)
+	return &catalogManager{db: db, st: st, now: nowRFC3339}, nil
+}
+
+// q starts a query against the table playing one role.
+func (m *catalogManager) q(ctx context.Context, role string) *gorm.DB {
+	return m.db.WithContext(ctx).Table(m.st.table(role))
+}
+
+// take reads at most one row into out, answering notFound when there is
+// none. Rows come back as maps rather than structs, because the columns are
+// the spec's to declare and this package no longer restates them.
+func (m *catalogManager) take(q *gorm.DB, role string, out any, notFound error) error {
+	var rows []map[string]any
+	if err := q.Limit(1).Find(&rows).Error; err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		return notFound
+	}
+	return decode(m.st.object(role), rows[0], out)
+}
+
+// listOf reads every row q matches. A free function rather than a method
+// because Go has no generic methods, and the alternative is the same decode
+// loop written out once per listing.
+func listOf[T any](m *catalogManager, q *gorm.DB, role string) ([]T, error) {
+	var rows []map[string]any
+	if err := q.Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	o := m.st.object(role)
+	out := make([]T, 0, len(rows))
+	for _, r := range rows {
+		var v T
+		if err := decode(o, r, &v); err != nil {
+			return nil, err
 		}
+		out = append(out, v)
 	}
-	return &catalogManager{db: db, tables: t, now: nowRFC3339}, nil
+	return out, nil
+}
+
+// insert writes v as a new row.
+func (m *catalogManager) insert(ctx context.Context, role string, v any) error {
+	row, err := encode(m.st.object(role), v)
+	if err != nil {
+		return err
+	}
+	return m.q(ctx, role).Create(row).Error
 }

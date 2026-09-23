@@ -59,17 +59,29 @@
 //
 // # Storage
 //
-// GORM directly, in the shape mwanachama-backend-assetmanager and
-// mwanachama-backend-actor settled on: models/ holds the domain types,
-// gormstore/ the row structs and migration, one file per entity in each.
-// Entry.Doc is jsonb wherever the database has it — see gormstore.JSONDoc —
-// because filtering and counting inside the document happen in the database.
+// GORM directly, over tables this package does not describe: the objects
+// are declared in a spec and spec.Migrate creates a table per declared
+// object, so there are no row structs and no AutoMigrate here. A domain
+// calls its objects whatever it likes and fills the module's roles with
+// them — "entry", "share_link" — and every rule reaches its table through a
+// role rather than through a domain's own noun.
+//
+// The join between a declared column and a Go field is the field's name,
+// put through the rule in store.go: SubmittedBy is submitted_by.
+// Deliberately not the json tag, which is a presentation choice and is
+// wrong in exactly the place it would hurt — ShareLink.KeyHash is json:"-"
+// so a stored hash never reaches an API response.
+//
+// Entry.Doc is jsonb wherever the database has it, because filtering and
+// counting inside the document happen in the database.
 //
 // Layout:
 //   - models/    — domain types (Entry, EntryPrivate, ShareLink, Suggestion,
 //     MiningRun, Setting, PageView) and DocFilter
-//   - gormstore/ — GORM row structs, row<->domain conversion, migration
-//   - doc.go (this file), tables.go — table-name/migrate wrappers
+//   - spec/      — the declared objects, their validation and their migrator
+//   - doc.go (this file)
+//   - store.go           — roles, table lookup, and the row codec
+//   - validate.go        — the declared rules (required, enum, matches)
 //   - catalog_manager.go — CatalogManager interface, catalogManager struct
 //   - entry.go           — Entry CRUD, visibility and the public read
 //   - private.go         — the operator's notes and module configs

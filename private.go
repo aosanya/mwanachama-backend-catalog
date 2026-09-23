@@ -5,32 +5,29 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
-
-	"github.com/aosanya/mwanachama-backend-catalog/gormstore"
 )
 
 func (m *catalogManager) privates(ctx context.Context) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.tables.EntryPrivates)
+	return m.q(ctx, roleEntryPrivate)
 }
 
 func (m *catalogManager) PutPrivate(ctx context.Context, p EntryPrivate) (EntryPrivate, error) {
-	if !p.Validate() {
+	if err := m.checks(roleEntryPrivate, p); err != nil || p.Rank < 0 {
 		return EntryPrivate{}, ErrInvalidPrivate
 	}
 	if _, err := m.findEntry(ctx, p.Slug); err != nil {
 		return EntryPrivate{}, err
 	}
 
-	var existing gormstore.EntryPrivateRow
-	err := m.privates(ctx).Where("slug = ?", p.Slug).Take(&existing).Error
+	var existing EntryPrivate
+	err := m.take(m.privates(ctx).Where("slug = ?", p.Slug), roleEntryPrivate, &existing, errNoPrivate)
 	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
+	case errors.Is(err, errNoPrivate):
 		p.UpdatedAt = m.now()
-		row := gormstore.EntryPrivateToRow(p)
-		if err := m.privates(ctx).Create(&row).Error; err != nil {
+		if err := m.insert(ctx, roleEntryPrivate, p); err != nil {
 			return EntryPrivate{}, err
 		}
-		return gormstore.RowToEntryPrivate(row), nil
+		return p, nil
 	case err != nil:
 		return EntryPrivate{}, err
 	}
@@ -38,7 +35,7 @@ func (m *catalogManager) PutPrivate(ctx context.Context, p EntryPrivate) (EntryP
 	// A partial write: an empty field means "leave it alone", so a caller
 	// re-ranking the catalog does not have to resend every readme to avoid
 	// erasing them.
-	merged := gormstore.RowToEntryPrivate(existing)
+	merged := existing
 	if p.Readme != "" {
 		merged.Readme = p.Readme
 	}
@@ -56,11 +53,14 @@ func (m *catalogManager) PutPrivate(ctx context.Context, p EntryPrivate) (EntryP
 	}
 	merged.UpdatedAt = m.now()
 
-	row := gormstore.EntryPrivateToRow(merged)
-	if err := m.privates(ctx).Where("slug = ?", p.Slug).Save(&row).Error; err != nil {
+	row, err := encode(m.st.object(roleEntryPrivate), merged)
+	if err != nil {
 		return EntryPrivate{}, err
 	}
-	return gormstore.RowToEntryPrivate(row), nil
+	if err := m.privates(ctx).Where("slug = ?", p.Slug).Updates(row).Error; err != nil {
+		return EntryPrivate{}, err
+	}
+	return merged, nil
 }
 
 func (m *catalogManager) GetPrivate(ctx context.Context, slug string) (EntryPrivate, error) {
@@ -68,9 +68,9 @@ func (m *catalogManager) GetPrivate(ctx context.Context, slug string) (EntryPriv
 		return EntryPrivate{}, err
 	}
 
-	var row gormstore.EntryPrivateRow
-	err := m.privates(ctx).Where("slug = ?", slug).Take(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	var p EntryPrivate
+	err := m.take(m.privates(ctx).Where("slug = ?", slug), roleEntryPrivate, &p, errNoPrivate)
+	if errors.Is(err, errNoPrivate) {
 		// An Entry with nothing written about it yet is not an error; it
 		// has empty private parts.
 		return EntryPrivate{Slug: slug}, nil
@@ -78,5 +78,9 @@ func (m *catalogManager) GetPrivate(ctx context.Context, slug string) (EntryPriv
 	if err != nil {
 		return EntryPrivate{}, err
 	}
-	return gormstore.RowToEntryPrivate(row), nil
+	return p, nil
 }
+
+// errNoPrivate is internal: both callers turn it into something else, and
+// neither ever lets it out.
+var errNoPrivate = errors.New("catalog: no private parts stored")

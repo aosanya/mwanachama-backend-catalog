@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"regexp"
-	"strings"
 )
 
 // SlugPattern is the shape of an Entry's Slug: lowercase alphanumeric words
@@ -57,19 +56,6 @@ type Entry struct {
 
 	// Deleted marks a soft-deleted Entry.
 	Deleted bool `json:"deleted"`
-}
-
-// Validate reports whether e carries the fields the store requires: a
-// well-formed Slug, a Name, a recognized Visibility, and a Doc that is a
-// JSON object rather than an array, a scalar or nothing.
-func (e Entry) Validate() bool {
-	if !SlugPattern.MatchString(e.Slug) || strings.TrimSpace(e.Name) == "" {
-		return false
-	}
-	if !IsVisibility(e.Visibility) {
-		return false
-	}
-	return IsJSONObject(e.Doc)
 }
 
 // IsJSONObject reports whether s parses as a JSON object. The store keeps

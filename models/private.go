@@ -33,13 +33,3 @@ type EntryPrivate struct {
 	// UpdatedAt is the RFC 3339 timestamp of the last update.
 	UpdatedAt string `json:"updated_at"`
 }
-
-// Validate reports whether p is storable: a well-formed Slug, a
-// non-negative Rank, and ModuleConfigs that is either empty or a JSON
-// object keyed by module code.
-func (p EntryPrivate) Validate() bool {
-	if !SlugPattern.MatchString(p.Slug) || p.Rank < 0 {
-		return false
-	}
-	return p.ModuleConfigs == "" || IsJSONObject(p.ModuleConfigs)
-}

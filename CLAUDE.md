@@ -34,9 +34,9 @@ and were moved out; they are the pattern to check every addition against:
 
 The third is the worst kind: **a stored enum value outlives a rename.**
 
-`domain_agnostic_test.go` enforces this. It parses `models/`, `gormstore/`
-and `spec/` and fails on any identifier carrying a domain word, with a second
-test over every stored enum value. Domain words stay allowed in comments,
+`domain_agnostic_test.go` enforces this. It parses `models/`, `spec/` and the
+root package, and fails on any identifier carrying a domain word, with a
+second test over every stored enum value. Domain words stay allowed in comments,
 where they illustrate what a neutral name stands for. When adding a field,
 ask whether a librarian would recognise it.
 
@@ -64,15 +64,87 @@ rather than escaped. Never relax this to "escape it instead".
 would let an omitted value pass unnoticed; `TestRequiredFieldsHaveNoDefault`
 asserts no column is ever both `not null` and defaulted.
 
+**A table is `<instance>_<module>_<object>`** — `agency_catalog_agencies`.
+The module segment is not decoration: without it a catalog instance named
+`agency` and an agency instance of the same name both want `agency_agencies`,
+and neither module notices, because `AutoMigrate` adopts a table that already
+exists and `create table if not exists` is a no-op against one. A collision
+here is silent data mixing, not an error, which is why `spec.Validate` refuses
+it rather than leaving it to the database:
+
+- `Instance` and `Module` match `SegmentPattern` — `NamePattern` minus the
+  underscore, so the three segments can be read back apart.
+- Every emitted name is measured against `MaxIdentifier` (63). Postgres
+  truncates past it **without complaining**, so two names agreeing that far
+  are one relation — with a long agency slug, `…_catalog_entries` and
+  `…_catalog_entry_privates` are the same table.
+- Duplicates are detected on the physical name, and indexes are checked in
+  the same namespace as tables, because Postgres keeps them there — and
+  `<table>_<index>_idx` overflows before its own table does.
+
+**A column is found by field name, never by json tag.** `store.go`'s
+`columnName` turns `SubmittedBy` into `submitted_by` and `RunID` into
+`run_id`. The tag is a presentation choice and gets this wrong where it
+hurts: `ShareLink.KeyHash` is `json:"-"` so a stored hash never reaches an
+API response, and a tag-reading codec would quietly stop storing it — every
+share key would then fail to match. Mutation-checked in `store_test.go`; the
+tag-reading variant breaks five share-key tests.
+
+**Every declared column is written on every write.** A map missing a key
+means "leave it alone" to an update, so omitting empty values would make
+clearing a field impossible — an Entry would keep the `approved_at` that its
+document changing is supposed to drop.
+
+**The spec and the types are checked against each other when the manager is
+built.** A declared column with no field to hold it, or a field with no
+column to land in, fails in `NewCatalogManager` rather than dropping a value
+on every write.
+
+## Rules are declared too, where they can be
+
+`validate.go` reads `required`, an enum's `values` and `matches` off the
+spec and applies them on the way in. So the permitted states are the
+domain's to declare: a spec that adds a fourth visibility gets one with no
+Go change, which `TestVocabularyComesFromTheSpec` demonstrates both ways.
+`models/vocabulary.go` keeps only the constants Go compares against — the
+membership maps and their `IsX` functions are gone.
+
+`matches` names a pattern; this module says what the name means, in
+`patterns` (`slug`, `json_object`). A spec naming one nobody supplies is an
+error, not a rule that quietly never runs.
+
+**What stays in Go is what a spec cannot say**, and each piece lives with
+the type it is about: `PageView.SlugFitsPage` (one field's presence depends
+on another's value), and the non-negative checks on `Rank`, `Attempts` and
+`TemplatesFiled`.
+
+`Check(spec, role, value)` is the same validation without a database, for a
+bulk import validating what it has read before it opens a connection.
+
+**One pattern, one expression builder.** `models.DocFilter.Valid` uses
+`spec.DocPathPattern`, and `docPathExpr` defers to `spec.DocPathExpr` — the
+same function the migrator builds a document index with. Both were copies
+once. The second matters for more than tidiness: an expression index applies
+only to a query whose expression matches it exactly, so a copy that drifted
+by a space would leave every document filter doing a full scan with nothing
+reporting it.
+
 ## What is superseded
 
-- **`gormstore/`** — its row structs and `Migrate` are what `spec.Migrate`
-  replaces. `JSONDoc`'s dialect split already moved to `spec/migrate.go`.
+- **`gormstore/`** — **deleted 2026-09-23 (CAT1)**. Its nine row structs and
+  `Migrate` are what `spec.Migrate` and `store.go`'s codec replace; root
+  `tables.go` and its `TableNames`/`DefaultTableNames` re-export went with
+  it. `NewCatalogManager(db, *spec.Spec)` is the constructor now, and the
+  package's own tests run against the shipped
+  `spec/examples/agency.catalog.json` rather than a test-only table set.
 - **`routes/`** — twelve hand-written handlers, rejected by the owner and
   superseded by the spec-driven dispatcher (W14). **Do not copy this
   package.** `routes/routes_test.go` survives as the acceptance test the
   dispatcher must pass unchanged.
-- **`models/`** — shrinks to whatever the rules genuinely need. Open.
+- **`models/`** — shrunk 2026-09-23 (CAT3): the six membership maps, their
+  `IsX` functions, four `Validate` methods and a duplicate `DocPathPattern`
+  are gone. What remains is the types themselves, the constants Go compares
+  against, and the rules a spec cannot state.
 
 What stays Go is the logic a spec cannot declare: the enumeration refusal,
 the stall counter, the write-once key, the merge-don't-erase in

@@ -14,6 +14,7 @@
 package spec
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -29,6 +30,20 @@ import (
 // caller could use to close an identifier and continue the statement is
 // excluded from the alphabet outright rather than escaped.
 var NamePattern = regexp.MustCompile(`^[a-z][a-z0-9]*(_[a-z0-9]+)*$`)
+
+// SegmentPattern is the shape of the instance and module segments, which is
+// [NamePattern] minus the underscore. A physical name is
+// <instance>_<module>_<table>, and with the separator legal inside the first
+// two segments that name could not be read back apart — a_b_c_goals does not
+// say which part is the instance. The object's own table name is last, so it
+// keeps its underscores.
+var SegmentPattern = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
+
+// MaxIdentifier is Postgres's identifier limit. It matters because the
+// database does not complain: NAMEDATALEN-1 is 63 bytes and anything longer
+// is silently truncated, so two names that agree for 63 bytes are one name.
+// Every identifier the spec emits is measured against this when it loads.
+const MaxIdentifier = 63
 
 // FieldType is what a column holds. The set is closed: a type without an arm
 // in [Field.columnType] should fail when the spec loads, not produce a column
@@ -183,7 +198,7 @@ func Load(path string) (*Spec, error) {
 // Parse validates a spec already in memory.
 func Parse(raw []byte) (*Spec, error) {
 	var s Spec
-	dec := json.NewDecoder(strings.NewReader(string(raw)))
+	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&s); err != nil {
 		return nil, fmt.Errorf("spec: %w", err)
@@ -194,167 +209,36 @@ func Parse(raw []byte) (*Spec, error) {
 	return &s, nil
 }
 
-// Validate reports every way the spec is unusable, rather than the first.
-func (s *Spec) Validate() error {
-	var problems []string
-	add := func(format string, a ...any) { problems = append(problems, fmt.Sprintf(format, a...)) }
-
-	if !NamePattern.MatchString(s.Instance) {
-		add("instance %q is not a usable name", s.Instance)
-	}
-	if s.Module == "" {
-		add("module is required")
-	}
-	if len(s.Objects) == 0 {
-		add("a spec declares at least one object")
-	}
-
-	seenObject := map[string]bool{}
-	seenTable := map[string]bool{}
-	seenRole := map[string]string{}
-	for _, o := range s.Objects {
-		if !NamePattern.MatchString(o.Name) {
-			add("object %q is not a usable name", o.Name)
-			continue
-		}
-		if seenObject[o.Name] {
-			add("object %q is declared twice", o.Name)
-		}
-		seenObject[o.Name] = true
-
-		if strings.TrimSpace(o.Description) == "" {
-			add("object %q has no description", o.Name)
-		}
-
-		if o.Role != "" {
-			if !NamePattern.MatchString(o.Role) {
-				add("object %q: role %q is not a usable name", o.Name, o.Role)
-			}
-			// Two objects claiming one role would leave a rule with no way
-			// to know which of them it operates on.
-			if first, taken := seenRole[o.Role]; taken {
-				add("objects %q and %q both claim the role %q", first, o.Name, o.Role)
-			} else {
-				seenRole[o.Role] = o.Name
-			}
-		}
-
-		table := o.Table
-		if table == "" {
-			table = o.Name
-		}
-		if !NamePattern.MatchString(table) {
-			add("object %q: table %q is not a usable name", o.Name, table)
-		}
-		if seenTable[table] {
-			add("table %q is declared by more than one object", table)
-		}
-		seenTable[table] = true
-
-		problems = append(problems, o.validate()...)
-	}
-
-	if len(problems) > 0 {
-		sort.Strings(problems)
-		return fmt.Errorf("spec: %s", strings.Join(problems, "; "))
-	}
-	return nil
-}
-
-func (o Object) validate() []string {
-	var problems []string
-	add := func(format string, a ...any) { problems = append(problems, fmt.Sprintf(format, a...)) }
-
-	if len(o.Fields) == 0 {
-		add("object %q declares no fields", o.Name)
-		return problems
-	}
-
-	seen := map[string]bool{}
-	primaries := 0
-	for _, f := range o.Fields {
-		if !NamePattern.MatchString(f.Name) {
-			add("object %q: field %q is not a usable name", o.Name, f.Name)
-			continue
-		}
-		if seen[f.Name] {
-			add("object %q: field %q is declared twice", o.Name, f.Name)
-		}
-		seen[f.Name] = true
-
-		if strings.TrimSpace(f.Description) == "" {
-			add("object %q: field %q has no description", o.Name, f.Name)
-		}
-
-		if !fieldTypes[f.Type] {
-			add("object %q: field %q has unknown type %q", o.Name, f.Name, f.Type)
-		}
-		if f.Type == TypeEnum && len(f.Values) == 0 {
-			add("object %q: enum field %q declares no values", o.Name, f.Name)
-		}
-		if f.Type != TypeEnum && len(f.Values) > 0 {
-			add("object %q: field %q declares values but is not an enum", o.Name, f.Name)
-		}
-		if f.Primary {
-			primaries++
-		}
-		if f.Primary && f.Type == TypeJSON {
-			add("object %q: field %q cannot be both a document and a key", o.Name, f.Name)
-		}
-	}
-	if primaries == 0 {
-		add("object %q declares no primary key", o.Name)
-	}
-
-	seenIndex := map[string]bool{}
-	for _, idx := range o.Indexes {
-		if !NamePattern.MatchString(idx.Name) {
-			add("object %q: index %q is not a usable name", o.Name, idx.Name)
-			continue
-		}
-		if seenIndex[idx.Name] {
-			add("object %q: index %q is declared twice", o.Name, idx.Name)
-		}
-		seenIndex[idx.Name] = true
-
-		switch {
-		case idx.Path != nil && len(idx.Fields) > 0:
-			add("object %q: index %q names both fields and a path", o.Name, idx.Name)
-		case idx.Path != nil:
-			if !seen[idx.Path.Field] {
-				add("object %q: index %q indexes unknown field %q", o.Name, idx.Name, idx.Path.Field)
-			}
-			if !DocPathPattern.MatchString(idx.Path.Path) {
-				add("object %q: index %q has an unusable path %q", o.Name, idx.Name, idx.Path.Path)
-			}
-		case len(idx.Fields) > 0:
-			for _, f := range idx.Fields {
-				if !seen[f] {
-					add("object %q: index %q indexes unknown field %q", o.Name, idx.Name, f)
-				}
-			}
-		default:
-			add("object %q: index %q indexes nothing", o.Name, idx.Name)
-		}
-
-		if idx.NotDeleted && !seen["deleted"] {
-			add("object %q: index %q is scoped to undeleted rows but there is no deleted field", o.Name, idx.Name)
-		}
-	}
-	return problems
-}
-
 // DocPathPattern is the shape a path inside a document may take. Same
 // alphabet and same reason as a name: it reaches SQL as text.
 var DocPathPattern = regexp.MustCompile(`^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$`)
 
-// TableFor returns the physical table name for one object.
+// TableFor returns the physical table name for one object:
+// <instance>_<module>_<table>, e.g. agency_catalog_agencies.
+//
+// The module segment is what lets two modules share one database without
+// arranging not to collide. Without it, a catalog instance named "agency"
+// and an agency instance of the same name both want agency_agencies, and
+// nothing in either module would notice: GORM's AutoMigrate adopts a table
+// that already exists and adds the missing columns, and this package's own
+// "create table if not exists" is a no-op against one.
 func (s *Spec) TableFor(o Object) string {
-	table := o.Table
-	if table == "" {
-		table = o.Name
+	return s.Instance + "_" + s.Module + "_" + o.table()
+}
+
+// IndexFor returns the physical index name for one index on one object.
+// Postgres keeps indexes in the same per-schema namespace as tables, so this
+// has to be unique across the whole database, not just its table — which is
+// why the table name is part of it.
+func (s *Spec) IndexFor(o Object, idx Index) string {
+	return s.TableFor(o) + "_" + idx.Name + "_idx"
+}
+
+func (o Object) table() string {
+	if o.Table != "" {
+		return o.Table
 	}
-	return s.Instance + "_" + table
+	return o.Name
 }
 
 // Object returns the declared object of that name.
