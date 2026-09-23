@@ -163,15 +163,23 @@ Each has a test, and the first two were mutation-checked rather than trusted:
 - Leaving `private` retires every live key.
 - A listing never carries `Doc`.
 - Re-sending an **unchanged** document leaves its review alone; a changed one
-  returns to pending.
+  returns to pending. **"Unchanged" is semantic, not byte-wise** — `jsonb`
+  sorts keys and strips whitespace, so the document read back is rarely the
+  one sent, and the byte compare this started as silently un-published every
+  re-imported agency on Postgres while passing on SQLite. `sameDocument`
+  compares canonical JSON; only `postgres_integration_test.go` catches a
+  regression here.
 - An Entry page view counts only against a slug that exists.
 
 ## Conventions
 
 - `go test ./...` (sqlite via `glebarez/sqlite`) is the expected way to
   verify a change here — do not reach for a real Postgres. The `jsonb`
-  behaviours SQLite cannot stand in for belong in a Postgres integration
-  test. See [[feedback_use_memory_backend_for_tests]].
+  behaviours SQLite cannot stand in for live in `postgres_integration_test.go`
+  (`//go:build integration`, gated on `POSTGRES_URL`, run by `make test-pg`),
+  which is **not** part of `go test ./...`. The tag is `integration`, not the
+  sibling repos' `postgres`, because the Makefile target came first. See
+  [[feedback_use_memory_backend_for_tests]].
 - No Go file over 300 lines; split by responsibility.
 - Route builder functions are named `<ModelType>Routes` — see
   [[feedback_routes_name_match_model]] — until `routes/` is deleted.

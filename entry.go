@@ -2,6 +2,7 @@ package mwanachamacatalog
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -56,13 +57,9 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 		return Entry{}, err
 	}
 
-	// A changed document has not been reviewed, so it goes back to pending
-	// however the stored row was approved. An unchanged one leaves the
-	// review alone, which is what lets a mining run re-send an agency it
-	// already published without un-publishing it.
 	e.Visibility = existing.Visibility
 	e.ApprovedAt = existing.ApprovedAt
-	if existing.Doc != e.Doc {
+	if !sameDocument(existing.Doc, e.Doc) {
 		e.Visibility = models.VisibilityPending
 		e.ApprovedAt = ""
 	}
@@ -76,6 +73,35 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	e.Deleted = false
 
 	return e, m.replaceEntry(ctx, e)
+}
+
+func sameDocument(stored, sent string) bool {
+	if stored == sent {
+		return true
+	}
+	canonicalStored, ok := canonicalDocument(stored)
+	if !ok {
+		return false
+	}
+	canonicalSent, ok := canonicalDocument(sent)
+	if !ok {
+		return false
+	}
+	return canonicalStored == canonicalSent
+}
+
+func canonicalDocument(doc string) (string, bool) {
+	dec := json.NewDecoder(strings.NewReader(doc))
+	dec.UseNumber()
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		return "", false
+	}
+	out, err := json.Marshal(v)
+	if err != nil {
+		return "", false
+	}
+	return string(out), true
 }
 
 // replaceEntry writes every declared column of e over the stored row. It is

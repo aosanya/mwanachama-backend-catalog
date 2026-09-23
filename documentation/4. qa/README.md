@@ -8,11 +8,13 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-23: 68 test functions, 119 counting subtests, all green —
-`entry_test.go` (14), `spec/spec_test.go` (15), `suggestion_test.go` (12),
-`run_test.go` (8), `routes/routes_test.go` (7), `private_test.go` (5),
-`sharelink_test.go` (5), `domain_agnostic_test.go` (2). SQLite in memory is
-the expected way to verify a change here — do not reach for a real Postgres.
+As of 2026-09-23: 81 test functions offline, all green — `spec/spec_test.go`
+(15), `entry_test.go` (14), `suggestion_test.go` (12), `run_test.go` (8),
+`routes/routes_test.go` (7), `private_test.go` (5), `sharelink_test.go` (5),
+`store_test.go` (4), `domain_agnostic_test.go` (2), `validate_test.go` (2),
+plus 7 more in `postgres_integration_test.go` that need a database. SQLite in
+memory is the expected way to verify a change here — reach for a real
+Postgres only for what the section below lists.
 
 ## What is guarded, and how
 
@@ -38,18 +40,36 @@ the expected way to verify a change here — do not reach for a real Postgres.
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
 
-## What is not covered yet
+## What only a real Postgres covers
 
-`make test-pg` has nothing tagged `integration` to run. Three things exist
-only on Postgres and are unguarded: the `jsonb` column type and the document
-reads that go through it, the inner parentheses an expression index needs
-(SQLite accepts a single pair, so `TestExpressionIndexesAreDoubleParenthesised`
-asserts on the emitted string rather than on a database accepting it), and
-identifier truncation at 63 bytes. Tracked as CAT2 on
-[the board](../3.%20implementation/todo.md).
+`postgres_integration_test.go` is tagged `integration` and skips unless
+`POSTGRES_URL` is set, so `go test ./...` stays offline. Seven tests, last
+run green against the live `mwanachama-2` project (PostgreSQL 17.6):
 
-Two bugs so far were found by a real database rather than by these tests —
-the missing inner parentheses, and a slug beginning with a digit being
-dropped by an identifier pattern — which is the standing argument for CAT2.
-`cmd/import` has also never been run against a live database; `cmd/seed`'s
+- **`doc` is really `jsonb`** there and `text` on SQLite, read back off
+  `information_schema` rather than assumed.
+- **A document filter goes through `doc #>> '{_template,sector}'`** against a
+  real jsonb column, the operator SQLite never sees.
+- **Every declared path index is accepted** and appears in `pg_indexes` — and
+  the companion test removes the inner parentheses from the emitted DDL and
+  asserts Postgres *rejects* it. That is the database mutation-checking the
+  double parens, which `TestExpressionIndexesAreDoubleParenthesised` can only
+  assert about a string.
+- **Identifier truncation at 63 bytes is silent**: two names agreeing that far
+  are created as one relation, carrying only the first one's columns. This is
+  the premise `spec.Validate` refuses on, and until now it was assumed.
+- **A document survives jsonb semantically** but not byte-for-byte, which is
+  what the review comparison had to learn.
+
+Each run mints a random instance sized to the spec's own identifier budget,
+so its tables are `pg<hex>_catalog_*`, cannot collide with the live
+`agency_*` set, and are dropped on cleanup.
+
+Three bugs so far were found by a real database rather than by the SQLite
+tests — the missing inner parentheses, a slug beginning with a digit being
+dropped by an identifier pattern, and the byte-wise document comparison in
+`UpsertEntry` that jsonb's normalisation turned into a silent un-publish
+(CAT2). That is the standing argument for keeping this suite runnable.
+
+`cmd/import` has still never been run against a live database; `cmd/seed`'s
 SQL path has (623 agencies into `mwanachama-2`).
