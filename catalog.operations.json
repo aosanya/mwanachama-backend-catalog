@@ -21,7 +21,7 @@
     "list_entries": {
       "method": "GET", "path": "/entries", "call": "ListEntries", "action": "catalog.entry.list",
       "title": "List entries",
-      "description": "List the entry cards matching the filter, ordered by name. A card never carries the document, so read one entry to see it.",
+      "description": "List the entry cards matching the filter, ordered by name. A card never carries the document, so read one entry to see it. A large catalog returns a large answer \u2014 634 cards is around 350KB, past what a tool result can carry \u2014 so pass a limit, or narrow with a document path or a search term, unless you genuinely need every card.",
       "args": [{"from": "query", "whole": true}],
       "returns": [{"body": true}]
     },
@@ -99,7 +99,7 @@
     "list_suggestions": {
       "method": "GET", "path": "/suggestions", "call": "ListSuggestions", "action": "catalog.suggestion.list",
       "title": "List suggestions",
-      "description": "Proposals in the given statuses, best priority first. No status means all of them.",
+      "description": "Proposals in the given statuses, best priority first. Pass every status you care about in ONE call \u2014 status takes a list, so [\"approved\", \"stalled\", \"proposed\"] is one call, not three. No status at all means every status.",
       "args": [{"from": "query", "as": "status", "repeated": true, "field": "Suggestion.status"}],
       "returns": [{"body": true}]
     },
