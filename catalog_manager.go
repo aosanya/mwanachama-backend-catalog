@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 // Entry, EntryPrivate, ShareLink and their enum types are aliases of their
@@ -253,7 +253,7 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 
 // q starts a query against the table playing one role.
 func (m *catalogManager) q(ctx context.Context, role string) *gorm.DB {
-	return m.db.WithContext(ctx).Table(m.st.table(role))
+	return m.db.WithContext(ctx).Table(m.st.Table(role))
 }
 
 // take reads at most one row into out, answering notFound when there is
@@ -267,7 +267,7 @@ func (m *catalogManager) take(q *gorm.DB, role string, out any, notFound error) 
 	if len(rows) == 0 {
 		return notFound
 	}
-	return decode(m.st.object(role), rows[0], out)
+	return decode(m.st.Object(role), rows[0], out)
 }
 
 // listOf reads every row q matches. A free function rather than a method
@@ -278,7 +278,7 @@ func listOf[T any](m *catalogManager, q *gorm.DB, role string) ([]T, error) {
 	if err := q.Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	o := m.st.object(role)
+	o := m.st.Object(role)
 	out := make([]T, 0, len(rows))
 	for _, r := range rows {
 		var v T
@@ -292,7 +292,7 @@ func listOf[T any](m *catalogManager, q *gorm.DB, role string) ([]T, error) {
 
 // insert writes v as a new row.
 func (m *catalogManager) insert(ctx context.Context, role string, v any) error {
-	row, err := encode(m.st.object(role), v)
+	row, err := encode(m.st.Object(role), v)
 	if err != nil {
 		return err
 	}

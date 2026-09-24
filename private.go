@@ -53,7 +53,7 @@ func (m *catalogManager) PutPrivate(ctx context.Context, p EntryPrivate) (EntryP
 	}
 	merged.UpdatedAt = m.now()
 
-	row, err := encode(m.st.object(roleEntryPrivate), merged)
+	row, err := encode(m.st.Object(roleEntryPrivate), merged)
 	if err != nil {
 		return EntryPrivate{}, err
 	}

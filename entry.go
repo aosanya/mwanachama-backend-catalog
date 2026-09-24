@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 func nowRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
@@ -108,7 +108,7 @@ func canonicalDocument(doc string) (string, bool) {
 // a whole-row write rather than a patch, which is what lets a field be
 // cleared — an Entry losing its ApprovedAt because its document changed.
 func (m *catalogManager) replaceEntry(ctx context.Context, e Entry) error {
-	row, err := encode(m.st.object(roleEntry), e)
+	row, err := encode(m.st.Object(roleEntry), e)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry
 		return nil, err
 	}
 
-	o := m.st.object(roleEntry)
+	o := m.st.Object(roleEntry)
 	out := make([]Entry, 0, len(rows))
 	for _, r := range rows {
 		var e Entry

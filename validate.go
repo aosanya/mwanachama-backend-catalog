@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 // The roles a caller may name when checking a value against a spec without
@@ -124,10 +124,10 @@ func declares(values []string, s string) bool {
 
 // checks runs check for the object playing one role.
 func (m *catalogManager) checks(role string, v any) error {
-	return check(m.st.object(role), v)
+	return check(m.st.Object(role), v)
 }
 
 // checksField runs checkField for the object playing one role.
 func (m *catalogManager) checksField(role, column, value string) error {
-	return checkField(m.st.object(role), column, value)
+	return checkField(m.st.Object(role), column, value)
 }

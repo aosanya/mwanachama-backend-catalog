@@ -31,7 +31,7 @@ var domainWords = []string{
 // stops the rule in doc.go becoming decoration: Entry.Sector and
 // PageKind's "agency" value both existed once, and both would fail here.
 func TestNoDomainWordsInIdentifiers(t *testing.T) {
-	for _, dir := range []string{"models", "spec", "."} {
+	for _, dir := range []string{"models", "routes", "."} {
 		fset := token.NewFileSet()
 		pkgs, err := parser.ParseDir(fset, dir, func(fi os.FileInfo) bool {
 			return !strings.HasSuffix(fi.Name(), "_test.go")

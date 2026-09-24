@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 const prettyDoc = `{

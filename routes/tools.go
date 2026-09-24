@@ -6,7 +6,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/dispatch"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 type Tool = dispatch.Tool

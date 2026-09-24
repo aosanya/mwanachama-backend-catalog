@@ -34,7 +34,7 @@ and were moved out; they are the pattern to check every addition against:
 
 The third is the worst kind: **a stored enum value outlives a rename.**
 
-`domain_agnostic_test.go` enforces this. It parses `models/`, `spec/` and the
+`domain_agnostic_test.go` enforces this. It parses `models/`, `routes/` and the
 root package, and fails on any identifier carrying a domain word, with a
 second test over every stored enum value. Domain words stay allowed in comments,
 where they illustrate what a neutral name stands for. When adding a field,
@@ -50,9 +50,12 @@ The tables come from a JSON spec, not from Go structs — see
   `catalog.LoadSpec(path)` and `catalog.ParseSpec(raw)`. Load a domain spec
   through those, never through `spec.Load`, or its roled objects arrive
   with no fields.
-- `spec/` — the spec types, loader, validation, blueprint merge and migrator.
-  `spec.Load` refuses a bad spec at startup; `spec.Migrate` creates a table
-  per declared object and its indexes, idempotently.
+- `mwanachama-backend-shared/spec` — the spec types, loader, validation,
+  blueprint merge and migrator. `spec.Load` refuses a bad spec at startup;
+  `spec.Migrate` creates a table per declared object and its indexes,
+  idempotently. It lived in this repo's own `spec/` until 2026-09-24, when it
+  moved to shared (S18) so the other backends build on the same engine; what
+  remains under `spec/` here is `examples/`.
 - `spec/examples/agency.catalog.json` and `library.catalog.json` — the same
   module under two domains. `TestTwoDomainsCoexist` migrates both into one
   database.

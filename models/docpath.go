@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 // DocFilter keeps only the Entries whose document holds Value at Path.

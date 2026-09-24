@@ -73,7 +73,7 @@ func (m *catalogManager) ListShareLinks(ctx context.Context, slug string) ([]Sha
 		Order("created_at DESC, id DESC").Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	o := m.st.object(roleShareLink)
+	o := m.st.Object(roleShareLink)
 	out := make([]ShareLink, 0, len(rows))
 	for _, r := range rows {
 		var link ShareLink

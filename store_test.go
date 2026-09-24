@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 // The column a field lands in is derived from its name, so the rule that

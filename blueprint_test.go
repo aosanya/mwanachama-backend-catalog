@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 func TestVocabularyMatchesTheBlueprint(t *testing.T) {

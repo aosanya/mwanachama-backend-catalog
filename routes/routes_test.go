@@ -15,7 +15,7 @@ import (
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 	"github.com/aosanya/mwanachama-backend-catalog/routes"
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 const doc = `{"agency":{"name":"Test"},"_template":{"sector":"health"},"modules":[{"code":"auth","enabled":true}]}`

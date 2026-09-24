@@ -7,7 +7,11 @@ This page records only what is true of this repo today.
 
 ## Objects are declared, not written
 
-`spec/` holds the spec types, loader, validation and migrator. A spec is one
+`mwanachama-backend-shared/spec` holds the spec types, loader, validation and
+migrator — it lived in this repo's own `spec/` until 2026-09-24, when it moved
+to shared (S18) so `mwanachama-backend-agency` and the backends after it build
+on the same engine. What is left here under `spec/` is `examples/`, the two
+domain specs this module ships. A spec is one
 domain's declared shape — `module`, `domain`, `instance` and a list of
 objects — and `spec.Load` refuses a bad one at startup, the only moment at
 which refusing it is cheap. `spec.Migrate` creates a table per declared

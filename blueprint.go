@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"sync"
 
-	"github.com/aosanya/mwanachama-backend-catalog/spec"
+	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 //go:embed catalog.blueprint.json
