@@ -23,10 +23,12 @@ Postgres only for what the section below lists.
   entry from the identical-404 refusal fails the test, and turning the stall
   counter's `>=` into `>` fails it.
 - **The domain-agnostic rule** is enforced, not asserted:
-  `domain_agnostic_test.go` parses `models/`, `gormstore/` and `spec/` and
-  fails on any identifier carrying a domain word, with a second test over
+  `domain_agnostic_test.go` parses `models/`, `spec/` and the root package
+  and fails on any identifier carrying a domain word, with a second test over
   every stored enum value — because a stored value outlives a rename. It was
-  mutation-checked by reintroducing `Entry.Sector`.
+  mutation-checked by reintroducing `Entry.Sector`. (`gormstore/` was deleted
+  2026-09-23, CAT1, and is no longer part of the scan — confirmed against the
+  test's own `[]string{"models", "spec", "."}` directory list, 2026-09-26.)
 - **The spec's refusals** — bad names, an underscore in a segment, a
   duplicate role, identifiers the database would merge past 63 bytes, a
   required field carrying a default, unknown JSON keys — are each their own
