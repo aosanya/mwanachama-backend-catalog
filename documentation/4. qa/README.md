@@ -8,13 +8,16 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-23: 81 test functions offline, all green — `spec/spec_test.go`
-(15), `entry_test.go` (14), `suggestion_test.go` (12), `run_test.go` (8),
-`routes/routes_test.go` (7), `private_test.go` (5), `sharelink_test.go` (5),
-`store_test.go` (4), `domain_agnostic_test.go` (2), `validate_test.go` (2),
-plus 7 more in `postgres_integration_test.go` that need a database. SQLite in
-memory is the expected way to verify a change here — reach for a real
-Postgres only for what the section below lists.
+As of 2026-09-26: 98 test functions offline, all green (`go test -v ./...`,
+counted by `--- PASS` lines) — root package (56): `entry_test.go` (14),
+`suggestion_test.go` (12), `run_test.go` (8), `sharelink_test.go` (5),
+`private_test.go` (5), `store_test.go` (4), `domain_agnostic_test.go` (3),
+`blueprint_test.go` (3), `validate_test.go` (2); `routes/` (17):
+`routes/tools_test.go` (10), `routes/routes_test.go` (7); `spec/` (25):
+`spec/spec_test.go` (15), `spec/blueprint_test.go` (10); plus 7 more in
+`postgres_integration_test.go` that need a database. SQLite in memory is the
+expected way to verify a change here — reach for a real Postgres only for
+what the section below lists.
 
 ## What is guarded, and how
 
