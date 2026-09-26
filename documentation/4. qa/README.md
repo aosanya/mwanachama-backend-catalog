@@ -8,13 +8,14 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-23: 81 test functions offline, all green — `spec/spec_test.go`
+As of 2026-09-26: 98 test functions offline, all green — `spec/spec_test.go`
 (15), `entry_test.go` (14), `suggestion_test.go` (12), `run_test.go` (8),
 `routes/routes_test.go` (7), `private_test.go` (5), `sharelink_test.go` (5),
-`store_test.go` (4), `domain_agnostic_test.go` (2), `validate_test.go` (2),
-plus 7 more in `postgres_integration_test.go` that need a database. SQLite in
-memory is the expected way to verify a change here — reach for a real
-Postgres only for what the section below lists.
+`store_test.go` (4), `blueprint_test.go` (3), `domain_agnostic_test.go` (3),
+`routes/tools_test.go` (10), `spec/blueprint_test.go` (10),
+`validate_test.go` (2), plus 7 more in `postgres_integration_test.go` that
+need a database. SQLite in memory is the expected way to verify a change
+here — reach for a real Postgres only for what the section below lists.
 
 ## What is guarded, and how
 
@@ -23,10 +24,11 @@ Postgres only for what the section below lists.
   entry from the identical-404 refusal fails the test, and turning the stall
   counter's `>=` into `>` fails it.
 - **The domain-agnostic rule** is enforced, not asserted:
-  `domain_agnostic_test.go` parses `models/`, `gormstore/` and `spec/` and
-  fails on any identifier carrying a domain word, with a second test over
-  every stored enum value — because a stored value outlives a rename. It was
-  mutation-checked by reintroducing `Entry.Sector`.
+  `domain_agnostic_test.go` parses `models/`, `spec/` and the root package
+  and fails on any identifier carrying a domain word, with a second test
+  over every stored enum value — because a stored value outlives a rename.
+  It was mutation-checked by reintroducing `Entry.Sector`. (`gormstore/`,
+  the third parse target this once named, was deleted 2026-09-23 — CAT1.)
 - **The spec's refusals** — bad names, an underscore in a segment, a
   duplicate role, identifiers the database would merge past 63 bytes, a
   required field carrying a default, unknown JSON keys — are each their own
