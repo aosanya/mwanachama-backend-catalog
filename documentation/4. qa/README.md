@@ -8,13 +8,18 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-23: 81 test functions offline, all green — `spec/spec_test.go`
-(15), `entry_test.go` (14), `suggestion_test.go` (12), `run_test.go` (8),
-`routes/routes_test.go` (7), `private_test.go` (5), `sharelink_test.go` (5),
-`store_test.go` (4), `domain_agnostic_test.go` (2), `validate_test.go` (2),
-plus 7 more in `postgres_integration_test.go` that need a database. SQLite in
-memory is the expected way to verify a change here — reach for a real
-Postgres only for what the section below lists.
+As of 2026-09-26 (after `spec/` moved to `mwanachama-backend-shared`, S18,
+and this repo's own store/blueprint/manager were refactored onto it,
+commit 37e0ae7): 81 test functions offline, all green — `entry_test.go`
+(14), `suggestion_test.go` (12), `routes/tools_test.go` (10), `run_test.go`
+(8), `examples_test.go` (8), `routes/routes_test.go` (7), `sharelink_test.go`
+(5), `private_test.go` (5), `store_test.go` (4), `domain_agnostic_test.go`
+(3), `blueprint_test.go` (3), `validate_test.go` (2), plus 7 more in
+`postgres_integration_test.go` that need a database. `spec/` now holds only
+`examples/` — its own loader/validator/migrator tests moved with the code to
+`mwanachama-backend-shared/spec`'s own suite. SQLite in memory is the
+expected way to verify a change here — reach for a real Postgres only for
+what the section below lists.
 
 ## What is guarded, and how
 
@@ -23,10 +28,11 @@ Postgres only for what the section below lists.
   entry from the identical-404 refusal fails the test, and turning the stall
   counter's `>=` into `>` fails it.
 - **The domain-agnostic rule** is enforced, not asserted:
-  `domain_agnostic_test.go` parses `models/`, `gormstore/` and `spec/` and
-  fails on any identifier carrying a domain word, with a second test over
+  `domain_agnostic_test.go` parses `models/`, `routes/` and the root package
+  and fails on any identifier carrying a domain word, with a second test over
   every stored enum value — because a stored value outlives a rename. It was
-  mutation-checked by reintroducing `Entry.Sector`.
+  mutation-checked by reintroducing `Entry.Sector`. (`gormstore/` was
+  deleted 2026-09-23, CAT1 — see CLAUDE.md's "What is superseded".)
 - **The spec's refusals** — bad names, an underscore in a segment, a
   duplicate role, identifiers the database would merge past 63 bytes, a
   required field carrying a default, unknown JSON keys — are each their own
@@ -83,3 +89,28 @@ dropped by an identifier pattern, and the byte-wise document comparison in
 
 `cmd/import` has still never been run against a live database; `cmd/seed`'s
 SQL path has (623 agencies into `mwanachama-2`).
+
+## First live probe through a real mount (2026-09-26)
+
+Until this date, this module's routes had only ever been exercised as a bare
+library (`CatalogManager` called directly, as CAT10's own row above does) —
+`mwanachama-wakala-api`'s mount (`buildCatalog`, `cmd/server/catalog.go`)
+never calls `spec.Migrate`, so a freshly created Postgres database 500s on
+every `/catalog/...` request until the spec's DDL is applied by hand (see
+that repo's own `documentation/4. qa/README.md`). The 2026-09-26 scheduled
+security sweep did that by hand once (a throwaway local Postgres, `cmd/ddl`
+piped to `psql`) and drove the real router for the first time. Confirmed
+live: `GET /entries/{slug}` (anonymous) refuses a never-registered slug, a
+never-published (pending) Entry's own slug, and a private Entry's slug with
+byte-identical `{"error":"entry not found"}` 404 bodies — the flagship
+"Behaviours to preserve" invariant in CLAUDE.md, previously only proven at
+the library level. Also confirmed: every operator route (`PUT`/`DELETE
+/entries/{slug}`, `.../visibility`, `.../admin`) is reachable by any
+authenticated caller and by none anonymously, and — because this module
+"names no domain" and therefore has no submitter/ownership check of its own
+— any two authenticated operators can fully read, overwrite, publish or
+delete each other's Entries. That last part is not a defect: it matches
+`mwanachama-wakala-api`'s own `documentation/2. design/tenancy-and-identity.md`
+verbatim ("The catalog is outside it... gated on being a user of the
+project, not on membership of an Instance... If the catalog ever needs its
+own operator/reader split, it needs its own rule").
