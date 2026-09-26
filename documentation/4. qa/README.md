@@ -8,13 +8,19 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-23: 81 test functions offline, all green — `spec/spec_test.go`
-(15), `entry_test.go` (14), `suggestion_test.go` (12), `run_test.go` (8),
-`routes/routes_test.go` (7), `private_test.go` (5), `sharelink_test.go` (5),
-`store_test.go` (4), `domain_agnostic_test.go` (2), `validate_test.go` (2),
-plus 7 more in `postgres_integration_test.go` that need a database. SQLite in
-memory is the expected way to verify a change here — reach for a real
-Postgres only for what the section below lists.
+As of 2026-09-26 (`go test ./...` and `go test -tags=integration ./...`,
+both green): 81 test functions offline — `entry_test.go` (14),
+`suggestion_test.go` (12), `routes/tools_test.go` (10), `run_test.go` (8),
+`examples_test.go` (8), `routes/routes_test.go` (7), `sharelink_test.go`
+(5), `private_test.go` (5), `store_test.go` (4), `domain_agnostic_test.go`
+(3), `blueprint_test.go` (3), `validate_test.go` (2) — plus 7 more in
+`postgres_integration_test.go` that need a database, 88 in all.
+`spec/spec_test.go` is gone from this count: S18 moved `spec/` itself to
+`mwanachama-backend-shared` on 2026-09-24, and this repo now tests the
+blueprint/example layer that sits on top of it (`blueprint_test.go`,
+`examples_test.go`) instead. SQLite in memory is the expected way to verify
+a change here — reach for a real Postgres only for what the section below
+lists.
 
 ## What is guarded, and how
 
@@ -23,22 +29,48 @@ Postgres only for what the section below lists.
   entry from the identical-404 refusal fails the test, and turning the stall
   counter's `>=` into `>` fails it.
 - **The domain-agnostic rule** is enforced, not asserted:
-  `domain_agnostic_test.go` parses `models/`, `gormstore/` and `spec/` and
-  fails on any identifier carrying a domain word, with a second test over
-  every stored enum value — because a stored value outlives a rename. It was
-  mutation-checked by reintroducing `Entry.Sector`.
-- **The spec's refusals** — bad names, an underscore in a segment, a
-  duplicate role, identifiers the database would merge past 63 bytes, a
-  required field carrying a default, unknown JSON keys — are each their own
-  test in `spec/spec_test.go`. The truncation and budget tests were
-  mutation-checked by widening `MaxIdentifier` and by restoring the looser
-  pattern on the segments.
-- **Two domains in one database**: `TestTwoDomainsCoexist` migrates both
-  example specs into one database; `TestMigrateIsIdempotent` runs a migration
-  twice.
-- **`routes/routes_test.go`** is kept deliberately as the acceptance test the
-  W14 dispatcher must pass **unchanged**, even though the package it
-  currently exercises is superseded.
+  `domain_agnostic_test.go` parses `models/`, `routes/` and the root package
+  and fails on any identifier carrying a domain word, with a second test over
+  every stored enum value and a third over the blueprint's own roles, fields
+  and stored `values` — because a stored value outlives a rename. It was
+  mutation-checked by reintroducing `Entry.Sector`. (`gormstore/` and the
+  hand-written `spec/` it once parsed are both gone — see CLAUDE.md's "What
+  is superseded" and "Objects are declared, not written".)
+- **The spec engine's own refusals** — bad names, an underscore in a
+  segment, a duplicate role, identifiers the database would merge past 63
+  bytes, a required field carrying a default, unknown JSON keys — moved with
+  `spec/` to `mwanachama-backend-shared` on 2026-09-24 (S18) and are now that
+  repo's own `spec/spec_test.go` (`TestValidate_RefusesABadSpec`,
+  `TestValidate_RefusesAnUnderscoreInASegment`,
+  `TestValidate_RefusesADuplicateRole`,
+  `TestValidate_RefusesIdentifiersTheDatabaseWouldMerge`,
+  `TestRequiredFieldsHaveNoDefault`, `TestParse_RefusesUnknownKeys`, and
+  `TestTwoDomainsCoexist`/`TestMigrateIsIdempotent` for two domains sharing
+  one database). What stays in this repo is the domain-level equivalent
+  against the two shipped catalog specs: `examples_test.go`'s
+  `TestShippedExamplesCoexist`, `TestShippedExampleMigratesIdempotently`,
+  `TestShippedIndexesComeFromTheDomain`, `TestShippedCompositePrimaryKeys`,
+  `TestShippedExamplesHaveNoDefaultedRequiredColumn`,
+  `TestShippedExamplesAreDescribed`, and
+  `TestShippedExpressionIndexesAreDoubleParenthesised` (a copy of the engine
+  test's assertion, run against `agency.catalog.json`/`library.catalog.json`
+  specifically), plus `blueprint_test.go`'s `TestEveryExampleFitsTheTypes`
+  and `TestExamplesDeclareNoFieldsOfTheirOwn` (CAT5's "a domain names
+  objects; it does not re-declare them" rule).
+- **`routes/routes_test.go`** was the acceptance test the W14 dispatcher had
+  to pass **unchanged** when it replaced the twelve hand-written handlers
+  (CAT4/W14, 2026-09-23) — `routes.go` is now 74 lines of adapter over
+  `mwanachama-backend-shared/dispatch`, and this file still passes against it
+  unmodified, real `http.Client` through a real `http.ServeMux`.
+  `routes/tools_test.go` covers `routes.BuildTools`, the same
+  `catalog.operations.json`-declared operations built as callable tools
+  instead of HTTP handlers: every gated operation becomes one
+  (`TestEveryGatedOperationBecomesATool`), a reader operation does not
+  (`TestTheReadersOperationsAreNotTools`), each carries a schema
+  (`TestEveryToolCarriesProseAndASchema`,
+  `TestEveryDescribedFieldIsOneItsTypeCarries`), and a tool refuses an
+  argument its operation never declared
+  (`TestAToolRefusesAnArgumentTheOperationDoesNotDeclare`).
 
 ## What only a real Postgres covers
 
