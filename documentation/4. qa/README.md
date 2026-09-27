@@ -117,9 +117,33 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design (security sweep, 2026-09-27)
 
-**None. Both reds this section carried were cleared 2026-09-27**, and each
-test stays in place as the regression guard for its fix, with the board id
-kept and the `_OpenHole_` infix dropped:
+**Two, both filed by the eleventh security sweep (2026-09-27, late
+evening)** — the rest of CAT12's class. Each test builds the routes through
+`routes.RoutesFor` with a `Mount` whose `Caller` answers
+`the-signed-in-caller`, sends a body naming someone else, and asserts the
+stored value is the mount's caller:
+
+- `routes/run_submitter_security_test.go` —
+  `TestCAT13_OpenHole_RunSubmitterIsTakenFromTheRequestBody` (CAT13, P1).
+  `POST /runs` and the `catalog_run_record` tool store the body's
+  `submitted_by` verbatim.
+- `routes/entry_submitter_security_test.go` —
+  `TestCAT14_OpenHole_EntrySubmitterIsTakenFromTheRequestBody` (CAT14, P1).
+  `PUT /entries/{slug}` stores the body's `submitted_by` as the revision's
+  author.
+
+`go test ./routes/` is red for exactly these two until the fix binds each
+field `from: "caller"`.
+
+Pinned green on the same run: `routes/sharelink_caller_security_test.go`'s
+`TestCAT12_AMountedShareLinkRecordsTheMountsCallerAndMCPRefusesAnIssuer` —
+with a mount supplying a caller, a share link issued over REST records that
+caller whatever the body's `by` says, and `catalog_share_link_issue` refuses
+a `by` argument outright (`takes no argument "by"`).
+
+The two earlier reds were cleared 2026-09-27, and each test stays in place
+as the regression guard for its fix, with the board id kept and the
+`_OpenHole_` infix dropped:
 
 - `routes/pageview_security_test.go` —
   `TestCAT11_PageViewAnswersAnUnpublishedSlugLikeAMissingOne` (CAT11, P1).
