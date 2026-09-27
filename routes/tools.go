@@ -77,7 +77,9 @@ func Fields() (map[string]dispatch.FieldDoc, error) {
 	return out, nil
 }
 
-func BuildTools(cm catalog.CatalogManager) ([]Tool, error) {
+func BuildTools(cm catalog.CatalogManager) ([]Tool, error) { return BuildToolsWith(cm, nil) }
+
+func BuildToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([]Tool, error) {
 	s, err := operations()
 	if err != nil {
 		return nil, err
@@ -86,15 +88,19 @@ func BuildTools(cm catalog.CatalogManager) ([]Tool, error) {
 	if err != nil {
 		return nil, err
 	}
-	tools, err := dispatch.Tools(s, dispatch.Deps{Manager: cm, Errors: sentinels, Fields: fields})
+	tools, err := dispatch.Tools(s, dispatch.Deps{
+		Manager: cm, Errors: sentinels, Fields: fields, Authorize: authorize,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return operatorOnly(tools), nil
 }
 
-func Tools(cm catalog.CatalogManager) []Tool {
-	out, err := BuildTools(cm)
+func Tools(cm catalog.CatalogManager) []Tool { return ToolsWith(cm, nil) }
+
+func ToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Tool {
+	out, err := BuildToolsWith(cm, authorize)
 	if err != nil {
 		panic(fmt.Sprintf("catalog tools: %v", err))
 	}

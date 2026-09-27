@@ -45,30 +45,40 @@ var AnonymousActions = []string{
 	"catalog.page_view.record",
 }
 
-func Build(cm catalog.CatalogManager) ([]Route, error) {
+func Build(cm catalog.CatalogManager) ([]Route, error) { return BuildWith(cm, nil) }
+
+func BuildWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([]Route, error) {
 	s, err := operations()
 	if err != nil {
 		return nil, err
 	}
-	return dispatch.Dispatch(s, dispatch.Deps{Manager: cm, Errors: sentinels})
+	return dispatch.Dispatch(s, dispatch.Deps{Manager: cm, Errors: sentinels, Authorize: authorize})
 }
 
-func Routes(cm catalog.CatalogManager) []Route {
-	out, err := Build(cm)
+func Routes(cm catalog.CatalogManager) []Route { return RoutesWith(cm, nil) }
+
+func RoutesWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Route {
+	out, err := BuildWith(cm, authorize)
 	if err != nil {
 		panic(fmt.Sprintf("catalog routes: %v", err))
 	}
 	return out
 }
 
-func Split(cm catalog.CatalogManager) dispatch.Split {
-	return dispatch.Anonymous(Routes(cm), AnonymousActions...)
+func Split(cm catalog.CatalogManager) dispatch.Split { return SplitWith(cm, nil) }
+
+func SplitWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) dispatch.Split {
+	public := dispatch.Anonymous(Routes(cm), AnonymousActions...)
+	gated := dispatch.Anonymous(RoutesWith(cm, authorize), AnonymousActions...)
+	return dispatch.Split{Anonymous: public.Anonymous, Gated: gated.Gated}
 }
 
 func PublicRoutes(cm catalog.CatalogManager) []Route {
 	return Split(cm).Anonymous
 }
 
-func OperatorRoutes(cm catalog.CatalogManager) []Route {
-	return Split(cm).Gated
+func OperatorRoutes(cm catalog.CatalogManager) []Route { return OperatorRoutesWith(cm, nil) }
+
+func OperatorRoutesWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Route {
+	return SplitWith(cm, authorize).Gated
 }

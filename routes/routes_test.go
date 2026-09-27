@@ -3,6 +3,7 @@ package routes_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -222,5 +223,47 @@ func TestRoutes_BadJSONIsABadRequest(t *testing.T) {
 	rec := do(t, h, http.MethodPost, "/suggestions", `{"slug":`)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func TestOperatorRoutesWith_GatesOnlyTheGatedHalf(t *testing.T) {
+	_, cm, _ := newServer(t)
+
+	var asked []string
+	authorize := func(ctx context.Context, action string) error {
+		asked = append(asked, action)
+		return errors.New("nope")
+	}
+
+	public := routes.PublicRoutes(cm)
+	gated := routes.OperatorRoutesWith(cm, authorize)
+
+	if len(public) != len(routes.AnonymousActions) {
+		t.Fatalf("public routes = %d, want %d", len(public), len(routes.AnonymousActions))
+	}
+	if len(gated) == 0 {
+		t.Fatal("no gated routes were built")
+	}
+
+	for _, r := range public {
+		rec := httptest.NewRecorder()
+		r.Handler(rec, httptest.NewRequest(r.Method, "/entries/x", nil))
+		if rec.Code == http.StatusForbidden {
+			t.Errorf("a storefront route %s was gated; it never had a caller to authorize", r.Action)
+		}
+	}
+	if len(asked) != 0 {
+		t.Errorf("the authorizer was asked about a public action: %v", asked)
+	}
+
+	for _, r := range gated {
+		rec := httptest.NewRecorder()
+		r.Handler(rec, httptest.NewRequest(r.Method, "/entries", nil))
+		if rec.Code != http.StatusForbidden {
+			t.Errorf("gated route %s answered %d, want 403", r.Action, rec.Code)
+		}
+	}
+	if len(asked) != len(gated) {
+		t.Errorf("the authorizer was asked %d times for %d gated routes", len(asked), len(gated))
 	}
 }
