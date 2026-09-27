@@ -114,3 +114,20 @@ delete each other's Entries. That last part is not a defect: it matches
 verbatim ("The catalog is outside it... gated on being a user of the
 project, not on membership of an Instance... If the catalog ever needs its
 own operator/reader split, it needs its own rule").
+
+**2026-09-27, scheduled security sweep — widened past Entry to the
+ShareLink and Suggestion/MiningRun surfaces, same real mount.** Confirmed
+live for the first time: a share key is returned once at `issue_share_link`
+and never again (`list_share_links` never carries it — matches `ShareLink.
+KeyHash`'s `json:"-"`); the correct key opens a private Entry anonymously
+via `?k=`, a wrong key gives the identical `{"error":"entry not found"}`
+404 as no key at all; and leaving `private` (`set_visibility` to `public`)
+retires every live key for that Entry (`list_share_links` shows
+`"status":"retired"`, `retired_at` set) — all three are flagship
+"Behaviours to preserve" invariants in CLAUDE.md, now proven past the
+library's own sqlite tests. Also: `list_suggestions` and `list_runs` are
+uncapped exactly like `ListEntries` (CAT10) — 61 Suggestions and 55
+MiningRuns each came back in one response with no `limit` query param, and
+`?limit=5` on `list_suggestions` was silently ignored, not merely
+under-capped. See CAT10's addendum on `todo.md` for the request/response
+detail.
