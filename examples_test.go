@@ -52,14 +52,14 @@ func TestShippedExamplesCoexist(t *testing.T) {
 	}
 
 	want := []string{
-		"agency_catalog_agencies", "agency_catalog_agency_privates", "agency_catalog_mining_runs",
-		"agency_catalog_page_views", "agency_catalog_settings", "agency_catalog_share_links",
-		"agency_catalog_suggestion_comments", "agency_catalog_suggestion_matches",
-		"agency_catalog_suggestions",
 		"library_catalog_acquisition_notes", "library_catalog_copies", "library_catalog_import_runs",
 		"library_catalog_page_views", "library_catalog_preview_links",
 		"library_catalog_purchase_requests", "library_catalog_request_fulfilments",
 		"library_catalog_request_notes", "library_catalog_settings", "library_catalog_titles",
+		"wakala_catalog_agencies", "wakala_catalog_agency_privates", "wakala_catalog_mining_runs",
+		"wakala_catalog_page_views", "wakala_catalog_settings", "wakala_catalog_share_links",
+		"wakala_catalog_suggestion_comments", "wakala_catalog_suggestion_matches",
+		"wakala_catalog_suggestions",
 	}
 	if got := tableNames(t, db); strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("tables =\n  %v\nwant\n  %v", got, want)
@@ -70,7 +70,7 @@ func TestShippedExamplesCoexist(t *testing.T) {
 		wantName  string
 		wantTable string
 	}{
-		{agency, "agency", "agency_catalog_agencies"},
+		{agency, "agency", "wakala_catalog_agencies"},
 		{library, "title", "library_catalog_titles"},
 	} {
 		o, ok := tc.s.ByRole(roleEntry)
