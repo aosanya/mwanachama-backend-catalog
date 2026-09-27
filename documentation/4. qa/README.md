@@ -114,3 +114,28 @@ delete each other's Entries. That last part is not a defect: it matches
 verbatim ("The catalog is outside it... gated on being a user of the
 project, not on membership of an Instance... If the catalog ever needs its
 own operator/reader split, it needs its own rule").
+
+## Red by design (security sweep, 2026-09-27)
+
+Two tests in `routes/` fail on purpose until the hole each reproduces is
+fixed; each has its board row, and the fix turns it green without editing
+the test.
+
+- `routes/pageview_security_test.go` —
+  `TestCAT11_OpenHole_PageViewAnswersDifferentlyForAnUnpublishedSlug` (CAT11,
+  P1). The anonymous `POST /page-views` answers `204` for a pending or
+  private slug and `404` for one never filed, so it is an enumeration oracle
+  for exactly the slugs `GET /entries/{slug}` refuses to confirm. The
+  identical-404 invariant above is therefore proven for the open door and
+  broken on its neighbour.
+- `routes/sharelink_security_test.go` —
+  `TestCAT12_OpenHole_ShareLinkIssuerIsTakenFromTheRequestBody` (CAT12, P2).
+  A share link's `created_by` is whatever the request body's `by` says.
+
+Probed and holding on the same run, through `mwanachama-wakala-api`'s
+router: a share key opens only the entry it was issued for (another private
+entry answers the same 404), a key dies when its entry leaves `private` and
+does not revive when it returns, and `PUT /entries/{slug}` ignores a body's
+`visibility`, `approved_at`, `id` and `created_at` — a changed document
+still lands `pending`. Those are pinned in wakala-api's
+`catalog_storefront_security_test.go`.
