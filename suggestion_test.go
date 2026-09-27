@@ -284,3 +284,23 @@ func TestListSuggestions_ByStatusAndPriority(t *testing.T) {
 		t.Errorf("len = %d, want all 3", len(all))
 	}
 }
+
+func TestCAT12_PinsKnownDefect_RejectedSuggestionBlocksRefilingForever(t *testing.T) {
+	cm, ctx := newManager(t)
+
+	s := file(t, cm, ctx, "candidate")
+	rejected, err := cm.DecideSuggestion(ctx, s.ID, catalog.SuggestionStatusRejected, 0)
+	if err != nil {
+		t.Fatalf("reject: %v", err)
+	}
+	if rejected.Status != catalog.SuggestionStatusRejected {
+		t.Fatalf("Status = %q, want rejected", rejected.Status)
+	}
+
+	_, err = cm.FileSuggestion(ctx, catalog.Suggestion{
+		Slug: "candidate", Title: "Try again with new information", Source: catalog.SuggestionSourceRun,
+	})
+	if !errors.Is(err, catalog.ErrSuggestionDuplicate) {
+		t.Fatalf("re-filing a rejected slug: err = %v, want ErrSuggestionDuplicate (the pinned defect — CAT12's fix should let a rejected slug be re-proposed)", err)
+	}
+}

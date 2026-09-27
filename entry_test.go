@@ -335,3 +335,28 @@ func TestListEntries_RefusesAPathThatIsNotAPlainPath(t *testing.T) {
 		t.Fatalf("len = %d, want the seeded entry intact", len(got))
 	}
 }
+
+func TestCAT11_PinsKnownDefect_DeletedSlugCanNeverBeReused(t *testing.T) {
+	cm, ctx := newManager(t)
+
+	if _, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "squatted", Name: "First", Doc: doc}); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if err := cm.DeleteEntry(ctx, "squatted"); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	if _, err := cm.GetEntry(ctx, "squatted"); !errors.Is(err, catalog.ErrEntryNotFound) {
+		t.Fatalf("GetEntry after delete: err = %v, want ErrEntryNotFound", err)
+	}
+	if _, err := cm.OpenEntry(ctx, "squatted", ""); !errors.Is(err, catalog.ErrEntryNotFound) {
+		t.Fatalf("OpenEntry after delete: err = %v, want ErrEntryNotFound", err)
+	}
+
+	if _, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "squatted", Name: "Second attempt", Doc: doc}); !errors.Is(err, catalog.ErrEntryExists) {
+		t.Fatalf("CreateEntry on a slug every read reports as not-found: err = %v, want ErrEntryExists (the pinned defect — CAT11's fix should make this nil)", err)
+	}
+	if _, err := cm.UpsertEntry(ctx, catalog.Entry{Slug: "squatted", Name: "Second attempt via upsert", Doc: doc}); !errors.Is(err, catalog.ErrEntryExists) {
+		t.Fatalf("UpsertEntry on a slug every read reports as not-found: err = %v, want ErrEntryExists (the pinned defect — CAT11's fix should make this nil)", err)
+	}
+}
