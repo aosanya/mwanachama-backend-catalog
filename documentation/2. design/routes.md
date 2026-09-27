@@ -4,9 +4,10 @@
 route table is declared in `catalog.operations.json` and built by
 [`mwanachama-backend-shared/dispatch`](../../../mwanachama-backend-shared/documentation/2.%20design/dispatcher.md).
 
-Three files remain — `routes.go` (74 lines), `routes_test.go`, and nothing
-else. `entry.go` and `suggestion.go`, about 500 lines of decode/call/encode,
-are gone.
+Four files remain — `routes.go` (84 lines), `routes_test.go`, `tools.go`
+(123 lines, the MCP tool table CAT9 built from the same operations), and
+`tools_test.go`. `entry.go` and `suggestion.go`, about 500 lines of
+decode/call/encode, are gone.
 
 ## Why the operations are their own file
 

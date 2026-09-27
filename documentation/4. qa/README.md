@@ -8,14 +8,17 @@ go test ./...        # in-memory SQLite (glebarez/sqlite), no database needed
 make test-pg         # -tags=integration, with POSTGRES_URL set
 ```
 
-As of 2026-09-26 (after `spec/` moved to `mwanachama-backend-shared`, S18,
-and this repo's own store/blueprint/manager were refactored onto it,
-commit 37e0ae7): 81 test functions offline, all green — `entry_test.go`
+As of 2026-09-27 (commit c887ef6, "Let a mount supply an authorizer for the
+gated half"): 82 test functions offline, all green — `entry_test.go`
 (14), `suggestion_test.go` (12), `routes/tools_test.go` (10), `run_test.go`
-(8), `examples_test.go` (8), `routes/routes_test.go` (7), `sharelink_test.go`
+(8), `examples_test.go` (8), `routes/routes_test.go` (8), `sharelink_test.go`
 (5), `private_test.go` (5), `store_test.go` (4), `domain_agnostic_test.go`
 (3), `blueprint_test.go` (3), `validate_test.go` (2), plus 7 more in
-`postgres_integration_test.go` that need a database. `spec/` now holds only
+`postgres_integration_test.go` that need a database. `routes/routes_test.go`
+gained `TestOperatorRoutesWith_GatesOnlyTheGatedHalf`, pinning that
+`OperatorRoutesWith`/`RoutesWith` and friends run the gated half through a
+caller-supplied authorizer while the public half never consults it. `spec/`
+still holds only
 `examples/` — its own loader/validator/migrator tests moved with the code to
 `mwanachama-backend-shared/spec`'s own suite. SQLite in memory is the
 expected way to verify a change here — reach for a real Postgres only for
