@@ -117,7 +117,19 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design (security sweep, 2026-09-27)
 
-**None. Both reds this section carried were cleared 2026-09-27**, and each
+**One.** `routes/run_security_test.go` —
+`TestCAT13_OpenHole_RunSubmitterIsTakenFromTheRequestBody` (CAT13, P2) fails
+on purpose: `POST /runs` and the `catalog.run.record` tool store the body's
+`submitted_by` verbatim, even with a mount that supplies a `Caller`. It is the
+same class CAT12's fix closed for share links and left open here; the fix is
+to bind the submitter `from: "caller"`, which turns the test green.
+`go test ./...` is red in `routes/` for that test alone until then.
+
+The same sweep pinned the MCP half of CAT12's fix in
+`routes/sharelink_caller_security_test.go`: the share-link tool offers no
+issuer argument, refuses one when sent, and records the mount's caller.
+
+The two reds this section carried before were cleared 2026-09-27, and each
 test stays in place as the regression guard for its fix, with the board id
 kept and the `_OpenHole_` infix dropped:
 
