@@ -45,20 +45,35 @@ var AnonymousActions = []string{
 	"catalog.page_view.record",
 }
 
+type Mount struct {
+	Authorize dispatch.Authorizer
+	Caller    dispatch.Caller
+}
+
 func Build(cm catalog.CatalogManager) ([]Route, error) { return BuildWith(cm, nil) }
 
 func BuildWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([]Route, error) {
+	return BuildFor(cm, Mount{Authorize: authorize})
+}
+
+func BuildFor(cm catalog.CatalogManager, m Mount) ([]Route, error) {
 	s, err := operations()
 	if err != nil {
 		return nil, err
 	}
-	return dispatch.Dispatch(s, dispatch.Deps{Manager: cm, Errors: sentinels, Authorize: authorize})
+	return dispatch.Dispatch(s, dispatch.Deps{
+		Manager: cm, Errors: sentinels, Authorize: m.Authorize, Caller: m.Caller,
+	})
 }
 
 func Routes(cm catalog.CatalogManager) []Route { return RoutesWith(cm, nil) }
 
 func RoutesWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Route {
-	out, err := BuildWith(cm, authorize)
+	return RoutesFor(cm, Mount{Authorize: authorize})
+}
+
+func RoutesFor(cm catalog.CatalogManager, m Mount) []Route {
+	out, err := BuildFor(cm, m)
 	if err != nil {
 		panic(fmt.Sprintf("catalog routes: %v", err))
 	}
@@ -68,8 +83,12 @@ func RoutesWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Rout
 func Split(cm catalog.CatalogManager) dispatch.Split { return SplitWith(cm, nil) }
 
 func SplitWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) dispatch.Split {
+	return SplitFor(cm, Mount{Authorize: authorize})
+}
+
+func SplitFor(cm catalog.CatalogManager, m Mount) dispatch.Split {
 	public := dispatch.Anonymous(Routes(cm), AnonymousActions...)
-	gated := dispatch.Anonymous(RoutesWith(cm, authorize), AnonymousActions...)
+	gated := dispatch.Anonymous(RoutesFor(cm, m), AnonymousActions...)
 	return dispatch.Split{Anonymous: public.Anonymous, Gated: gated.Gated}
 }
 
@@ -80,5 +99,9 @@ func PublicRoutes(cm catalog.CatalogManager) []Route {
 func OperatorRoutes(cm catalog.CatalogManager) []Route { return OperatorRoutesWith(cm, nil) }
 
 func OperatorRoutesWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Route {
-	return SplitWith(cm, authorize).Gated
+	return OperatorRoutesFor(cm, Mount{Authorize: authorize})
+}
+
+func OperatorRoutesFor(cm catalog.CatalogManager, m Mount) []Route {
+	return SplitFor(cm, m).Gated
 }

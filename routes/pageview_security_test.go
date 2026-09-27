@@ -7,7 +7,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT11_OpenHole_PageViewAnswersDifferentlyForAnUnpublishedSlug(t *testing.T) {
+func TestCAT11_PageViewAnswersAnUnpublishedSlugLikeAMissingOne(t *testing.T) {
 	h, cm, ctx := newServer(t)
 	seed(t, cm, ctx, "pending-one", catalog.VisibilityPending)
 	seed(t, cm, ctx, "private-one", catalog.VisibilityPrivate)

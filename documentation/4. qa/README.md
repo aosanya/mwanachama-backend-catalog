@@ -117,20 +117,32 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design (security sweep, 2026-09-27)
 
-Two tests in `routes/` fail on purpose until the hole each reproduces is
-fixed; each has its board row, and the fix turns it green without editing
-the test.
+**None. Both reds this section carried were cleared 2026-09-27**, and each
+test stays in place as the regression guard for its fix, with the board id
+kept and the `_OpenHole_` infix dropped:
 
 - `routes/pageview_security_test.go` —
-  `TestCAT11_OpenHole_PageViewAnswersDifferentlyForAnUnpublishedSlug` (CAT11,
-  P1). The anonymous `POST /page-views` answers `204` for a pending or
-  private slug and `404` for one never filed, so it is an enumeration oracle
-  for exactly the slugs `GET /entries/{slug}` refuses to confirm. The
-  identical-404 invariant above is therefore proven for the open door and
-  broken on its neighbour.
+  `TestCAT11_PageViewAnswersAnUnpublishedSlugLikeAMissingOne` (CAT11, P1).
+  The anonymous `POST /page-views` used to answer `204` for a pending or
+  private slug and `404` for one never filed, an enumeration oracle for
+  exactly the slugs `GET /entries/{slug}` refuses to confirm. `RecordPageView`
+  now checks the slug through `OpenEntry(ctx, slug, "")`, so the
+  identical-404 invariant above holds on this door too and a view counts only
+  against an entry an anonymous reader could open.
 - `routes/sharelink_security_test.go` —
-  `TestCAT12_OpenHole_ShareLinkIssuerIsTakenFromTheRequestBody` (CAT12, P2).
-  A share link's `created_by` is whatever the request body's `by` says.
+  `TestCAT12_ShareLinkIssuerIsNeverTakenFromTheRequestBody` (CAT12, P2). A
+  share link's `created_by` used to be whatever the request body's `by` said.
+  `issue_share_link` now binds `by` from `from: "caller"` —
+  `mwanachama-backend-shared`'s `dispatch` gained that source and a
+  `Deps.Caller`, and `routes.Mount` is where a host passes one. The module
+  still holds no auth model: with no `Caller` supplied the issuer is `""`,
+  never the request's.
+
+Both are pinned at the mount as well, in `mwanachama-wakala-api`'s
+`internal/api/http/catalog_issuer_security_test.go` — which is where the
+end-to-end proof has to live, since `make self-test` mounts no catalog
+(`buildCatalog` needs `CATALOG_DATABASE_URL` and `CATALOG_SPEC`, and this
+family does not stand up a real Postgres to test).
 
 Probed and holding on the same run, through `mwanachama-wakala-api`'s
 router: a share key opens only the entry it was issued for (another private

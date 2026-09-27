@@ -80,6 +80,10 @@ func Fields() (map[string]dispatch.FieldDoc, error) {
 func BuildTools(cm catalog.CatalogManager) ([]Tool, error) { return BuildToolsWith(cm, nil) }
 
 func BuildToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([]Tool, error) {
+	return BuildToolsFor(cm, Mount{Authorize: authorize})
+}
+
+func BuildToolsFor(cm catalog.CatalogManager, m Mount) ([]Tool, error) {
 	s, err := operations()
 	if err != nil {
 		return nil, err
@@ -89,7 +93,7 @@ func BuildToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([
 		return nil, err
 	}
 	tools, err := dispatch.Tools(s, dispatch.Deps{
-		Manager: cm, Errors: sentinels, Fields: fields, Authorize: authorize,
+		Manager: cm, Errors: sentinels, Fields: fields, Authorize: m.Authorize, Caller: m.Caller,
 	})
 	if err != nil {
 		return nil, err
@@ -100,7 +104,11 @@ func BuildToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) ([
 func Tools(cm catalog.CatalogManager) []Tool { return ToolsWith(cm, nil) }
 
 func ToolsWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) []Tool {
-	out, err := BuildToolsWith(cm, authorize)
+	return ToolsFor(cm, Mount{Authorize: authorize})
+}
+
+func ToolsFor(cm catalog.CatalogManager, m Mount) []Tool {
+	out, err := BuildToolsFor(cm, m)
 	if err != nil {
 		panic(fmt.Sprintf("catalog tools: %v", err))
 	}

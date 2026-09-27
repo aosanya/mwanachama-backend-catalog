@@ -85,7 +85,8 @@
       "description": "Mint a key that opens one private entry. The raw key is returned here and nowhere else — only its hash is stored — so hand it on before discarding the result.",
       "args": [{"from": "path", "as": "slug", "description": "The private entry the key opens."},
                {"from": "body", "as": "label", "field": "ShareLink.label"},
-               {"from": "body", "as": "by", "field": "ShareLink.created_by"}],
+               {"from": "caller", "as": "by", "field": "ShareLink.created_by",
+                "description": "The caller that issued the key, supplied by the mount. Never read from the request."}],
       "returns": [{"as": "link"}, {"as": "key", "once": true}]
     },
     "retire_share_link": {

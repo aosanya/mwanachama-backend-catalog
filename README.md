@@ -120,7 +120,8 @@ digits, underscore and hyphen. Anything else is refused with
   approving it again clears the count for another ten.
 - Only fulfilling a proposal marks it `built`, and only against an Entry that
   exists.
-- An Entry page view counts only against a slug that exists.
+- An Entry page view counts only against an entry an anonymous reader could
+  open, and every other slug answers exactly as a missing one (CAT11).
 
 ## What it deliberately leaves out
 

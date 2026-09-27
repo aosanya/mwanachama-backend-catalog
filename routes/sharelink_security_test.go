@@ -8,7 +8,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT12_OpenHole_ShareLinkIssuerIsTakenFromTheRequestBody(t *testing.T) {
+func TestCAT12_ShareLinkIssuerIsNeverTakenFromTheRequestBody(t *testing.T) {
 	h, cm, ctx := newServer(t)
 	seed(t, cm, ctx, "private-one", catalog.VisibilityPrivate)
 

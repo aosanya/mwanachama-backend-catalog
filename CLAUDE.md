@@ -210,7 +210,8 @@ Each has a test, and the first two were mutation-checked rather than trusted:
   re-imported agency on Postgres while passing on SQLite. `sameDocument`
   compares canonical JSON; only `postgres_integration_test.go` catches a
   regression here.
-- An Entry page view counts only against a slug that exists.
+- An Entry page view counts only against an entry an anonymous reader could
+  open, and every other slug answers exactly as a missing one (CAT11).
 
 ## Conventions
 

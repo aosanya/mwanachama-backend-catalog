@@ -80,10 +80,8 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 	if err := m.checks(rolePageView, v); err != nil || !v.SlugFitsPage() {
 		return ErrInvalidPageView
 	}
-	// An Entry view counts only against a slug that exists, so a caller
-	// cannot grow this table by inventing slugs.
 	if page == models.PageKindEntry {
-		if _, err := m.findEntry(ctx, slug); err != nil {
+		if _, err := m.OpenEntry(ctx, slug, ""); err != nil {
 			return err
 		}
 	}
