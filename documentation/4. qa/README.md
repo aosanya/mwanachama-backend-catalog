@@ -50,6 +50,15 @@ what the section below lists.
   each at 200. The live probe that prompted it: 6,000 anonymous calls in
   428 ms, `204`×4,000 / `404`×2,000, two rows. Mutation-checked by removing
   `RecordPageView`'s index-slug normalisation.
+- **A malformed `limit` never reaches the store.**
+  `routes/runs_limit_security_test.go` (security sweep, 2026-09-28) sends
+  `GET /runs?limit=` with an overflowing integer, `abc`, `1e3` and a NUL, and
+  asserts each answers `400` naming only the argument
+  (`limit: "abc" is not a int`) — no driver, SQL or `strconv` detail. What it
+  does not pin: `limit=0` and `limit=-1` both return every run, and a raw `;`
+  in the query makes `net/http` drop the whole query string, so
+  `?limit=1;x` also returns every run. All three are the unbounded-list cost
+  CAT10 already tracks, not a separate door.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
