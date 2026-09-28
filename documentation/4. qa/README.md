@@ -149,8 +149,18 @@ stored value is the mount's caller:
   `PUT /entries/{slug}` stores the body's `submitted_by` as the revision's
   author.
 
-`go test ./routes/` is red for exactly these two until the fix binds each
-field `from: "caller"`.
+A third was filed by the 2026-09-28 security sweep (nineteenth run):
+
+- `routes/suggestion_priority_security_test.go` —
+  `TestCAT16_OpenHole_FilerTakesAQueuePositionNoDeciderCanSet` (CAT16, P2).
+  `POST /suggestions` keeps a body's negative `priority`, a queue position
+  `decide_suggestion` can never set (it applies only a priority `> 0`). A
+  filing's forged `id`, `created_at` and `decided_at` are replaced — that
+  half holds.
+
+`go test ./routes/` is red for exactly these three until CAT13/CAT14's fix
+binds each field `from: "caller"` and CAT16's refuses a negative filing
+priority.
 
 Pinned green on the same run: `routes/sharelink_caller_security_test.go`'s
 `TestCAT12_AMountedShareLinkRecordsTheMountsCallerAndMCPRefusesAnIssuer` —
