@@ -42,6 +42,14 @@ what the section below lists.
 - **Two domains in one database**: `TestTwoDomainsCoexist` migrates both
   example specs into one database; `TestMigrateIsIdempotent` runs a migration
   twice.
+- **The anonymous page-view door cannot grow its table.**
+  `routes/pageview_cost_security_test.go` (security sweep, 2026-09-28) sends
+  800 anonymous `POST /page-views` across 402 distinct slugs — never-filed
+  entry slugs, a pending entry, and index views carrying a slug — and asserts
+  exactly two counter rows remain (the index and the one openable entry),
+  each at 200. The live probe that prompted it: 6,000 anonymous calls in
+  428 ms, `204`×4,000 / `404`×2,000, two rows. Mutation-checked by removing
+  `RecordPageView`'s index-slug normalisation.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
