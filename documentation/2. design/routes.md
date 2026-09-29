@@ -68,6 +68,16 @@ address outranks the body, so a caller cannot `PUT /entries/a` with a body
 claiming slug `b`. That is the `into` binding, and it applies after the body
 is decoded.
 
+**The caller outranks the body the same way.** An actor field — who issued a
+share key, who submitted a run report, who wrote an entry revision — is bound
+`from: "caller"` with an `into`, so the mount's `Caller` overwrites whatever
+the request claimed. Three operations carry it: `issue_share_link`
+(`ShareLink.created_by`), `record_run` and `upsert_entry` (both
+`SubmittedBy`). The same binding keeps the field out of every MCP tool
+schema, so an agent is refused by name rather than ignored. A mount that
+supplies no `Caller` binds `""` — never the request's value, which is the
+point.
+
 `ErrInvalidDocPath` is deliberately *not* in the table, because it was not in
 the old ones either — it currently falls through to 500 although it is a
 caller error. Worth a row of its own rather than a silent change here.

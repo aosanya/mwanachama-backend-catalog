@@ -37,7 +37,9 @@
       "title": "Write entry",
       "description": "Create the entry at this slug or replace the document and card of the one already there. Replacing the document of an approved entry returns it to pending, so never re-send a document that has not changed. Visibility is not set here.",
       "args": [{"from": "body", "whole": true},
-               {"from": "path", "as": "slug", "into": "Slug", "description": "The entry to write. Fixed at creation."}],
+               {"from": "path", "as": "slug", "into": "Slug", "description": "The entry to write. Fixed at creation."},
+               {"from": "caller", "as": "submitted_by", "into": "SubmittedBy",
+                "description": "What wrote this revision, supplied by the mount. Never read from the request."}],
       "returns": [{"body": true}]
     },
     "delete_entry": {
@@ -184,7 +186,9 @@
       "status": 201,
       "title": "Record run",
       "description": "Store one run's report: which run it was, how much it filed, and what it found.",
-      "args": [{"from": "body", "whole": true}],
+      "args": [{"from": "body", "whole": true},
+               {"from": "caller", "as": "submitted_by", "into": "SubmittedBy",
+                "description": "What reported the run, supplied by the mount. Never read from the request."}],
       "returns": [{"body": true}]
     },
     "get_setting": {

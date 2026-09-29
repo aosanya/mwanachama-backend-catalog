@@ -153,35 +153,40 @@ verbatim ("The catalog is outside it... gated on being a user of the
 project, not on membership of an Instance... If the catalog ever needs its
 own operator/reader split, it needs its own rule").
 
-## Red by design (security sweep, 2026-09-27)
+## Red by design
 
-**Two, both filed by the eleventh security sweep (2026-09-27, late
-evening)** — the rest of CAT12's class. Each test builds the routes through
-`routes.RoutesFor` with a `Mount` whose `Caller` answers
-`the-signed-in-caller`, sends a body naming someone else, and asserts the
-stored value is the mount's caller:
+None open. `go test ./routes/` is green.
+
+CAT12's whole class is closed. The two reds the eleventh sweep filed
+(2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
+place as the regression guard for its fix, with the board id kept and the
+`_OpenHole_` infix dropped. Each builds the routes *and* the MCP tools
+through `routes.RoutesFor`/`routes.ToolsFor` with a `Mount` whose `Caller`
+answers `the-signed-in-caller`, then drives both doors:
 
 - `routes/run_submitter_security_test.go` —
-  `TestCAT13_OpenHole_RunSubmitterIsTakenFromTheRequestBody` (CAT13, P1).
-  `POST /runs` and the `catalog_run_record` tool store the body's
-  `submitted_by` verbatim.
+  `TestCAT13_RunSubmitterIsNeverTakenFromTheRequestBody` (CAT13, P1).
+  `POST /runs` used to store the body's `submitted_by` verbatim, and so did
+  the `catalog_run_record` tool. `record_run` now binds it
+  `from: "caller"` `into: "SubmittedBy"`, so the tool refuses a
+  `submitted_by` argument and every stored run carries the mount's caller.
 - `routes/entry_submitter_security_test.go` —
-  `TestCAT14_OpenHole_EntrySubmitterIsTakenFromTheRequestBody` (CAT14, P1).
-  `PUT /entries/{slug}` stores the body's `submitted_by` as the revision's
-  author.
+  `TestCAT14_EntrySubmitterIsNeverTakenFromTheRequestBody` (CAT14, P1).
+  `PUT /entries/{slug}` used to store the body's `submitted_by` as the
+  revision's author — the attribution a reviewer reads before publishing.
+  `upsert_entry` now carries the same caller binding beside its `slug`
+  overwrite: the address and the caller outrank the body, nothing else does.
 
-`go test ./routes/` is red for exactly these two until the fix binds each
-field `from: "caller"`.
+Both were mutation-checked — reverting the one declaration in
+`catalog.operations.json` puts each back in the red.
 
-Pinned green on the same run: `routes/sharelink_caller_security_test.go`'s
+Pinned green since that sweep: `routes/sharelink_caller_security_test.go`'s
 `TestCAT12_AMountedShareLinkRecordsTheMountsCallerAndMCPRefusesAnIssuer` —
 with a mount supplying a caller, a share link issued over REST records that
 caller whatever the body's `by` says, and `catalog_share_link_issue` refuses
 a `by` argument outright (`takes no argument "by"`).
 
-The two earlier reds were cleared 2026-09-27, and each test stays in place
-as the regression guard for its fix, with the board id kept and the
-`_OpenHole_` infix dropped:
+The two reds before those were cleared 2026-09-27, on the same terms:
 
 - `routes/pageview_security_test.go` —
   `TestCAT11_PageViewAnswersAnUnpublishedSlugLikeAMissingOne` (CAT11, P1).

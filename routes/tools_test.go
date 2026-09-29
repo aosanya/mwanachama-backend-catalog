@@ -96,12 +96,12 @@ func TestEveryToolCarriesProseAndASchema(t *testing.T) {
 func TestTheUpsertToolTakesTheDocumentAndNotTheStoresOwnFields(t *testing.T) {
 	tools, _, _ := newTools(t)
 	props := properties(t, tools["catalog_entry_upsert"])
-	for _, want := range []string{"slug", "name", "summary", "doc", "submitted_by"} {
+	for _, want := range []string{"slug", "name", "summary", "doc"} {
 		if _, ok := props[want]; !ok {
 			t.Fatalf("property %q is missing: %v", want, props)
 		}
 	}
-	for _, unwanted := range []string{"id", "created_at", "updated_at", "approved_at", "visibility", "deleted"} {
+	for _, unwanted := range []string{"id", "created_at", "updated_at", "approved_at", "visibility", "deleted", "submitted_by"} {
 		if _, ok := props[unwanted]; ok {
 			t.Fatalf("the store owns %q, so it must not be an argument: %v", unwanted, props)
 		}
@@ -128,13 +128,13 @@ func TestAMinedEntryReachesTheStoreThroughItsTool(t *testing.T) {
 	tools, cm, ctx := newTools(t)
 	invoke(t, tools["catalog_entry_upsert"], ctx,
 		`{"slug":"county-health","name":"County health authority","summary":"A health authority.","doc":`+
-			strconv.Quote(doc)+`,"submitted_by":"a-run"}`)
+			strconv.Quote(doc)+`}`)
 
 	stored, err := cm.GetEntry(ctx, "county-health")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
-	if stored.Name != "County health authority" || stored.SubmittedBy != "a-run" {
+	if stored.Name != "County health authority" {
 		t.Fatalf("stored = %+v", stored)
 	}
 	if stored.Visibility != models.VisibilityPending {
