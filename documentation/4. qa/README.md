@@ -67,6 +67,19 @@ what the section below lists.
   slug answers `404` and changes nothing. `put_private` binds the whole body and
   relies on the dispatcher's `into: "Slug"` path overwrite — mutation-checked
   by disabling that overwrite in `mwanachama-backend-shared/dispatch`.
+- **A filed suggestion's lifecycle fields are the server's.**
+  `routes/suggestion_forged_fields_security_test.go` (security sweep,
+  2026-09-29) files a suggestion whose body claims `status: built`,
+  `attempts: 42`, an `id`, a 1999 `created_at` and a `decided_at`, and asserts
+  it reads back `proposed` with no attempts, no decision, the server's id and
+  clock (the claimed id answers 404); fulfilling it while proposed and
+  deciding it `stalled` both answer 409 and leave it proposed.
+  Mutation-checked by dropping `FileSuggestion`'s attempts reset. The same run
+  measured the comment door: 5,001 comments on one suggestion read back as
+  1,822,058 bytes in 51 ms with `?limit=1` ignored, and the library accepts a
+  2 MiB comment body — CAT10's unbounded-list class behind the
+  `catalog.suggestion.comment` action; a mounting host's body cap is the only
+  bound.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
