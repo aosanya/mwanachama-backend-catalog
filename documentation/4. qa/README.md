@@ -59,6 +59,14 @@ what the section below lists.
   in the query makes `net/http` drop the whole query string, so
   `?limit=1;x` also returns every run. All three are the unbounded-list cost
   CAT10 already tracks, not a separate door.
+- **A private-parts write lands on the entry the path names.**
+  `routes/private_slug_security_test.go` (security sweep, 2026-09-29) sends
+  `PUT /entries/alpha/private` with a body naming `"slug":"beta"` and a forged
+  `updated_at`, and asserts beta's readme and rank are untouched, the write
+  lands on alpha, and the clock is the server's; the same body under a missing
+  slug answers `404` and changes nothing. `put_private` binds the whole body and
+  relies on the dispatcher's `into: "Slug"` path overwrite — mutation-checked
+  by disabling that overwrite in `mwanachama-backend-shared/dispatch`.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
