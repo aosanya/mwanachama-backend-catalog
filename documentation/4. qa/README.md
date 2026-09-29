@@ -80,6 +80,20 @@ what the section below lists.
   2 MiB comment body — CAT10's unbounded-list class behind the
   `catalog.suggestion.comment` action; a mounting host's body cap is the only
   bound.
+- **Every gated door asks for its own action before it acts.**
+  `routes/deny_all_security_test.go` (security sweep, 2026-09-29) mounts every
+  gated operation twice — as a REST route through `OperatorRoutesFor` and as
+  an MCP tool through `ToolsFor` — under a `Mount` whose authorizer records
+  what it is asked and refuses everything, over real seeded ids (an entry, a
+  private entry with a live share link, a proposed suggestion) so a refusal
+  cannot be a 404 in disguise. Each of the 24 doors must answer
+  `403`/`dispatch.ErrForbidden`, must have asked for exactly its own declared
+  action, and must leave the entry, suggestion, share link, runs, settings and
+  comments unchanged. Iterating the built set rather than a list means an
+  operation added later is covered on arrival. Mutation-checked by skipping
+  `handlerFor`'s gate for `catalog.setting.write` (`PUT /settings/k` answered
+  `200` and wrote the setting) and `invokerFor`'s for `catalog.run.record` in
+  `mwanachama-backend-shared/dispatch`.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
@@ -155,7 +169,10 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-None open. `go test ./routes/` is green.
+`go test ./routes/` is green. `go test ./...` is red for exactly one test,
+the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
+(CAT10) in the root package — confirmed red by the security sweep's own gate
+run on 2026-09-29 at `4467f4e`. No security-sweep red is open here.
 
 CAT12's whole class is closed. The two reds the eleventh sweep filed
 (2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
