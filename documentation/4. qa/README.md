@@ -94,6 +94,23 @@ what the section below lists.
   `handlerFor`'s gate for `catalog.setting.write` (`PUT /settings/k` answered
   `200` and wrote the setting) and `invokerFor`'s for `catalog.run.record` in
   `mwanachama-backend-shared/dispatch`.
+- **A flood of repeated statuses that breaks the store names nothing about it.**
+  `routes/repeated_status_flood_security_test.go` (security sweep,
+  2026-09-29) sends `GET /suggestions` with `status=proposed` repeated 40,000
+  times (640,000 bytes, under `net/http`'s 1 MiB header limit) and calls
+  `catalog_suggestion_list` with the same 40,000-element list. `status` is the
+  only `repeated` argument any of the four libraries declares, and each value
+  becomes one bound parameter, so the store's query passes SQLite's variable
+  limit (`SQL logic error: too many SQL variables (1)` from the manager
+  directly). That failure is the test's precondition; what it pins is that
+  neither door then says anything about the database. Both answer the
+  dispatcher's opaque `internal error` (a `500`, ~48 ms) — the status is not
+  pinned. Mutation-checked
+  by writing the call's own error in place of the opaque one in
+  `mwanachama-backend-shared/dispatch`'s `handlerFor` and `invokerFor` — each
+  half then fails naming `SQL`. Postgres's limit is 65,535 parameters, so the
+  same flood succeeds there and costs one 40,000-term `IN` list per request;
+  unmeasured (no Postgres plane in the run).
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
