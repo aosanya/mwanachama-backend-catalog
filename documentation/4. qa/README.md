@@ -201,10 +201,20 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly five tests:
+`go test ./...` is red for exactly six tests:
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
+- the integration sweep's `TestCAT20_OpenBug_RankCannotReturnToUnranked`
+  (CAT20) in the root package, filed 2026-09-30. `catalog.blueprint.json`
+  declares `entry_private.rank`'s zero as the meaningful "unranked, sorts
+  last" state, but `PutPrivate`'s merge (`private.go`) treats a zero `Rank`
+  the same as an omitted one (`if p.Rank != 0`), so a caller can never
+  write an entry back to unranked once it has held any other rank —
+  demonstrated against the real manager (`PutPrivate({Rank: 3})` then
+  `PutPrivate({Rank: 0})` still reads back `Rank: 3`). Goes green once
+  `PutPrivate` can tell "the caller omitted Rank" apart from "the caller
+  asked for Rank zero";
 - the security sweep's `routes/open_entry_timing_security_test.go` —
   `TestCAT16_OpenHole_PrivateSlugCostsTheStoreMoreThanAMissingOne` (CAT16,
   P1), filed 2026-09-30. The anonymous `GET /entries/{slug}?k=…` answers a
