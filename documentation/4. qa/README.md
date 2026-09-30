@@ -201,7 +201,7 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly six tests:
+`go test ./...` is red for exactly seven tests:
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
@@ -250,6 +250,14 @@ own operator/reader split, it needs its own rule").
   count at 2–4, never stalled (20/20). The test forces the interleaving with
   an update callback and goes green when the report's write is conditional
   on the suggestion still being approved.
+- the security sweep's `routes/suggestion_fulfil_race_security_test.go` —
+  `TestCAT21_OpenHole_FulfilUndoesAReviewersReject` (CAT21, P2), filed
+  2026-09-30 (forty-first run). `FulfilSuggestion` writes `built` over
+  whatever status the row holds by then, so a reject landing between its
+  check and its write is undone after the reviewer was answered `rejected`
+  (83/136 through the route table on shared-cache sqlite). The test forces
+  the interleaving with an update callback and goes green when the `built`
+  write is conditional on the suggestion still being approved or built.
 
 CAT12's whole class is closed. The two reds the eleventh sweep filed
 (2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
