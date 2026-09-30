@@ -88,23 +88,17 @@ rather than escaped. Never relax this to "escape it instead".
 would let an omitted value pass unnoticed; `TestRequiredFieldsHaveNoDefault`
 asserts no column is ever both `not null` and defaulted.
 
-**A table is `<instance>_<module>_<object>`** — `agency_catalog_agencies`.
-The module segment is not decoration: without it a catalog instance named
-`agency` and an agency instance of the same name both want `agency_agencies`,
-and neither module notices, because `AutoMigrate` adopts a table that already
-exists and `create table if not exists` is a no-op against one. A collision
-here is silent data mixing, not an error, which is why `spec.Validate` refuses
-it rather than leaving it to the database:
+**A table is `<instance>_hashOf(<mount>)_hashOf(<module>_<object>)`** — only
+the instance stays readable, e.g. `agy1f2e3d4c_0d6e4079_7fc95a982afe`. The
+middle segment groups one mount's tables together; the last identifies the
+table, and reads the same in every instance. `spec.Migrate` records both the
+physical and the raw name in the per-instance `<instance>_spec_table_names`
+registry. Hashing keeps every identifier a constant 33 bytes (57 for an index)
+against Postgres's 63-byte ceiling, which the readable form had already
+reached. Assert on `RawNameFor` in tests, never on a physical name literal, and
+exclude `%_spec_table_names` from anything that counts tables. See
+[declared-domains.md](../mwanachama-backend-shared/documentation/2.%20design/declared-domains.md).
 
-- `Instance` and `Module` match `SegmentPattern` — `NamePattern` minus the
-  underscore, so the three segments can be read back apart.
-- Every emitted name is measured against `MaxIdentifier` (63). Postgres
-  truncates past it **without complaining**, so two names agreeing that far
-  are one relation — with a long agency slug, `…_catalog_entries` and
-  `…_catalog_entry_privates` are the same table.
-- Duplicates are detected on the physical name, and indexes are checked in
-  the same namespace as tables, because Postgres keeps them there — and
-  `<table>_<index>_idx` overflows before its own table does.
 
 **A column is found by field name, never by json tag.** `store.go`'s
 `columnName` turns `SubmittedBy` into `submitted_by` and `RunID` into

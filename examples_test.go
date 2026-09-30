@@ -25,7 +25,8 @@ func examplePaths(t *testing.T) []string {
 func tableNames(t *testing.T, db *gorm.DB) []string {
 	t.Helper()
 	var names []string
-	if err := db.Raw(`select name from sqlite_master where type='table' and name not like 'sqlite_%'`).
+	if err := db.Raw(`select name from sqlite_master where type='table' and name not like 'sqlite_%'
+		and name not like '%_' || ?`, spec.NameRegistrySuffix).
 		Scan(&names).Error; err != nil {
 		t.Fatalf("list tables: %v", err)
 	}
@@ -51,35 +52,26 @@ func TestShippedExamplesCoexist(t *testing.T) {
 		}
 	}
 
-	want := []string{
-		"library_catalog_acquisition_notes", "library_catalog_copies", "library_catalog_import_runs",
-		"library_catalog_page_views", "library_catalog_preview_links",
-		"library_catalog_purchase_requests", "library_catalog_request_fulfilments",
-		"library_catalog_request_notes", "library_catalog_settings", "library_catalog_titles",
-		"wakala_catalog_agencies", "wakala_catalog_agency_privates", "wakala_catalog_mining_runs",
-		"wakala_catalog_page_views", "wakala_catalog_settings", "wakala_catalog_share_links",
-		"wakala_catalog_suggestion_comments", "wakala_catalog_suggestion_matches",
-		"wakala_catalog_suggestions",
-	}
+	want := declaredTables(library, agency)
 	if got := tableNames(t, db); strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("tables =\n  %v\nwant\n  %v", got, want)
 	}
 
 	for _, tc := range []struct {
-		s         *spec.Spec
-		wantName  string
-		wantTable string
+		s        *spec.Spec
+		wantName string
+		wantRaw  string
 	}{
-		{agency, "agency", "wakala_catalog_agencies"},
-		{library, "title", "library_catalog_titles"},
+		{agency, "agency", "catalog_main_agencies"},
+		{library, "title", "catalog_main_titles"},
 	} {
 		o, ok := tc.s.ByRole(roleEntry)
 		if !ok {
 			t.Fatalf("%s: no object fills the entry role", tc.s.Domain)
 		}
-		if o.Name != tc.wantName || tc.s.TableFor(o) != tc.wantTable {
-			t.Errorf("%s: entry is %q at %q, want %q at %q",
-				tc.s.Domain, o.Name, tc.s.TableFor(o), tc.wantName, tc.wantTable)
+		if o.Name != tc.wantName || tc.s.RawNameFor(o) != tc.wantRaw {
+			t.Errorf("%s: entry is %q raw-named %q, want %q named %q",
+				tc.s.Domain, o.Name, tc.s.RawNameFor(o), tc.wantName, tc.wantRaw)
 		}
 	}
 
@@ -227,4 +219,15 @@ func TestShippedExpressionIndexesAreDoubleParenthesised(t *testing.T) {
 			}
 		}
 	}
+}
+
+func declaredTables(specs ...*spec.Spec) []string {
+	var out []string
+	for _, s := range specs {
+		for _, o := range s.Objects {
+			out = append(out, s.TableFor(o))
+		}
+	}
+	sort.Strings(out)
+	return out
 }
