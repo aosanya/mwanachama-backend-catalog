@@ -201,7 +201,7 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly two tests:
+`go test ./...` is red for exactly three tests:
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
@@ -215,6 +215,14 @@ own operator/reader split, it needs its own rule").
   private from not-private 120 times out of 120. The test counts store
   statements per refusal — today 2 / 1 / 1 — and goes green when every
   refusal does the same work.
+- the security sweep's `sharelink_race_security_test.go` —
+  `TestCAT17_OpenHole_KeyIssuedWhileLeavingPrivateSurvivesTheRetirement`
+  (CAT17, P2), filed 2026-09-30. A share key issued while the entry is being
+  made public is inserted after `SetVisibility` has retired the entry's keys,
+  so it stays active and opens the entry again once it is private (25/100
+  through `mwanachama-wakala-api`'s `/catalog` mount on Postgres). The test
+  forces the interleaving with a create callback and goes green when issuing
+  a key and leaving `private` can no longer overlap.
 
 CAT12's whole class is closed. The two reds the eleventh sweep filed
 (2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
