@@ -98,6 +98,31 @@ func TestPutPrivate_RejectsBadInput(t *testing.T) {
 	}
 }
 
+func TestCAT20_OpenBug_RankCannotReturnToUnranked(t *testing.T) {
+	cm, ctx := newManager(t)
+	seed(t, cm, ctx, "agency-one", catalog.VisibilityPending)
+
+	if _, err := cm.PutPrivate(ctx, catalog.EntryPrivate{Slug: "agency-one", Rank: 3}); err != nil {
+		t.Fatalf("first put: %v", err)
+	}
+
+	got, err := cm.PutPrivate(ctx, catalog.EntryPrivate{Slug: "agency-one", Rank: 0})
+	if err != nil {
+		t.Fatalf("second put: %v", err)
+	}
+	if got.Rank != 0 {
+		t.Errorf("CAT20 open bug: PutPrivate with Rank: 0 returned Rank = %d, want 0 — the blueprint declares zero as the meaningful \"unranked, sorts last\" state, but PutPrivate's merge treats a zero Rank as \"omitted\" (private.go's `if p.Rank != 0`), so an operator can never move an entry back to unranked once it has held any other rank", got.Rank)
+	}
+
+	reread, err := cm.GetPrivate(ctx, "agency-one")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if reread.Rank != 0 {
+		t.Errorf("CAT20 open bug: re-read Rank = %d, want 0 — the store still holds the stale rank 3 after a caller asked to unrank the entry", reread.Rank)
+	}
+}
+
 func TestPutPrivate_UnknownEntry(t *testing.T) {
 	cm, ctx := newManager(t)
 	if _, err := cm.PutPrivate(ctx, catalog.EntryPrivate{Slug: "no-such-agency", Readme: "x"}); !errors.Is(err, catalog.ErrEntryNotFound) {
