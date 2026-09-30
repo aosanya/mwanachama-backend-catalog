@@ -201,7 +201,24 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly seven tests:
+`go test ./...` currently reports a **root-package build failure**, not a
+clean set of seven red tests: `examples_test.go` calls
+`spec.RawNameFor`/`spec.NameRegistrySuffix`, which exist on no branch of
+`mwanachama-backend-shared` this repo can see (`fb722e2`, checked
+2026-09-30) — the shared half of the owner's in-flight S29 commit. Since
+`TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`, `TestCAT20_OpenBug_
+RankCannotReturnToUnranked` and the three race tests below
+(`sharelink_race_security_test.go`, `entry_visibility_race_security_test.go`,
+`suggestion_attempt_race_security_test.go`) all live in the root package
+(`package mwanachamacatalog_test`), none of those five actually execute
+while the build fails — they are not "red", they simply never run. Only
+`routes/` builds independently and shows two explicit `FAIL`s: CAT16 and
+CAT21. Moving `examples_test.go` aside confirms the other five still
+compile and fail exactly as described below; it is restored unchanged
+afterwards. This will read as seven ordinary red tests again once S29
+lands.
+
+The seven tests, for when `go test ./...` runs clean again:
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
