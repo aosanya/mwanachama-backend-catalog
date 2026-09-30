@@ -111,6 +111,21 @@ what the section below lists.
   half then fails naming `SQL`. Postgres's limit is 65,535 parameters, so the
   same flood succeeds there and costs one 40,000-term `IN` list per request;
   unmeasured (no Postgres plane in the run).
+- **An MCP call cannot smuggle a server-owned field in another casing.**
+  `routes/mcp_hidden_field_security_test.go` (security sweep, 2026-09-30)
+  invokes `catalog_suggestion_file`, `catalog_entry_upsert` and
+  `catalog_run_record` with `Status`, `ATTEMPTS`, `Created_At`, `Visibility`,
+  `Approved_At`, `SubmittedBy`, `Submitted_By` and a `Slug` shadowing the
+  declared `slug`. `encoding/json` matches keys case-insensitively, so a
+  dispatcher that bound arguments with `DisallowUnknownFields` would accept
+  every one; `mwanachama-backend-shared/dispatch`'s `invokerFor` compares
+  each key exactly against the declared arguments and refuses the call by
+  name, and nothing is stored — the same calls without the forged key store a
+  `proposed` suggestion with zero attempts and a `pending`, unapproved entry.
+  This holds whether or not the MCP host validates the tool's
+  `additionalProperties: false` schema. Mutation-checked by letting
+  `invokerFor` accept a key whose lower-cased form is declared: the `Slug`
+  call then stores entry `alpha`.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
