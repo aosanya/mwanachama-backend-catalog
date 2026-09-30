@@ -186,10 +186,20 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./routes/` is green. `go test ./...` is red for exactly one test,
-the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
-(CAT10) in the root package — confirmed red by the security sweep's own gate
-run on 2026-09-29 at `4467f4e`. No security-sweep red is open here.
+`go test ./...` is red for exactly two tests:
+
+- the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
+  (CAT10) in the root package;
+- the security sweep's `routes/open_entry_timing_security_test.go` —
+  `TestCAT16_OpenHole_PrivateSlugCostsTheStoreMoreThanAMissingOne` (CAT16,
+  P1), filed 2026-09-30. The anonymous `GET /entries/{slug}?k=…` answers a
+  private slug, a pending one and a missing one with the same 404 body, but a
+  private slug given any key costs a second query (`keyOpens`). Through
+  `mwanachama-wakala-api`'s `/catalog` mount on Postgres that measured 694µs
+  against 467µs (medians of 3,000), and 50 paired requests per slug told
+  private from not-private 120 times out of 120. The test counts store
+  statements per refusal — today 2 / 1 / 1 — and goes green when every
+  refusal does the same work.
 
 CAT12's whole class is closed. The two reds the eleventh sweep filed
 (2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
