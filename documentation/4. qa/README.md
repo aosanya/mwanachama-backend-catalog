@@ -201,7 +201,7 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly three tests:
+`go test ./...` is red for exactly five tests:
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
@@ -223,6 +223,23 @@ own operator/reader split, it needs its own rule").
   through `mwanachama-wakala-api`'s `/catalog` mount on Postgres). The test
   forces the interleaving with a create callback and goes green when issuing
   a key and leaving `private` can no longer overlap.
+- the security sweep's `entry_visibility_race_security_test.go` —
+  `TestCAT18_OpenHole_UnchangedResendUndoesAReviewersTakedown` (CAT18, P1),
+  filed 2026-09-30 (thirty-eighth run). An unchanged re-send through
+  `UpsertEntry` writes back the visibility it read, so a reviewer's
+  `SetVisibility(private|pending)` landing between the read and the write
+  is undone and the entry opens anonymously again: 91/200 and 81/200 on
+  Postgres, 46/50 against a re-send loop. The test forces the interleaving
+  with an update callback and goes green when an unchanged re-send stops
+  writing `visibility`/`approved_at`.
+- the security sweep's `suggestion_attempt_race_security_test.go` —
+  `TestCAT19_OpenHole_FailedAttemptReportRevivesARejectedSuggestion`
+  (CAT19, P2), filed 2026-09-30 (thirty-eighth run). `RecordSuggestionAttempt`
+  writes back the status and count it read, so a reject landing in between
+  is undone (47/200 on Postgres) and twelve concurrent failures leave the
+  count at 2–4, never stalled (20/20). The test forces the interleaving with
+  an update callback and goes green when the report's write is conditional
+  on the suggestion still being approved.
 
 CAT12's whole class is closed. The two reds the eleventh sweep filed
 (2026-09-27, late evening) were cleared 2026-09-29, and each test stays in
