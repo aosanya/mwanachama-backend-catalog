@@ -201,13 +201,17 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twelve tests (re-counted by the security
-sweep 2026-10-01: the integration sweep's CAT22/CAT23, the owner's own CAT27
-and the sweep's CAT29/CAT30 had joined the seven this list used to name):
+`go test ./...` is red for exactly thirteen tests (re-counted by the security
+sweep 2026-10-01T22:30Z, fifty-fourth run: the integration sweep's CAT31 had
+joined the twelve the previous count named — CAT22/CAT23, the owner's own
+CAT27 and the sweep's CAT29/CAT30 on top of the original seven):
 
 - the integration sweep's `TestCAT22_OpenBug_SearchTreatsUnderscoreAndPercentAsWildcards`
   (CAT22) and `TestCAT23_OpenBug_ConcurrentPutSettingOnANewKeyFailsInstead`
   (CAT23) — see their board rows;
+- the integration sweep's `routes/cat31_attach_status_test.go`'s
+  `TestCAT31_OpenBug_RejectedArrivalStillCountsAsAttached` (CAT31) — a
+  rejected arrival still counts as attached to a board item; see its row;
 - `routes/municipality_reports_test.go`'s `TestMUNI6_ANoteSaysWhoAnsweredIt`,
   red by the owner's own design in 92a8e28 until CAT27 (a comment's `author`
   is the module's `run`/`admin` enum) is decided;
