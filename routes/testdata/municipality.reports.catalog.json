@@ -8,55 +8,37 @@
       "role": "suggestion",
       "name": "report",
       "table": "reports",
-      "description": "One arrival: something a resident brought without being asked — a report about a thing at a place, an idea, a suggestion, an expectation or a complaint. Every arrival is its own row even when forty of them turn out to be the same thing, because the count of people is the fact that moves an item up an agenda and a merge that drops them destroys it. Its proposal document carries what, where, which ward, which theme, which channel it came on, who took it down and who it came from. The channel lives there and not in source, because source is the module's own enum of run/owner/stray and a domain may not restate a value set.",
+      "description": "One arrival: something a resident brought without being asked — a report about a thing at a place, an idea, a suggestion, an expectation or a complaint. Every arrival is its own row even when forty of them turn out to be the same thing, because the count of people is the fact that moves an item up an agenda and a merge that drops them destroys it. Its proposal document carries what, where, which ward, which theme, which channel it came on, who took it down and who it came from. The channel lives there and not in source, because source is the module’s own enum of run/owner/stray and a domain may not restate a value set.",
       "indexes": [
         {
           "name": "open",
           "description": "Everything still live, best-ranked first — the queue a moderator works down.",
-          "fields": [
-            "status",
-            "priority"
-          ]
+          "fields": ["status", "priority"]
         },
         {
           "name": "ward",
           "description": "One ward's own arrivals, which is what a councillor is asked about at every meeting and what the quarterly silence sweep counts.",
-          "path": {
-            "field": "proposal",
-            "path": "_report.ward"
-          }
+          "path": { "field": "proposal", "path": "_report.ward" }
         },
         {
           "name": "theme",
           "description": "Housing, transport, waste, safety, green space — so that what people keep raising can be followed across years rather than rediscovered each term, and so the ten most-raised themes can be put in front of whoever sets the next round.",
-          "path": {
-            "field": "proposal",
-            "path": "_report.theme"
-          }
+          "path": { "field": "proposal", "path": "_report.theme" }
         },
         {
           "name": "channel",
           "description": "Counter, phone, online, meeting, market stall or councillor. A board that only ever fills up from one channel is hearing the same few people a different way.",
-          "path": {
-            "field": "proposal",
-            "path": "_report.channel"
-          }
+          "path": { "field": "proposal", "path": "_report.channel" }
         },
         {
           "name": "taken_by",
           "description": "Who filed it where somebody filed it for the resident — the councillor or the outreach team member RU-10 requires to be named.",
-          "path": {
-            "field": "proposal",
-            "path": "_report.taken_by"
-          }
+          "path": { "field": "proposal", "path": "_report.taken_by" }
         },
         {
           "name": "due",
           "description": "The date the answer is owed, so the overdue list RU-7 promises can be read off the queue rather than assembled by hand.",
-          "path": {
-            "field": "proposal",
-            "path": "_report.answer_due"
-          }
+          "path": { "field": "proposal", "path": "_report.answer_due" }
         }
       ]
     },
@@ -69,34 +51,22 @@
         {
           "name": "board",
           "description": "The public board as residents see it: live items, most-raised first.",
-          "fields": [
-            "visibility",
-            "updated_at"
-          ]
+          "fields": ["visibility", "updated_at"]
         },
         {
           "name": "ward",
           "description": "One ward's board, which is what a councillor stands in front of.",
-          "path": {
-            "field": "doc",
-            "path": "_item.ward"
-          }
+          "path": { "field": "doc", "path": "_item.ward" }
         },
         {
           "name": "with_partner",
           "description": "Items handed to the service company and not yet closed — the list the monthly partner review is drawn from, and the council's only real check on an outsourced service.",
-          "path": {
-            "field": "doc",
-            "path": "_item.partner_reference"
-          }
+          "path": { "field": "doc", "path": "_item.partner_reference" }
         },
         {
           "name": "raised_by_count",
           "description": "How many people raised it. The board ranks on this, and it is the number a council acts on.",
-          "path": {
-            "field": "doc",
-            "path": "_item.raised_by_count"
-          }
+          "path": { "field": "doc", "path": "_item.raised_by_count" }
         }
       ]
     },
@@ -110,7 +80,7 @@
       "role": "entry_private",
       "name": "board_item_private",
       "table": "board_item_private",
-      "description": "What the council knows about a board item and no resident sees: how it was matched, the reference the service company gave it, and any note that would identify somebody. One row per item."
+      "description": "What the council knows about a board item and no resident sees: how it was matched, the reference the service company gave it, and any note that would identify somebody. One row per item, in its doc. Operator-only is not declared here — it is the mount's gate, because catalog.entry.read_private is not an anonymous action."
     },
     {
       "role": "suggestion_comment",
@@ -133,9 +103,7 @@
         {
           "name": "quarter",
           "description": "The sweeps in order, so this quarter's silence can be read against the last.",
-          "fields": [
-            "created_at"
-          ]
+          "fields": ["created_at"]
         }
       ]
     },
