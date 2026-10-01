@@ -126,6 +126,15 @@ what the section below lists.
   `additionalProperties: false` schema. Mutation-checked by letting
   `invokerFor` accept a key whose lower-cased form is declared: the `Slug`
   call then stores entry `alpha`.
+- **A search term never widens the anonymous board.**
+  `routes/public_search_security_test.go` (security sweep, 2026-10-01) seeds
+  a pending, a private and a public entry whose summaries share one word, then
+  calls `GET /public/entries` anonymously with that word, with it beside
+  `visibility=private`/`pending`, and with `%` and `_` (which CAT22 shows act
+  as wildcards). Only the public entry ever comes back. The same probe against
+  wakala-api's booted `/reports` mount answered `["pub-one:public"]` for every
+  variant. Mutation-checked by dropping `ListPublicEntries`' forced
+  visibility: ten assertions turn red.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
