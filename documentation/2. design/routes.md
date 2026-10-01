@@ -78,6 +78,14 @@ schema, so an agent is refused by name rather than ignored. A mount that
 supplies no `Caller` binds `""` — never the request's value, which is the
 point.
 
+The binding lives in the declared operation, not in the manager:
+`CatalogManager.UpsertEntry` stores whatever `SubmittedBy` it is handed. A
+host that calls the manager directly from a tool of its own gets none of
+this, and has to take the actor from its caller itself. wakala-api's
+hand-written `catalog_template_mint` does not, and stores the
+`submitted_by` its arguments claim — demonstrated 2026-10-01 and filed
+there as WK66.
+
 `ErrInvalidDocPath` is deliberately *not* in the table, because it was not in
 the old ones either — it currently falls through to 500 although it is a
 caller error. Worth a row of its own rather than a silent change here.
