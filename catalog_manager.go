@@ -147,6 +147,8 @@ type CatalogManager interface {
 	// carrying Doc.
 	ListEntries(ctx context.Context, f ListFilter) ([]Entry, error)
 
+	ListPublicEntries(ctx context.Context, f ListFilter) ([]Entry, error)
+
 	// PutPrivate writes the private parts of one Entry. Empty fields leave
 	// the stored value alone, so a caller may update the rank without
 	// resending the readme.
@@ -194,12 +196,13 @@ type CatalogManager interface {
 	// first.
 	ListSuggestionComments(ctx context.Context, id string) ([]SuggestionComment, error)
 
-	// FulfilSuggestion records that an Entry answers a proposal and marks
-	// it built.
 	FulfilSuggestion(ctx context.Context, id, slug, runID, note string) (Suggestion, error)
 
-	// ListSuggestionMatches returns the Entries answering a proposal.
+	AttachSuggestion(ctx context.Context, id, slug, note string) (SuggestionMatch, error)
+
 	ListSuggestionMatches(ctx context.Context, id string) ([]SuggestionMatch, error)
+
+	ListEntryMatches(ctx context.Context, slug string) ([]SuggestionMatch, error)
 
 	// RecordRun stores one mining run's report.
 	RecordRun(ctx context.Context, r MiningRun) (MiningRun, error)

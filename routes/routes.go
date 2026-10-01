@@ -48,6 +48,14 @@ var AnonymousActions = []string{
 type Mount struct {
 	Authorize dispatch.Authorizer
 	Caller    dispatch.Caller
+	Anonymous []string
+}
+
+func (m Mount) anonymousActions() []string {
+	if m.Anonymous == nil {
+		return AnonymousActions
+	}
+	return m.Anonymous
 }
 
 func Build(cm catalog.CatalogManager) ([]Route, error) { return BuildWith(cm, nil) }
@@ -87,13 +95,22 @@ func SplitWith(cm catalog.CatalogManager, authorize dispatch.Authorizer) dispatc
 }
 
 func SplitFor(cm catalog.CatalogManager, m Mount) dispatch.Split {
-	public := dispatch.Anonymous(Routes(cm), AnonymousActions...)
-	gated := dispatch.Anonymous(RoutesFor(cm, m), AnonymousActions...)
+	actions := m.anonymousActions()
+	ungated := Routes(cm)
+	public := dispatch.Anonymous(ungated, actions...)
+	if missing := public.Unmatched(ungated, actions); len(missing) > 0 {
+		panic(fmt.Sprintf("catalog routes: mount opens unknown action(s) to anonymous callers: %v", missing))
+	}
+	gated := dispatch.Anonymous(RoutesFor(cm, m), actions...)
 	return dispatch.Split{Anonymous: public.Anonymous, Gated: gated.Gated}
 }
 
 func PublicRoutes(cm catalog.CatalogManager) []Route {
 	return Split(cm).Anonymous
+}
+
+func PublicRoutesFor(cm catalog.CatalogManager, m Mount) []Route {
+	return SplitFor(cm, m).Anonymous
 }
 
 func OperatorRoutes(cm catalog.CatalogManager) []Route { return OperatorRoutesWith(cm, nil) }

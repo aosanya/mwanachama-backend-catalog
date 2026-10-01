@@ -215,6 +215,14 @@ func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
 	return m.retireLinksFor(ctx, slug, now)
 }
 
+func (m *catalogManager) ListPublicEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
+	f.Visibility = models.VisibilityPublic
+	if f.Limit <= 0 || f.Limit > models.MaxPublicEntryLimit {
+		f.Limit = models.MaxPublicEntryLimit
+	}
+	return m.ListEntries(ctx, f)
+}
+
 func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
 	q := m.entries(ctx).Where("deleted = ?", false)
 	if f.Visibility != "" {

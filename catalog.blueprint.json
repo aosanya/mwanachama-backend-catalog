@@ -123,6 +123,12 @@
           "description": "Position in the running order, lowest first. Zero means unranked and sorts last."
         },
         {
+          "name": "doc",
+          "type": "json",
+          "description": "The domain's own private content for this entry, as one document. A domain that is not a storefront keeps what only operators may read here, the way every other object in this module carries its own document.",
+          "matches": "json_object"
+        },
+        {
           "name": "updated_at",
           "type": "timestamp",
           "description": "When these notes were last written."

@@ -13,3 +13,5 @@ type Entry struct {
 	UpdatedAt   string     `json:"updated_at"`
 	Deleted     bool       `json:"deleted"`
 }
+
+const MaxPublicEntryLimit = 100

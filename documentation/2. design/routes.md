@@ -46,6 +46,25 @@ it is better as data:
   the public internet. Under the old four-way split a new route added to
   `EntryRoutes` inherited that group's gate — right, but by luck.
 
+**The allowlist is a default, not a ceiling.** `AnonymousActions` is what a
+mount gets when it says nothing, and `Mount.Anonymous` replaces it when a
+domain's public does more than read. The `municipality` archetype is the case
+that forced it: its reports board takes a report from any resident, on any
+channel, with no account, and publishes what was raised — so
+`catalog.suggestion.file` and `catalog.entry.list_public` are anonymous there
+and nowhere else. The host names them, which is where decision #22 already
+puts a deployment's own declarations, and the module stays ignorant of which
+domain wanted what. An action named that no operation declares panics at mount
+time rather than opening nothing quietly.
+
+**`catalog.entry.list` is not the one to open.** `ListEntries` applies a
+visibility filter only when the caller supplies one, so an anonymous caller
+omitting it would receive the pending and private rows — the exact failure the
+old `EntryRoutes` split existed to prevent. `list_public_entries` is what a
+mount opens instead: it forces `visibility = public`, ignores a caller asking
+for more, and caps the result at `models.MaxPublicEntryLimit`, because an
+anonymous listing is where a missing cap costs most.
+
 The four-way split itself was not preserved because no mount distinguished
 those three groups; all of them sat behind the same gate. Action ids leave
 room for an admin tier above an operator one without another refactor.
@@ -95,7 +114,7 @@ caller error. Worth a row of its own rather than a silent change here.
 `routes.Tools(cm)` returns the operations as tools for an AI agent, built by
 the dispatcher's
 [`Tools`](../../../mwanachama-backend-shared/documentation/2.%20design/dispatcher.md)
-from `catalog.operations.json`. Nothing here is hand-written: 24 tools, one per
+from `catalog.operations.json`. Nothing here is hand-written: 27 tools, one per
 gated operation, named from the action with its dots turned into underscores —
 `catalog.entry.upsert` becomes `catalog_entry_upsert`.
 

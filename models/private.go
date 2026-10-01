@@ -7,5 +7,6 @@ type EntryPrivate struct {
 	ModuleConfigs string `json:"module_configs,omitempty"`
 	Appeal        string `json:"appeal,omitempty"`
 	Rank          int    `json:"rank,omitempty"`
+	Doc           string `json:"doc,omitempty"`
 	UpdatedAt     string `json:"updated_at"`
 }

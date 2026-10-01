@@ -192,6 +192,39 @@ func (m *catalogManager) ListSuggestionComments(ctx context.Context, id string) 
 		roleSuggestionComment)
 }
 
+func (m *catalogManager) upsertMatch(ctx context.Context, suggestionID, slug, runID, note string) (SuggestionMatch, error) {
+	if _, err := m.findEntry(ctx, slug); err != nil {
+		return SuggestionMatch{}, err
+	}
+	match := models.SuggestionMatch{
+		SuggestionID: suggestionID, Slug: slug, RunID: runID, Note: note, MetAt: m.now(),
+	}
+	var n int64
+	if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", suggestionID, slug).
+		Count(&n).Error; err != nil {
+		return SuggestionMatch{}, err
+	}
+	if n > 0 {
+		if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", suggestionID, slug).
+			Updates(map[string]any{"run_id": runID, "note": note, "met_at": match.MetAt}).Error; err != nil {
+			return SuggestionMatch{}, err
+		}
+		return match, nil
+	}
+	if err := m.insert(ctx, roleSuggestionMatch, match); err != nil {
+		return SuggestionMatch{}, err
+	}
+	return match, nil
+}
+
+func (m *catalogManager) AttachSuggestion(ctx context.Context, id, slug, note string) (SuggestionMatch, error) {
+	existing, err := m.findSuggestion(ctx, id)
+	if err != nil {
+		return SuggestionMatch{}, err
+	}
+	return m.upsertMatch(ctx, existing.ID, slug, existing.RunID, note)
+}
+
 func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, note string) (Suggestion, error) {
 	existing, err := m.findSuggestion(ctx, id)
 	if err != nil {
@@ -202,29 +235,9 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, 
 	default:
 		return Suggestion{}, ErrSuggestionStatus
 	}
-	// The Entry has to exist, or the suggestion would be marked built with
-	// nothing answering it.
-	if _, err := m.findEntry(ctx, slug); err != nil {
+	if _, err := m.upsertMatch(ctx, existing.ID, slug, runID, note); err != nil {
 		return Suggestion{}, err
 	}
-
-	match := models.SuggestionMatch{
-		SuggestionID: existing.ID, Slug: slug, RunID: runID, Note: note, MetAt: m.now(),
-	}
-	var n int64
-	if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", existing.ID, slug).
-		Count(&n).Error; err != nil {
-		return Suggestion{}, err
-	}
-	if n > 0 {
-		if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", existing.ID, slug).
-			Updates(map[string]any{"run_id": runID, "note": note, "met_at": match.MetAt}).Error; err != nil {
-			return Suggestion{}, err
-		}
-	} else if err := m.insert(ctx, roleSuggestionMatch, match); err != nil {
-		return Suggestion{}, err
-	}
-
 	if err := m.suggestions(ctx).Where("id = ?", existing.ID).
 		Update("status", string(models.SuggestionStatusBuilt)).Error; err != nil {
 		return Suggestion{}, err
@@ -238,5 +251,14 @@ func (m *catalogManager) ListSuggestionMatches(ctx context.Context, id string) (
 	}
 	return listOf[SuggestionMatch](m,
 		m.matches(ctx).Where("suggestion_id = ?", id).Order("slug"),
+		roleSuggestionMatch)
+}
+
+func (m *catalogManager) ListEntryMatches(ctx context.Context, slug string) ([]SuggestionMatch, error) {
+	if _, err := m.findEntry(ctx, slug); err != nil {
+		return nil, err
+	}
+	return listOf[SuggestionMatch](m,
+		m.matches(ctx).Where("slug = ?", slug).Order("met_at, suggestion_id"),
 		roleSuggestionMatch)
 }
