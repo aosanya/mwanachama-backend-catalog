@@ -123,6 +123,43 @@ func TestCAT20_OpenBug_RankCannotReturnToUnranked(t *testing.T) {
 	}
 }
 
+func TestCAT24_OpenBug_ClearingReadmeSalesAppealOrModuleConfigsIsImpossible(t *testing.T) {
+	cm, ctx := newManager(t)
+	seed(t, cm, ctx, "agency-one", catalog.VisibilityPending)
+
+	if _, err := cm.PutPrivate(ctx, catalog.EntryPrivate{
+		Slug: "agency-one", Readme: "the readme", Sales: "the sales pitch",
+		Appeal: "the appeal", ModuleConfigs: configs,
+	}); err != nil {
+		t.Fatalf("first put: %v", err)
+	}
+
+	got, err := cm.PutPrivate(ctx, catalog.EntryPrivate{Slug: "agency-one"})
+	if err != nil {
+		t.Fatalf("second put: %v", err)
+	}
+	if got.Readme != "" {
+		t.Errorf("CAT24 open bug: PutPrivate with Readme omitted returned Readme = %q, want \"\" — an operator who wants to remove a readme has no way to ask for that, since an empty Readme is indistinguishable from an omitted one in private.go's merge (`if p.Readme != \"\"`)", got.Readme)
+	}
+	if got.Sales != "" {
+		t.Errorf("CAT24 open bug: Sales = %q, want \"\" — same merge shape blocks clearing Sales", got.Sales)
+	}
+	if got.Appeal != "" {
+		t.Errorf("CAT24 open bug: Appeal = %q, want \"\" — same merge shape blocks clearing Appeal", got.Appeal)
+	}
+	if got.ModuleConfigs != "" {
+		t.Errorf("CAT24 open bug: ModuleConfigs = %q, want \"\" — same merge shape blocks clearing ModuleConfigs", got.ModuleConfigs)
+	}
+
+	reread, err := cm.GetPrivate(ctx, "agency-one")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if reread.Readme != "" || reread.Sales != "" || reread.Appeal != "" || reread.ModuleConfigs != "" {
+		t.Errorf("CAT24 open bug: re-read still holds the stale values Readme=%q Sales=%q Appeal=%q ModuleConfigs=%q after a caller asked to clear all four", reread.Readme, reread.Sales, reread.Appeal, reread.ModuleConfigs)
+	}
+}
+
 func TestPutPrivate_UnknownEntry(t *testing.T) {
 	cm, ctx := newManager(t)
 	if _, err := cm.PutPrivate(ctx, catalog.EntryPrivate{Slug: "no-such-agency", Readme: "x"}); !errors.Is(err, catalog.ErrEntryNotFound) {
