@@ -201,7 +201,27 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly seven tests:
+`go test ./...` is red for exactly twelve tests (re-counted by the security
+sweep 2026-10-01: the integration sweep's CAT22/CAT23, the owner's own CAT27
+and the sweep's CAT29/CAT30 had joined the seven this list used to name):
+
+- the integration sweep's `TestCAT22_OpenBug_SearchTreatsUnderscoreAndPercentAsWildcards`
+  (CAT22) and `TestCAT23_OpenBug_ConcurrentPutSettingOnANewKeyFailsInstead`
+  (CAT23) — see their board rows;
+- `routes/municipality_reports_test.go`'s `TestMUNI6_ANoteSaysWhoAnsweredIt`,
+  red by the owner's own design in 92a8e28 until CAT27 (a comment's `author`
+  is the module's `run`/`admin` enum) is decided;
+- the security sweep's `routes/public_filing_security_test.go` —
+  `TestCAT29_OpenHole_AnonymousFilerSetsItsOwnQueuePriorityAndSource` (CAT29,
+  P1) and `TestCAT30_OpenHole_AnonymousFilingTellsAHiddenBoardItemFromAMissingSlug`
+  (CAT30, P1), filed 2026-10-01 (fifty-third run). Once a mount opens
+  `catalog.suggestion.file` to the public, an anonymous filer keeps the
+  `priority` (jumping the moderator queue at −2³¹), `source: owner` and
+  `run_id` it sent, and the dedup answers `409` for a pending or private
+  entry's slug where a free one gets `201` — the enumeration `open_entry`
+  deliberately hides. Both were first shown through `mwanachama-wakala-api`'s
+  booted `/reports` mount and go green when an anonymous filing keeps
+  neither field and answers every collision like a free slug;
 
 - the integration sweep's `TestCAT10_OpenBug_ListEntriesHasNoDefaultCap`
   (CAT10) in the root package;
