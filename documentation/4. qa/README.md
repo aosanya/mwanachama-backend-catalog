@@ -89,6 +89,17 @@ what the section below lists.
   2 MiB comment body — CAT10's unbounded-list class behind the
   `catalog.suggestion.comment` action; a mounting host's body cap is the only
   bound.
+- **The same holds whatever case the keys are spelled in.**
+  `routes/suggestion_forged_fields_key_case_security_test.go` (security sweep,
+  2026-10-02) files anonymously on the municipality mount with `Status`,
+  `ATTEMPTS`, `Id`, `Created_At` and `DECIDED_AT`. The whole body decodes
+  through `encoding/json`, which matches field names case-insensitively, so
+  these reach the struct exactly as the lowercase spellings do; the filing
+  still reads back `proposed`, with no attempts, no decision, and the server's
+  id and clock, because `FileSuggestion` overwrites every one rather than
+  relying on a key being absent. Mutation-checked by letting a non-empty
+  status through `FileSuggestion`. Probed first through wakala-api's booted
+  `/reports/suggestions`.
 - **Every gated door asks for its own action before it acts.**
   `routes/deny_all_security_test.go` (security sweep, 2026-09-29) mounts every
   gated operation twice — as a REST route through `OperatorRoutesFor` and as
