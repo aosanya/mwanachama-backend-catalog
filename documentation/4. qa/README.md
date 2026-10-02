@@ -210,10 +210,18 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly thirteen tests (re-counted by the security
-sweep 2026-10-01T22:30Z, fifty-fourth run: the integration sweep's CAT31 had
-joined the twelve the previous count named — CAT22/CAT23, the owner's own
-CAT27 and the sweep's CAT29/CAT30 on top of the original seven):
+`go test ./...` is red for exactly fourteen tests (re-counted by the security
+sweep 2026-10-02T04:20Z, fifty-seventh run, which added CAT32 to the thirteen
+the fifty-fourth run counted — CAT31, CAT22/CAT23, the owner's own CAT27 and
+the sweep's CAT29/CAT30 on top of the original seven):
+
+- the security sweep's `routes/run_list_cost_security_test.go`'s
+  `TestCAT32_OpenHole_OneCallerGrowsTheRunListAnswerWithoutBound` (CAT32, P2),
+  filed 2026-10-02. `POST /runs` stores a summary of any size up to the
+  mount's request cap and `GET /runs` with no `limit` answers every run, so
+  one caller's writes make a single read arbitrarily large — 200 reports in
+  1.4 s made one `GET /catalog/runs` on wakala-api answer 180 MB. Goes green
+  once the default answer is bounded, by a default page, a summary cap or both;
 
 - the integration sweep's `TestCAT22_OpenBug_SearchTreatsUnderscoreAndPercentAsWildcards`
   (CAT22) and `TestCAT23_OpenBug_ConcurrentPutSettingOnANewKeyFailsInstead`
