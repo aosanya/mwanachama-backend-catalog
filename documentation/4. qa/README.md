@@ -210,11 +210,32 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly fourteen tests (re-counted by the security
-sweep 2026-10-02T04:20Z, fifty-seventh run, which added CAT32 to the thirteen
-the fifty-fourth run counted — CAT31, CAT22/CAT23, the owner's own CAT27 and
-the sweep's CAT29/CAT30 on top of the original seven):
+`go test ./...` is red for exactly seventeen tests (re-counted by the
+integration sweep 2026-10-02, which added CAT33/CAT34 (widening CAT17/18/19/23's
+read-then-write class into `PutPrivate`) and CAT35 (widening CAT18 itself to
+the opposite, approval, direction) to the fourteen the security sweep's
+fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
+counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
+sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `entry_approval_race_test.go`'s
+  `TestCAT35_OpenBug_UnchangedResendUndoesAReviewersApproval` (CAT35), filed
+  2026-10-02. The reverse of CAT18 below: a resend of a pending Entry's
+  unchanged document writes back the pre-approval `visibility`/`approved_at`
+  it read, so a reviewer's concurrent `SetVisibility(public)` (the approval)
+  is undone — the entry reverts to pending with `approved_at` erased and stops
+  opening anonymously, even though both calls answered success. Goes green
+  together with CAT18, from the same fix (`UpsertEntry`/`replaceEntry`
+  conditioning its write on the row it read rather than a stale snapshot);
+- the integration sweep's `private_race_test.go`'s
+  `TestCAT33_OpenBug_ConcurrentPutPrivateOnDifferentFieldsLosesOne` (CAT33)
+  and `private_insert_race_test.go`'s
+  `TestCAT34_OpenBug_ConcurrentPutPrivateOnANewSlugFailsInstead` (CAT34),
+  filed 2026-10-02, widening CAT17/CAT18/CAT19/CAT23's read-then-write class
+  into `PutPrivate`: two concurrent writers setting different private fields
+  on the same Entry lose one writer's field (CAT33), and two concurrent
+  first-time writers on a new slug surface a raw constraint error instead of
+  both succeeding (CAT34, the same shape as CAT23). See their board rows;
 - the security sweep's `routes/run_list_cost_security_test.go`'s
   `TestCAT32_OpenHole_OneCallerGrowsTheRunListAnswerWithoutBound` (CAT32, P2),
   filed 2026-10-02. `POST /runs` stores a summary of any size up to the
