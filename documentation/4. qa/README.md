@@ -221,19 +221,33 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly nineteen tests (re-counted by the
-integration sweep 2026-10-02, second pass, which added CAT37 — a deleted
-Entry's slug is sterilised forever by an unconditional unique constraint
-even though every read already reports it free — on top of the eighteen the
-same day's first pass counted: CAT36 (`UpdateEntry` reaches no declared
-operation and clobbers a moderator's approval with no race needed) on top
-of CAT33/CAT34 (widening CAT17/18/19/23's read-then-write class into
+`go test ./...` is red for exactly twenty tests (re-counted by the
+integration sweep 2026-10-02, third pass, which added CAT38 — `decide_suggestion`
+cannot lower a suggestion's priority to zero or below once it has held a
+positive one — on top of the nineteen the same day's second pass counted:
+CAT37, a deleted Entry's slug sterilised forever by an unconditional unique
+constraint even though every read already reports it free — on top of the
+eighteen the same day's first pass counted: CAT36 (`UpdateEntry` reaches no
+declared operation and clobbers a moderator's approval with no race needed)
+on top of CAT33/CAT34 (widening CAT17/18/19/23's read-then-write class into
 `PutPrivate`) and CAT35 (widening CAT18 itself to the opposite, approval,
 direction), themselves on top of the fourteen the security sweep's
 fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `suggestion_priority_floor_test.go`'s
+  `TestCAT38_OpenBug_DecideSuggestionCannotLowerPriorityToZeroOrBelow`
+  (CAT38), filed 2026-10-02, widening CAT20's "zero overloaded as omitted"
+  class to a second field on a second object: `suggestion.priority` is a
+  plain int with no declared minimum, ordered lowest-first, but
+  `DecideSuggestion`'s `if priority > 0 { updates["priority"] = priority }`
+  (`suggestion.go`) silently drops a caller's `0` or negative value instead
+  of writing it — the only declared operation that can change a filed
+  suggestion's priority can never move one to the front of the queue once
+  it has held any positive value. Goes green once `DecideSuggestion` can
+  tell "the caller omitted priority" apart from "the caller asked for 0 or
+  lower";
 - the integration sweep's `entry_delete_slugreuse_test.go`'s
   `TestCAT37_OpenBug_DeletedEntrySlugCanNeverBeReused` (CAT37), filed
   2026-10-02. `DeleteEntry` only sets `deleted = true`; `entry.slug`'s
