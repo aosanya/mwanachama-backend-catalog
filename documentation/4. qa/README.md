@@ -221,16 +221,32 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly eighteen tests (re-counted by the
-integration sweep 2026-10-02, which added CAT36 (`UpdateEntry` reaches no
-declared operation and clobbers a moderator's approval with no race needed)
-on top of CAT33/CAT34 (widening CAT17/18/19/23's read-then-write class into
+`go test ./...` is red for exactly nineteen tests (re-counted by the
+integration sweep 2026-10-02, second pass, which added CAT37 — a deleted
+Entry's slug is sterilised forever by an unconditional unique constraint
+even though every read already reports it free — on top of the eighteen the
+same day's first pass counted: CAT36 (`UpdateEntry` reaches no declared
+operation and clobbers a moderator's approval with no race needed) on top
+of CAT33/CAT34 (widening CAT17/18/19/23's read-then-write class into
 `PutPrivate`) and CAT35 (widening CAT18 itself to the opposite, approval,
 direction), themselves on top of the fourteen the security sweep's
 fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `entry_delete_slugreuse_test.go`'s
+  `TestCAT37_OpenBug_DeletedEntrySlugCanNeverBeReused` (CAT37), filed
+  2026-10-02. `DeleteEntry` only sets `deleted = true`; `entry.slug`'s
+  `unique: true` is a plain, unconditional field-level constraint, so the
+  soft-deleted row keeps the slug forever even though `GetEntry`/
+  `OpenEntry`/`ListEntries` all already report it free. `UpsertEntry` — the
+  only Entry-creating operation this module declares — falls through to
+  `CreateEntry` on that same slug and collides with the invisible row,
+  answering `ErrEntryExists` (`409` over `PUT /entries/{slug}`) on a slug
+  every read says is open. Goes green once `entry.slug`'s uniqueness moves
+  from the field onto a declared index with `not_deleted: true` — the
+  mechanism `mwanachama-backend-shared/spec`'s `Index.NotDeleted` already
+  ships, unused here;
 - the integration sweep's `entry_update_unreachable_test.go`'s
   `TestCAT36_OpenBug_UpdateEntryHasNoOperationAndClobbersAModeratorsApproval`
   (CAT36), filed 2026-10-02. `UpdateEntry` is exported on `CatalogManager`
