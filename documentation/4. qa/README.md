@@ -42,6 +42,15 @@ what the section below lists.
 - **Two domains in one database**: `TestTwoDomainsCoexist` migrates both
   example specs into one database; `TestMigrateIsIdempotent` runs a migration
   twice.
+- **A visibility a domain adds stays closed to anonymous readers.**
+  `widened_visibility_security_test.go` (security sweep, 2026-10-02) widens
+  the blueprint's `visibility` values with `embargoed` — the S37 widening a
+  domain spec is allowed — sets an entry to it, and asserts it opens for
+  neither a keyless nor a keyed reader (the same `ErrEntryNotFound` text as a
+  missing slug), never appears in `ListPublicEntries`, and cannot be given a
+  share key. `OpenEntry` is an allow-list (`public` opens, `private` opens
+  with a live key, anything else is not found); mutation-checked by turning
+  its `default` arm into "open", which turns the test red.
 - **The anonymous page-view door cannot grow its table.**
   `routes/pageview_cost_security_test.go` (security sweep, 2026-09-28) sends
   800 anonymous `POST /page-views` across 402 distinct slugs — never-filed
