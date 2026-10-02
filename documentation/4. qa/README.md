@@ -221,14 +221,26 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly seventeen tests (re-counted by the
-integration sweep 2026-10-02, which added CAT33/CAT34 (widening CAT17/18/19/23's
-read-then-write class into `PutPrivate`) and CAT35 (widening CAT18 itself to
-the opposite, approval, direction) to the fourteen the security sweep's
+`go test ./...` is red for exactly eighteen tests (re-counted by the
+integration sweep 2026-10-02, which added CAT36 (`UpdateEntry` reaches no
+declared operation and clobbers a moderator's approval with no race needed)
+on top of CAT33/CAT34 (widening CAT17/18/19/23's read-then-write class into
+`PutPrivate`) and CAT35 (widening CAT18 itself to the opposite, approval,
+direction), themselves on top of the fourteen the security sweep's
 fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `entry_update_unreachable_test.go`'s
+  `TestCAT36_OpenBug_UpdateEntryHasNoOperationAndClobbersAModeratorsApproval`
+  (CAT36), filed 2026-10-02. `UpdateEntry` is exported on `CatalogManager`
+  but no operation in `catalog.operations.json` calls it, and unlike
+  `UpsertEntry` it never carries the existing row's `Visibility`/`ApprovedAt`
+  forward before its whole-row `replaceEntry` write — a caller holding an
+  earlier `GetEntry` snapshot silently undoes a moderator's already-committed
+  `SetVisibility`, sequentially, with no concurrency needed. Goes green once
+  `UpdateEntry` either merges those two fields the way `UpsertEntry` does or
+  is removed as unreachable;
 - the integration sweep's `entry_approval_race_test.go`'s
   `TestCAT35_OpenBug_UnchangedResendUndoesAReviewersApproval` (CAT35), filed
   2026-10-02. The reverse of CAT18 below: a resend of a pending Entry's
