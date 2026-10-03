@@ -89,6 +89,16 @@ what the section below lists.
   2 MiB comment body — CAT10's unbounded-list class behind the
   `catalog.suggestion.comment` action; a mounting host's body cap is the only
   bound.
+- **A deleted entry's private notes never reach a later entry at its slug.**
+  `deleted_slug_private_security_test.go` (security sweep, 2026-10-03) writes
+  notes on a private entry, deletes it, and holds that `GetPrivate` answers
+  `ErrEntryNotFound` and that whatever re-using the slug does — today
+  `ErrEntryExists`, which is CAT37's open bug; after its fix, a fresh entry —
+  the old notes are not read back. The notes row is keyed by slug and
+  survives the soft delete, so `GetPrivate`'s `findEntry` check is the whole
+  control. Mutation-checked by dropping that check: the deleted entry's notes
+  come back. Probed first through wakala-api's booted `/catalog` mount
+  (`DELETE` → `204`, `GET …/private` → `404`, `PUT` the same slug → `409`).
 - **The same holds whatever case the keys are spelled in.**
   `routes/suggestion_forged_fields_key_case_security_test.go` (security sweep,
   2026-10-02) files anonymously on the municipality mount with `Status`,
