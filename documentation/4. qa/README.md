@@ -231,8 +231,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty tests (re-counted by the
-integration sweep 2026-10-02, third pass, which added CAT38 — `decide_suggestion`
+`go test ./...` is red for exactly twenty-one tests (re-counted by the
+integration sweep 2026-10-03, which added CAT39 — `UpsertEntry`'s
+changed-document path can leave `private` without retiring any of its share
+keys, no race needed — on top of the twenty the 2026-10-02 third pass counted,
+which added CAT38 — `decide_suggestion`
 cannot lower a suggestion's priority to zero or below once it has held a
 positive one — on top of the nineteen the same day's second pass counted:
 CAT37, a deleted Entry's slug sterilised forever by an unconditional unique
@@ -246,6 +249,17 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `entry_upsert_leaves_private_test.go`'s
+  `TestCAT39_OpenBug_UpsertLeavingPrivateNeverRetiresItsKeys` (CAT39), filed
+  2026-10-03, widening CAT17's "leaving private must retire every live key"
+  invariant off its race-only door: `SetVisibility`/`DeleteEntry` both call
+  `retireLinksFor` when an Entry leaves `private`, but `UpsertEntry`'s
+  changed-document branch forces the same transition straight through
+  `replaceEntry` and calls neither — a plain, sequential document re-import
+  on a private Entry, with no timing window at all, leaves every key issued
+  under the old review live, ready to open the entry again the next time it
+  is made private. Goes green once `UpsertEntry` retires links on the same
+  branch that forces `VisibilityPending`;
 - the integration sweep's `suggestion_priority_floor_test.go`'s
   `TestCAT38_OpenBug_DecideSuggestionCannotLowerPriorityToZeroOrBelow`
   (CAT38), filed 2026-10-02, widening CAT20's "zero overloaded as omitted"
