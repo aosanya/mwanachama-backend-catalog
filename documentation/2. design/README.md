@@ -2,7 +2,7 @@
 
 The org-wide shape this module is the first to take is written up one level
 up, in
-[architecture-spec-driven-modules.md](../../../developer/documentation/2.%20design/architecture-spec-driven-modules.md).
+[architecture-spec-driven-modules.md](../../../mwanachama-developer/documentation/2.%20design/architecture-spec-driven-modules.md).
 This page records only what is true of this repo today.
 
 ## Objects are declared, not written

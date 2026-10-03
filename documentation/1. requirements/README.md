@@ -53,7 +53,7 @@ Supabase Auth's `auth.users`. This module has no auth model, matching
 assetmanager: a route still needs a capability gate wrapped around it by
 whatever mounts it, and the role→action grant table belongs in
 `mwanachama-backend-auth` — see
-[architecture-spec-driven-modules.md](../../../developer/documentation/2.%20design/architecture-spec-driven-modules.md)
+[architecture-spec-driven-modules.md](../../../mwanachama-developer/documentation/2.%20design/architecture-spec-driven-modules.md)
 §5.
 
 ## Where the product decisions are taken
