@@ -124,6 +124,17 @@ what the section below lists.
   `handlerFor`'s gate for `catalog.setting.write` (`PUT /settings/k` answered
   `200` and wrote the setting) and `invokerFor`'s for `catalog.run.record` in
   `mwanachama-backend-shared/dispatch`.
+- **A re-send cannot smuggle a changed document past its review.**
+  `routes/doc_resend_review_security_test.go` (security sweep, 2026-10-04)
+  re-sends a published entry's document over `PUT /entries/{slug}`: reordered
+  and respaced it stays on the anonymous read; carrying a second JSON value
+  after the reviewed one it is refused `400` and the stored document and
+  visibility are untouched; with a key differing only in case, or a number
+  written `1.0`, it returns to pending (`404` anonymously). `sameDocument`
+  canonicalises with a streaming decoder that would ignore trailing data, so
+  what holds the line is `isJSONObject`'s `json.Unmarshal` in `patterns.go`.
+  Mutation-checked by swapping it for a `json.Decoder` — the trailing-data
+  case goes red.
 - **A flood of repeated statuses that breaks the store names nothing about it.**
   `routes/repeated_status_flood_security_test.go` (security sweep,
   2026-09-29) sends `GET /suggestions` with `status=proposed` repeated 40,000
@@ -231,8 +242,10 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-two tests (re-counted by the
-security sweep's eighty-first run 2026-10-04, which added CAT40 — every
+`go test ./...` is red for exactly twenty-three tests (re-counted by the
+security sweep's eighty-fifth run 2026-10-04, which added CAT41 — an
+anonymous `GET /public/entries` takes any number of stacked `docs` filters —
+on top of the twenty-two the eighty-first run counted, which added CAT40 — every
 anonymous read of a public or keyed entry, and the public listing, hands the
 reader the writing operator's `submitted_by` — on top of the twenty-one the
 integration sweep counted 2026-10-03, which added CAT39 — `UpsertEntry`'s
@@ -316,6 +329,13 @@ sweep's CAT29/CAT30 on top of the original seven):
   on the same Entry lose one writer's field (CAT33), and two concurrent
   first-time writers on a new slug surface a raw constraint error instead of
   both succeeding (CAT34, the same shape as CAT23). See their board rows;
+- the security sweep's `routes/public_doc_filter_cost_security_test.go`'s
+  `TestCAT41_OpenHole_AnonymousListingTakesUnboundedDocFilters` (CAT41, P2),
+  filed 2026-10-04. `ListEntries` adds one `Where` per `docs=` filter with
+  no cap, so an anonymous request carrying 13,000 of them (inside the 1 MiB
+  header limit) costs ~800 ms against ~0.15 ms for one and is answered
+  `500`. Goes green once a listing refuses more than a handful of document
+  filters with a `400` before the query is built;
 - the security sweep's `routes/public_read_writer_security_test.go`'s
   `TestCAT40_OpenHole_AnonymousReadCarriesTheWritersIdentity` (CAT40, P3),
   filed 2026-10-04. `OpenEntry` and `ListPublicEntries` return the whole
