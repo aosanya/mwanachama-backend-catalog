@@ -231,8 +231,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-one tests (re-counted by the
-integration sweep 2026-10-03, which added CAT39 — `UpsertEntry`'s
+`go test ./...` is red for exactly twenty-two tests (re-counted by the
+security sweep's eighty-first run 2026-10-04, which added CAT40 — every
+anonymous read of a public or keyed entry, and the public listing, hands the
+reader the writing operator's `submitted_by` — on top of the twenty-one the
+integration sweep counted 2026-10-03, which added CAT39 — `UpsertEntry`'s
 changed-document path can leave `private` without retiring any of its share
 keys, no race needed — on top of the twenty the 2026-10-02 third pass counted,
 which added CAT38 — `decide_suggestion`
@@ -313,6 +316,13 @@ sweep's CAT29/CAT30 on top of the original seven):
   on the same Entry lose one writer's field (CAT33), and two concurrent
   first-time writers on a new slug surface a raw constraint error instead of
   both succeeding (CAT34, the same shape as CAT23). See their board rows;
+- the security sweep's `routes/public_read_writer_security_test.go`'s
+  `TestCAT40_OpenHole_AnonymousReadCarriesTheWritersIdentity` (CAT40, P3),
+  filed 2026-10-04. `OpenEntry` and `ListPublicEntries` return the whole
+  Entry, so `GET /entries/{slug}` and `GET /public/entries` carry
+  `submitted_by` — on wakala-api, the internal subject of the operator who
+  wrote it — to a reader with no account. Goes green once the anonymous view
+  drops `SubmittedBy` the way the listing already drops `Doc`;
 - the security sweep's `routes/run_list_cost_security_test.go`'s
   `TestCAT32_OpenHole_OneCallerGrowsTheRunListAnswerWithoutBound` (CAT32, P2),
   filed 2026-10-02. `POST /runs` stores a summary of any size up to the
