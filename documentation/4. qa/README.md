@@ -135,6 +135,17 @@ what the section below lists.
   what holds the line is `isJSONObject`'s `json.Unmarshal` in `patterns.go`.
   Mutation-checked by swapping it for a `json.Decoder` — the trailing-data
   case goes red.
+- **A share key opens only its own entry, in its exact spelling, while live.**
+  `routes/sharelink_key_exactness_security_test.go` (security sweep,
+  2026-10-04) issues a key for private `alpha` and opens `/entries/alpha?k=`
+  with it (`200`), then sends it against a second private entry, upper-cased,
+  space-padded either side, NUL-suffixed, truncated by one character, under
+  an upper-cased slug, and second behind a wrong `k` (the dispatcher binds the
+  first): every one is the same `404` a missing slug answers. A retired key,
+  and a key issued before its entry left private and came back, are refused
+  the same way. `open_entry` declares no MCP tool, so REST is its only door.
+  Mutation-checked by dropping the `slug = ?` predicate from `keyOpens` — the
+  second-entry case answers `200`.
 - **A flood of repeated statuses that breaks the store names nothing about it.**
   `routes/repeated_status_flood_security_test.go` (security sweep,
   2026-09-29) sends `GET /suggestions` with `status=proposed` repeated 40,000
