@@ -146,6 +146,18 @@ what the section below lists.
   the same way. `open_entry` declares no MCP tool, so REST is its only door.
   Mutation-checked by dropping the `slug = ?` predicate from `keyOpens` — the
   second-entry case answers `200`.
+- **A required body argument left out is refused and changes nothing.**
+  `routes/required_body_absent_security_test.go` (security sweep,
+  2026-10-05) posts `{}` to every operation declaring a `required` body
+  argument — `set_visibility`, `decide_suggestion`,
+  `record_suggestion_attempt`, `fulfil_suggestion`, `comment_on_suggestion`,
+  `attach_suggestion`, `record_page_view` — and each answers a 4xx, leaving
+  the public entry public and the approved suggestion's status, attempts,
+  priority and comments untouched. The dispatcher does not enforce
+  `required` on HTTP (shared's S35), so each refusal is the manager's own;
+  the same omission strips a role in `mwanachama-backend-permissions` (PM14).
+  Mutation-checked by dropping `RecordSuggestionAttempt`'s comment check —
+  the attempt is counted and a blank comment stored.
 - **A flood of repeated statuses that breaks the store names nothing about it.**
   `routes/repeated_status_flood_security_test.go` (security sweep,
   2026-09-29) sends `GET /suggestions` with `status=proposed` repeated 40,000
