@@ -155,6 +155,16 @@ what the section below lists.
   past the way it would past `routes_test.go`'s check on the name
   `key_hash`. Mutation-checked by tagging `ShareLink.KeyHash` `json:"kh"` —
   the link listing goes red on both hashes.
+- **An upsert body never publishes its own entry.**
+  `routes/upsert_review_fields_security_test.go` (security sweep,
+  2026-10-05) sends `PUT /entries/forged` claiming `visibility: "public"`,
+  `Visibility: "public"` and a 2000 `approved_at`: each lands `pending` and
+  unapproved, opens anonymously as `404` and stays off `/public/entries`.
+  Once published through `set_visibility`, a changed document still
+  claiming `public` drops back off the anonymous listing. The
+  `catalog_entry_upsert` tool refuses both arguments by name and writes
+  nothing. Mutation-checked by letting `UpsertEntry` keep a non-empty body
+  visibility on a new entry — the anonymous open answers `200`.
 - **A required body argument left out is refused and changes nothing.**
   `routes/required_body_absent_security_test.go` (security sweep,
   2026-10-05) posts `{}` to every operation declaring a `required` body
