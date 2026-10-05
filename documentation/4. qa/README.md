@@ -146,6 +146,15 @@ what the section below lists.
   the same way. `open_entry` declares no MCP tool, so REST is its only door.
   Mutation-checked by dropping the `slug = ?` predicate from `keyOpens` — the
   second-entry case answers `200`.
+- **No read answer carries a share key or its stored hash, under any name.**
+  `routes/sharelink_hash_value_security_test.go` (security sweep,
+  2026-10-05) issues two keys for private `alpha`, opens it with the first,
+  then reads `/entries/alpha/links`, a keyed `/entries/alpha?k=`,
+  `/entries` and `/entries/alpha/private` and looks for each key and for the
+  hex SHA-256 the store keeps — the *value*, so a renamed field cannot slip
+  past the way it would past `routes_test.go`'s check on the name
+  `key_hash`. Mutation-checked by tagging `ShareLink.KeyHash` `json:"kh"` —
+  the link listing goes red on both hashes.
 - **A required body argument left out is refused and changes nothing.**
   `routes/required_body_absent_security_test.go` (security sweep,
   2026-10-05) posts `{}` to every operation declaring a `required` body
