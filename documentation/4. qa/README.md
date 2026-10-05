@@ -59,6 +59,14 @@ what the section below lists.
   each at 200. The live probe that prompted it: 6,000 anonymous calls in
   428 ms, `204`×4,000 / `404`×2,000, two rows. Mutation-checked by removing
   `RecordPageView`'s index-slug normalisation.
+- **An oversized slug on the anonymous doors reads as a missing one.**
+  `routes/oversized_slug_security_test.go` (security sweep, 2026-10-05) sends
+  1 KB, 100 KB and 900 KB slugs to `GET /entries/{slug}` and `POST
+  /page-views` (entry and index) and asserts each answers byte-for-byte what a
+  never-filed slug does and leaves only the one slug-less index counter. The
+  `slug` pattern bounds no length, so the host's 1 MiB body cap is the only
+  ceiling; the probe measured ~30 ms at 900 KB, linear, no row growth.
+  Mutation-checked by removing `RecordPageView`'s index-slug normalisation.
 - **A malformed `limit` never reaches the store.**
   `routes/runs_limit_security_test.go` (security sweep, 2026-09-28) sends
   `GET /runs?limit=` with an overflowing integer, `abc`, `1e3` and a NUL, and
