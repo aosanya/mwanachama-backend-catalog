@@ -162,6 +162,17 @@ what the section below lists.
   key (`200`) and looks for both strings in the answer: neither appears —
   the label stays on `/entries/{slug}/links` and the notes on
   `/entries/{slug}/private`, both operator doors. Not mutation-checked.
+- **A deleted entry is gone from every door, and a re-send revives nothing.**
+  `routes/deleted_entry_doors_security_test.go` (security sweep,
+  2026-10-05) gives `blocked-drain` private notes, a share key and an
+  approval, deletes it, and walks eight operator doors (each `404`) and
+  three anonymous ones — plain open, keyed open with the pre-delete key,
+  page view — each answering byte-for-byte what a never-filed slug does.
+  A re-`PUT` of the unchanged document is accepted only as a fresh
+  `pending` entry with no approval or notes carried across (today it is
+  `409`, the integration sweep's CAT37), and the old key never opens it.
+  Mutation-checked by making `DeleteEntry` leave `deleted` false — thirteen
+  assertions go red.
 - **An upsert body never publishes its own entry.**
   `routes/upsert_review_fields_security_test.go` (security sweep,
   2026-10-05) sends `PUT /entries/forged` claiming `visibility: "public"`,
