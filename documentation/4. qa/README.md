@@ -155,6 +155,13 @@ what the section below lists.
   past the way it would past `routes_test.go`'s check on the name
   `key_hash`. Mutation-checked by tagging `ShareLink.KeyHash` `json:"kh"` —
   the link listing goes red on both hashes.
+- **A keyed anonymous open carries no operator-only text.**
+  `routes/keyed_open_operator_text_security_test.go` (security sweep,
+  2026-10-05) writes private notes on private `private-one`, issues it a
+  share link whose label names its recipient, opens it anonymously with the
+  key (`200`) and looks for both strings in the answer: neither appears —
+  the label stays on `/entries/{slug}/links` and the notes on
+  `/entries/{slug}/private`, both operator doors. Not mutation-checked.
 - **An upsert body never publishes its own entry.**
   `routes/upsert_review_fields_security_test.go` (security sweep,
   2026-10-05) sends `PUT /entries/forged` claiming `visibility: "public"`,
