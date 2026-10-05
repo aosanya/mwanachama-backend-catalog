@@ -165,6 +165,19 @@ what the section below lists.
   `catalog_entry_upsert` tool refuses both arguments by name and writes
   nothing. Mutation-checked by letting `UpsertEntry` keep a non-empty body
   visibility on a new entry — the anonymous open answers `200`.
+- **Two mounts of one instance never reach each other's rows.**
+  `routes/cross_mount_isolation_security_test.go` (security sweep,
+  2026-10-05) migrates the agency storefront and the municipality reports
+  board into one database under the same instance, `wakala` — the shape
+  `mwanachama-wakala-api` deploys `/catalog` and `/reports` in. A public
+  entry, a share-keyed private entry, a setting and a page view written
+  through the storefront are invisible to every board door, including
+  delete, retire and the anonymous public listing; a report filed on the
+  board is invisible to the storefront's suggestion reads and decide.
+  `page_view` is the one object both domains name alike, so the mount
+  segment is all that keeps that table apart. Mutation-checked by giving
+  both specs the default mount: the board's `GET /page-views` then lists
+  the storefront's `alpha`.
 - **A required body argument left out is refused and changes nothing.**
   `routes/required_body_absent_security_test.go` (security sweep,
   2026-10-05) posts `{}` to every operation declaring a `required` body
