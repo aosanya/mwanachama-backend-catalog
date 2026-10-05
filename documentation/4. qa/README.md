@@ -178,6 +178,17 @@ what the section below lists.
   segment is all that keeps that table apart. Mutation-checked by giving
   both specs the default mount: the board's `GET /page-views` then lists
   the storefront's `alpha`.
+- **An anonymous search never widens the public listing past moderation.**
+  `routes/public_search_moderation_security_test.go` (security sweep,
+  2026-10-05) seeds a published card beside a pending, a private and a
+  published-then-deleted report whose names and summaries carry a marker,
+  then searches `/public/entries` anonymously for each marker and for
+  words all three share, with and without a `visibility` query. Only the
+  published card ever comes back. `ListEntries` writes its search as one
+  `LOWER(name) LIKE ? OR LOWER(summary) LIKE ?` clause, which GORM
+  parenthesises against `deleted` and `visibility`; mutation-checked by
+  splitting it into `.Where(…).Or(…)`, which lists all three unpublished
+  reports to an anonymous `?search=summary`.
 - **A required body argument left out is refused and changes nothing.**
   `routes/required_body_absent_security_test.go` (security sweep,
   2026-10-05) posts `{}` to every operation declaring a `required` body
