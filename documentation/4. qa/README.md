@@ -308,8 +308,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-three tests (re-counted by the
-security sweep's eighty-fifth run 2026-10-04, which added CAT41 — an
+`go test ./...` is red for exactly twenty-four tests (re-counted by the
+security sweep's ninety-fourth run 2026-10-05, which added CAT42 — a re-sent
+unchanged `doc` with a new `name` or `summary` keeps an entry's approval, so
+the anonymous card changes unreviewed — on top of the twenty-three the
+eighty-fifth run counted 2026-10-04, which added CAT41 — an
 anonymous `GET /public/entries` takes any number of stacked `docs` filters —
 on top of the twenty-two the eighty-first run counted, which added CAT40 — every
 anonymous read of a public or keyed entry, and the public listing, hands the
@@ -395,6 +398,12 @@ sweep's CAT29/CAT30 on top of the original seven):
   on the same Entry lose one writer's field (CAT33), and two concurrent
   first-time writers on a new slug surface a raw constraint error instead of
   both succeeding (CAT34, the same shape as CAT23). See their board rows;
+- the security sweep's `routes/upsert_card_review_security_test.go`'s
+  `TestCAT42_OpenHole_ResendWithANewNameOrSummaryKeepsTheApproval` (CAT42,
+  P1), filed 2026-10-05. `UpsertEntry` keeps `visibility` and `approved_at`
+  whenever `sameDocument` says the `doc` is unchanged and never compares
+  `name` or `summary` — the only text the anonymous listing shows. Goes green
+  once a changed card returns the entry to `pending` like a changed document;
 - the security sweep's `routes/public_doc_filter_cost_security_test.go`'s
   `TestCAT41_OpenHole_AnonymousListingTakesUnboundedDocFilters` (CAT41, P2),
   filed 2026-10-04. `ListEntries` adds one `Where` per `docs=` filter with
