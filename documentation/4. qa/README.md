@@ -67,6 +67,15 @@ what the section below lists.
   `slug` pattern bounds no length, so the host's 1 MiB body cap is the only
   ceiling; the probe measured ~30 ms at 900 KB, linear, no row growth.
   Mutation-checked by removing `RecordPageView`'s index-slug normalisation.
+- **A second anonymous filing on a taken slug neither reveals nor rewrites
+  the first report.** `routes/colliding_filing_security_test.go` (security
+  sweep, 2026-10-06) files a resident's report carrying a phone number and a
+  name in `why`/`proposal`, then files a second anonymous report on the same
+  slug, and asserts the second answer carries nothing of the first (id, title,
+  `why`, `proposal`) and the first reads back untouched. It deliberately does
+  not pin the `409` itself: that status is CAT30's oracle and its fix may
+  change it. Mutation-checked with a `FileSuggestion` that overwrites the
+  title and returns the existing row on a collision — both halves red.
 - **A malformed `limit` never reaches the store.**
   `routes/runs_limit_security_test.go` (security sweep, 2026-09-28) sends
   `GET /runs?limit=` with an overflowing integer, `abc`, `1e3` and a NUL, and
