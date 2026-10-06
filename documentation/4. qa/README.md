@@ -334,8 +334,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-four tests (re-counted by the
-security sweep's ninety-fourth run 2026-10-05, which added CAT42 — a re-sent
+`go test ./...` is red for exactly twenty-five tests (re-counted by the
+integration sweep 2026-10-06, which added CAT43 — `AttachSuggestion`/
+`FulfilSuggestion` race the same way CAT23/CAT34 already do, on a third
+table — on top of the twenty-four the security sweep's ninety-fourth run
+2026-10-05 counted, which added CAT42 — a re-sent
 unchanged `doc` with a new `name` or `summary` keeps an entry's approval, so
 the anonymous card changes unreviewed — on top of the twenty-three the
 eighty-fifth run counted 2026-10-04, which added CAT41 — an
@@ -360,6 +363,17 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `suggestion_match_race_test.go`'s
+  `TestCAT43_OpenBug_ConcurrentAttachSuggestionOnANewPairFailsInstead`
+  (CAT43), filed 2026-10-06, widening CAT23/CAT34's check-then-insert race
+  class to a third table: `upsertMatch` (shared by `AttachSuggestion` and
+  `FulfilSuggestion`) counts rows for `(suggestion_id, slug)` before
+  inserting, so two callers attaching the same brand-new pair at once can
+  both see zero and one of them hits `suggestion_match`'s composite
+  primary key as a raw SQL constraint failure instead of a successful
+  write. Goes green once `upsertMatch`'s insert branch recognises
+  `isUniqueViolation` the way `CreateEntry`/`PageView`/`FileSuggestion`'s
+  own inserts already do;
 - the integration sweep's `entry_upsert_leaves_private_test.go`'s
   `TestCAT39_OpenBug_UpsertLeavingPrivateNeverRetiresItsKeys` (CAT39), filed
   2026-10-03, widening CAT17's "leaving private must retire every live key"
