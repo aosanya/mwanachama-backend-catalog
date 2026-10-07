@@ -76,6 +76,16 @@ what the section below lists.
   not pin the `409` itself: that status is CAT30's oracle and its fix may
   change it. Mutation-checked with a `FileSuggestion` that overwrites the
   title and returns the existing row on a collision — both halves red.
+- **A mount that widens the anonymous list still gates everything else.**
+  `routes/widened_anonymous_mount_gate_security_test.go` (security sweep,
+  2026-10-07) builds the routes under a mount opening the four municipality
+  actions (`entry.open`, `page_view.record`, `suggestion.file`,
+  `entry.list_public`, as wakala-api's `/reports` does) with a deny-all
+  authorizer, and asserts exactly those four are anonymous, none of them is
+  also built gated, and each of the 25 gated routes asks for its own declared
+  action, answers `403` and writes nothing. The existing deny-all pin covered
+  the default mount only. Mutation-checked twice in `SplitFor`: building the
+  gated half without the mount's authorizer, and opening one extra action.
 - **A malformed `limit` never reaches the store.**
   `routes/runs_limit_security_test.go` (security sweep, 2026-09-28) sends
   `GET /runs?limit=` with an overflowing integer, `abc`, `1e3` and a NUL, and
