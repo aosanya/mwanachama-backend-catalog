@@ -103,6 +103,14 @@ what the section below lists.
   slug answers `404` and changes nothing. `put_private` binds the whole body and
   relies on the dispatcher's `into: "Slug"` path overwrite — mutation-checked
   by disabling that overwrite in `mwanachama-backend-shared/dispatch`.
+- **A share key cannot be guessed.** `sharelink_key_strength_security_test.go`
+  (security sweep, 2026-10-08) issues 400 keys for one private entry and
+  asserts each opens it, decodes as hex to at least 16 bytes, is never
+  repeated, and that every one of the key's positions takes at least eight
+  distinct digits across the 400 — a key drawn from a counter, a clock or a
+  short seed leaves positions fixed. Mutation-checked both ways: a 6-byte key
+  fails the length check, and zeroing the first 28 of 32 bytes fails 56
+  positions. Today's key is 32 bytes from `crypto/rand`, hex-encoded.
 - **A filed suggestion's lifecycle fields are the server's.**
   `routes/suggestion_forged_fields_security_test.go` (security sweep,
   2026-09-29) files a suggestion whose body claims `status: built`,
