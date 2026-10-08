@@ -286,6 +286,19 @@ what the section below lists.
   `additionalProperties: false` schema. Mutation-checked by letting
   `invokerFor` accept a key whose lower-cased form is declared: the `Slug`
   call then stores entry `alpha`.
+- **No spelling of a query key widens the anonymous listing.**
+  `routes/public_listing_key_spelling_security_test.go` (security sweep,
+  2026-10-08) was written after the integration sweep's S54 found that
+  `dispatch` binds an untagged query field to its all-lowercase Go name.
+  `ListFilter` carries no tags, so `/public/entries` answers to `visibility`,
+  `docs`, `search` and `limit`. The test sends `visibility=pending`,
+  `Visibility=pending`, `VISIBILITY=private`, a repeated `visibility`,
+  `deleted=true`, `include_deleted=true`, `limit=100000` in three casings,
+  `limit=-1`, `limit=0` and a repeated `limit`. Each answer lists only public,
+  undeleted entries, at most `MaxPublicEntryLimit` of them, and none carries
+  `doc`. The control is `ListPublicEntries` overwriting `Visibility`
+  unconditionally. Mutation-checked: forcing it only when unset turns three
+  queries red.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
