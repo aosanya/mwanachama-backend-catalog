@@ -322,6 +322,15 @@ what the section below lists.
   description built from a row would reach every other caller's model.
   Mutation-checked: appending the first stored entry's name to a description
   in `BuildToolsFor` turns it red.
+- **A wide anonymous filing and a long anonymous search stay linear.**
+  `routes/public_filing_width_cost_security_test.go` (security sweep,
+  2026-10-09) files a 50,000-key, ~640 KB `proposal` through the
+  municipality mount's anonymous `POST /suggestions` (40 ms when pinned,
+  1,000 and 10,000 keys scaling linearly), reads it back whole from the
+  moderator queue, and sends a 100,000-character `search` to the anonymous
+  `GET /public/entries` (1 ms). Each is bounded at 5 s, which only a
+  super-linear regression would reach. Not mutation-checked: it is a cost
+  bound, and the host's body cap and WK67 already cover the flood.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
