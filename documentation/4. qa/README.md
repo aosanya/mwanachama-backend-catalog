@@ -406,8 +406,12 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-six tests (re-counted by the
-integration sweep 2026-10-09, which added CAT44 — `ListShareLinks` has no
+`go test ./...` is red for exactly twenty-seven tests (re-counted by the
+same integration sweep pass 2026-10-09, which also added CAT45 — the shared
+`listOf` helper applies no cap at all, worse than CAT10/CAT44 since its five
+callers have no limit parameter to set even if a caller wanted one — on top
+of the twenty-six the same run's own prior count, which added CAT44 —
+`ListShareLinks` has no
 default cap, the same loophole already filed as CAT10 (`ListEntries`), on a
 second table — on top of the twenty-five the integration sweep's prior pass
 counted 2026-10-06, which added CAT43 — `AttachSuggestion`/
@@ -438,6 +442,16 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `suggestion_listof_cap_test.go`'s
+  `TestCAT45_OpenBug_ListSuggestionsHasNoCapAndNoWayToAskForOne` (CAT45),
+  filed 2026-10-09, widening CAT10/CAT44's class to the shared `listOf`
+  helper itself: filed 300 suggestions and `ListSuggestions()` returned
+  all 300, with no limit parameter on the signature at all to ask for a
+  smaller page. `ListSuggestionComments`/`ListSuggestionMatches`/
+  `ListEntryMatches`/`ListPageViews` share the identical root cause and
+  fix location (`catalog_manager.go`'s `listOf[T]`) as evidence in the
+  same row, not four more tests. Goes green once `listOf` applies a
+  default cap before `.Find`;
 - the integration sweep's `sharelink_listcap_test.go`'s
   `TestCAT44_OpenBug_ListShareLinksHasNoDefaultCap` (CAT44), filed
   2026-10-09, widening CAT10's no-default-cap class to a second table:
