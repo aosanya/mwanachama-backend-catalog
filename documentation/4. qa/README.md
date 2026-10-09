@@ -406,8 +406,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-five tests (re-counted by the
-integration sweep 2026-10-06, which added CAT43 — `AttachSuggestion`/
+`go test ./...` is red for exactly twenty-six tests (re-counted by the
+integration sweep 2026-10-09, which added CAT44 — `ListShareLinks` has no
+default cap, the same loophole already filed as CAT10 (`ListEntries`), on a
+second table — on top of the twenty-five the integration sweep's prior pass
+counted 2026-10-06, which added CAT43 — `AttachSuggestion`/
 `FulfilSuggestion` race the same way CAT23/CAT34 already do, on a third
 table — on top of the twenty-four the security sweep's ninety-fourth run
 2026-10-05 counted, which added CAT42 — a re-sent
@@ -435,6 +438,13 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `sharelink_listcap_test.go`'s
+  `TestCAT44_OpenBug_ListShareLinksHasNoDefaultCap` (CAT44), filed
+  2026-10-09, widening CAT10's no-default-cap class to a second table:
+  `ListShareLinks` builds its query with no `.Limit` either, so an entry
+  with 150 keys issued against it gets all 150 of 150 back from one call.
+  Goes green once `ListShareLinks` gets a default cap, ideally the same
+  fix CAT10 lands on for `ListEntries`;
 - the integration sweep's `suggestion_match_race_test.go`'s
   `TestCAT43_OpenBug_ConcurrentAttachSuggestionOnANewPairFailsInstead`
   (CAT43), filed 2026-10-06, widening CAT23/CAT34's check-then-insert race
