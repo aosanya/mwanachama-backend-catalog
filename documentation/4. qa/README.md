@@ -312,6 +312,16 @@ what the section below lists.
   `doc`. The control is `ListPublicEntries` overwriting `Visibility`
   unconditionally. Mutation-checked: forcing it only when unset turns three
   queries red.
+- **No stored entry reaches a tool's name, description or schema.**
+  `routes/tool_list_stored_text_security_test.go` (security sweep,
+  2026-10-09, OWASP MCP03 tool poisoning) builds the tool set, upserts an
+  entry whose name and summary carry a marker and an injected instruction,
+  builds it again over the same manager, and asserts the marker is absent and
+  every tool's name, title, description, action and input schema is
+  byte-identical. The host registers these tools on its `/mcp`, so a
+  description built from a row would reach every other caller's model.
+  Mutation-checked: appending the first stored entry's name to a description
+  in `BuildToolsFor` turns it red.
 - **`routes/routes_test.go`** is kept deliberately as the acceptance test the
   W14 dispatcher must pass **unchanged**, even though the package it
   currently exercises is superseded.
