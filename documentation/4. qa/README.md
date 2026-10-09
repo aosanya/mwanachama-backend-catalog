@@ -76,6 +76,19 @@ what the section below lists.
   not pin the `409` itself: that status is CAT30's oracle and its fix may
   change it. Mutation-checked with a `FileSuggestion` that overwrites the
   title and returns the existing row on a collision — both halves red.
+- **An anonymous filing cannot nest its proposal past the decoder, and a
+  deep one never breaks the moderator queue.**
+  `routes/public_filing_nesting_security_test.go` (security sweep,
+  2026-10-09) files anonymous reports whose `proposal` nests 1,000, 4,000 and
+  10,001 objects deep (~80 KB, well under the host's body cap) and asserts the
+  10,001-deep one is refused `400` by the declared `json_object` rule, the
+  1,000-deep one is stored, and `GET /suggestions` still answers `200` with
+  every stored proposal decoding as an object. On sqlite a proposal deeper
+  than 2,000 levels answers `500 internal error` and stores nothing — the
+  driver's own JSON depth limit, not a declared rule — so the 4,000-deep
+  filing's status is deliberately not pinned; Postgres `jsonb` has a
+  different ceiling and is unprobed. Mutation-checked by making `json_object`
+  accept any text.
 - **A mount that widens the anonymous list still gates everything else.**
   `routes/widened_anonymous_mount_gate_security_test.go` (security sweep,
   2026-10-07) builds the routes under a mount opening the four municipality
