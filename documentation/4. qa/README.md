@@ -406,8 +406,11 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-seven tests (re-counted by the
-same integration sweep pass 2026-10-09, which also added CAT45 — the shared
+`go test ./...` is red for exactly twenty-eight tests (re-counted by the
+integration sweep pass 2026-10-10, which added CAT46 — `ListFilter` has no
+`Offset`, so once a listing is capped — which `ListPublicEntries` always is
+— a caller can never reach a second page — on top of the twenty-seven the
+same integration sweep pass 2026-10-09 counted, which also added CAT45 — the shared
 `listOf` helper applies no cap at all, worse than CAT10/CAT44 since its five
 callers have no limit parameter to set even if a caller wanted one — on top
 of the twenty-six the same run's own prior count, which added CAT44 —
@@ -442,6 +445,15 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `routes/public_listing_offset_test.go`'s
+  `TestCAT46_OpenBug_PublicListingHasNoOffsetSoRowsPastTheCapAreUnreachable`
+  (CAT46), filed 2026-10-10, picking up the lead the security-hunt routine
+  flagged for this one: seeded and published 150 public entries, page one
+  of the anonymous listing held the first 100 (`MaxPublicEntryLimit`), and
+  `?offset=100` answered the identical 100 rows rather than the 50 past the
+  cap — `ListFilter` declares no `Offset` field at all, so a caller has no
+  way to ask for a second page, ever. Goes green once `ListFilter` gains an
+  `Offset int` and `ListEntries` applies it;
 - the integration sweep's `suggestion_listof_cap_test.go`'s
   `TestCAT45_OpenBug_ListSuggestionsHasNoCapAndNoWayToAskForOne` (CAT45),
   filed 2026-10-09, widening CAT10/CAT44's class to the shared `listOf`
