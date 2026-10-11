@@ -194,6 +194,14 @@ what the section below lists.
   the same way. `open_entry` declares no MCP tool, so REST is its only door.
   Mutation-checked by dropping the `slug = ?` predicate from `keyOpens` — the
   second-entry case answers `200`.
+- **Retiring a share link again never rewrites when it stopped working.**
+  `routes/sharelink_retire_trail_security_test.go` (security sweep,
+  2026-10-11) retires one link through `POST /links/{id}/retire` and lets a
+  second be retired by its entry going public, waits past the clock's
+  one-second grain, then retires both through the route again: each answers
+  `200` and its `retired_at` in `GET /entries/{slug}/links` is the one first
+  stamped, so the trail a rotation leaves stays honest. Mutation-checked by
+  dropping `RetireShareLink`'s already-retired guard — both halves go red.
 - **No read answer carries a share key or its stored hash, under any name.**
   `routes/sharelink_hash_value_security_test.go` (security sweep,
   2026-10-05) issues two keys for private `alpha`, opens it with the first,
