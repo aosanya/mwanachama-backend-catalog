@@ -337,6 +337,15 @@ what the section below lists.
   and asserts each refuses and that no entry or suggestion was stored. The
   tools with no required argument (listings, `run_record`) are not probed.
   Not mutation-checked.
+- **A REST upsert never takes the id, clock, submitter or `deleted` from
+  its body.** `routes/upsert_server_owned_fields_security_test.go`
+  (security sweep, 2026-10-12) sends `id`, `created_at`, `updated_at`,
+  `submitted_by` and `deleted: true` on a create and again on an unchanged
+  re-send of a published entry, and asserts every one is the server's and
+  the entry stays on the anonymous listing. `dispatch` hides these fields
+  only on the MCP plane (`ReadOnly`); on REST the whole body decodes into
+  `Entry`, so `entry.go`'s overwrites are the whole control.
+  Mutation-checked: dropping the re-send's `e.Deleted = false` turns it red.
 - **A wide anonymous filing and a long anonymous search stay linear.**
   `routes/public_filing_width_cost_security_test.go` (security sweep,
   2026-10-09) files a 50,000-key, ~640 KB `proposal` through the
