@@ -330,6 +330,13 @@ what the section below lists.
   description built from a row would reach every other caller's model.
   Mutation-checked: appending the first stored entry's name to a description
   in `BuildToolsFor` turns it red.
+- **A tool given `null` for every required argument refuses and writes
+  nothing.** `routes/tool_null_required_security_test.go` (security sweep,
+  2026-10-12) calls each tool declaring a required argument with every one
+  of them `null` — `dispatch` checks presence only and binds the zero value —
+  and asserts each refuses and that no entry or suggestion was stored. The
+  tools with no required argument (listings, `run_record`) are not probed.
+  Not mutation-checked.
 - **A wide anonymous filing and a long anonymous search stay linear.**
   `routes/public_filing_width_cost_security_test.go` (security sweep,
   2026-10-09) files a 50,000-key, ~640 KB `proposal` through the
