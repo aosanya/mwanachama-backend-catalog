@@ -118,6 +118,14 @@ built.** A declared column with no field to hold it, or a field with no
 column to land in, fails in `NewCatalogManager` rather than dropping a value
 on every write.
 
+**A domain spec may attach another module to one of its roles** (shared's
+S62, 2026-10-12): `"attach": [{"module": "ratings", "items": "catalog.entry"}]`
+makes every entry rateable, with ratings mounted beside the catalog by the
+host. This module carries no Go that knows an attachment exists — the
+engine validates the block and the host acts on it — so nothing here names
+ratings, and `domain_agnostic_test.go` is unaffected. See
+[declared-domains.md](../mwanachama-backend-shared/documentation/2.%20design/declared-domains.md#a-domain-attaches-another-module).
+
 ## Rules are declared too, where they can be
 
 `validate.go` reads `required`, an enum's `values` and `matches` off the
