@@ -430,8 +430,12 @@ own operator/reader split, it needs its own rule").
 
 ## Red by design
 
-`go test ./...` is red for exactly twenty-eight tests (re-counted by the
-integration sweep pass 2026-10-10, which added CAT46 — `ListFilter` has no
+`go test ./...` is red for exactly twenty-nine tests (re-counted by the
+integration sweep pass 2026-10-12, which added CAT47 — `DecideSuggestion`
+checks the target status but never the suggestion's own current status, so
+deciding a `built` suggestion un-builds it while the Entry and match row
+that answered it both survive untouched — on top of the twenty-eight the
+same routine counted 2026-10-10, which added CAT46 — `ListFilter` has no
 `Offset`, so once a listing is capped — which `ListPublicEntries` always is
 — a caller can never reach a second page — on top of the twenty-seven the
 same integration sweep pass 2026-10-09 counted, which also added CAT45 — the shared
@@ -469,6 +473,14 @@ fifty-seventh run counted — CAT32 on top of the thirteen the fifty-fourth run
 counted, which was itself CAT31, CAT22/CAT23, the owner's own CAT27 and the
 sweep's CAT29/CAT30 on top of the original seven):
 
+- the integration sweep's `suggestion_decide_built_test.go`'s
+  `TestCAT47_OpenBug_DecideBuiltSuggestionSilentlyUnbuildsItWhileTheMatchSurvives`
+  (CAT47), filed 2026-10-12, picking up a second lead the security-hunt
+  routine flagged for this one (its hundred-and-fifty-second run): fulfilled
+  a suggestion against an Entry (status `built`), then `DecideSuggestion`
+  with `rejected` succeeded (`err=nil`) and read back as `rejected` while
+  its match row and the Entry it names both survived unchanged, and a
+  follow-up approve-then-fulfil cycle built it a second time.
 - the integration sweep's `routes/public_listing_offset_test.go`'s
   `TestCAT46_OpenBug_PublicListingHasNoOffsetSoRowsPastTheCapAreUnreachable`
   (CAT46), filed 2026-10-10, picking up the lead the security-hunt routine
