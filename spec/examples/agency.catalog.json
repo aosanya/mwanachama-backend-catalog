@@ -82,6 +82,12 @@
       "name": "form_record",
       "table": "form_records",
       "description": "One member's latest answers to one form, as sent."
+    },
+    {
+      "role": "endorsement",
+      "name": "me_too",
+      "table": "me_toos",
+      "description": "A member saying \"me too\" to an item on the public board."
     }
   ]
 }

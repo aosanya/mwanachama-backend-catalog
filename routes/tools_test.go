@@ -200,6 +200,7 @@ func TestEveryDescribedFieldIsOneItsTypeCarries(t *testing.T) {
 		"Setting":           reflect.TypeOf(models.Setting{}),
 		"PageView":          reflect.TypeOf(models.PageView{}),
 		"Record":            reflect.TypeOf(models.Record{}),
+		"Endorsement":       reflect.TypeOf(models.Endorsement{}),
 		"ListFilter":        reflect.TypeOf(catalog.ListFilter{}),
 	}
 	for key := range fields {

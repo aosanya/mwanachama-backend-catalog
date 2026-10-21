@@ -88,3 +88,7 @@ var ErrInvalidPageView = errors.New("invalid page view")
 var ErrInvalidRecord = errors.New("invalid record")
 
 var ErrRecordsNotKept = errors.New("records are not kept here")
+
+var ErrInvalidEndorsement = errors.New("invalid endorsement")
+
+var ErrEndorsementsNotCounted = errors.New("endorsements are not counted here")

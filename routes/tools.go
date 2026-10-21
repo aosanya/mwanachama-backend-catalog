@@ -22,6 +22,7 @@ var carriers = map[string]string{
 	"setting":            "Setting",
 	"page_view":          "PageView",
 	"record":             "Record",
+	"endorsement":        "Endorsement",
 }
 
 var storeOwned = map[string]bool{

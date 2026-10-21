@@ -558,6 +558,38 @@
           ]
         }
       ]
+    },
+    {
+      "role": "endorsement",
+      "description": "One holder's say that they share an item already raised, at most one per holder per item. A domain that counts no endorsements fills no object for this role.",
+      "fields": [
+        {
+          "name": "subject_id",
+          "type": "string",
+          "description": "The item endorsed, opaque to this module.",
+          "primary": true
+        },
+        {
+          "name": "holder_id",
+          "type": "string",
+          "description": "Who endorsed it, opaque to this module.",
+          "primary": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When the holder first endorsed it."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "subject",
+          "description": "Counts one item's endorsements.",
+          "fields": [
+            "subject_id"
+          ]
+        }
+      ]
     }
   ]
 }

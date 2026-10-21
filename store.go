@@ -22,6 +22,7 @@ const (
 	roleSetting           = "setting"
 	rolePageView          = "page_view"
 	roleRecord            = "record"
+	roleEndorsement       = "endorsement"
 )
 
 // store is the spec-driven store, which lives in
