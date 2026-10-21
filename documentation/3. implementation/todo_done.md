@@ -20,3 +20,4 @@
 
 _Board context: this module's programme-level rows (W13–W16) live on
 [`mwanachama-website`'s board](../../../mwanachama-website/documentation/3.%20implementation/todo.md)._
+| CAT48 | 🧭 **An agency's forms catalog: one record per person per form** (decisions 208, 209) | 2026-10-21 | 946c7b5 (`Record`, `TallyRecords`) and 21b6953 (merged as 9be9d11): an optional `record` role keyed on (subject, holder), `doc` replaced whole on each send with every send time in `changes`; `PutRecord` is Go-only for the host; `catalog.record.list` and `catalog.record.count` declared, gated, MCP tools too; a spec without the role answers `ErrRecordsNotKept`. `records.md`. wakala-api 5147b6a declares the role in its catalog spec. The agency-only read gate and calling `PutRecord` on a send are WK153/WK154. Verified: build, vet, the record tests; the suite's failures are the existing deliberate reds only; wakala-api builds and `internal/specs` ok. |
