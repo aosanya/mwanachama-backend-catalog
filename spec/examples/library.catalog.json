@@ -141,6 +141,12 @@
           ]
         }
       ]
+    },
+    {
+      "role": "record",
+      "name": "reader_record",
+      "table": "reader_records",
+      "description": "One reader's latest answers to one questionnaire, as sent."
     }
   ]
 }

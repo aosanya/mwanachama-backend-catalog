@@ -76,6 +76,12 @@
       "name": "page_view",
       "table": "page_views",
       "description": "A running count for one storefront page."
+    },
+    {
+      "role": "record",
+      "name": "form_record",
+      "table": "form_records",
+      "description": "One member's latest answers to one form, as sent."
     }
   ]
 }

@@ -504,6 +504,60 @@
           "description": "Running total. There are no per-day rows, so nothing here answers a question about a trend."
         }
       ]
+    },
+    {
+      "role": "record",
+      "description": "One holder's latest values on one subject, as last sent, with the time of every change. A domain that keeps no records fills no object for this role.",
+      "fields": [
+        {
+          "name": "subject_id",
+          "type": "string",
+          "description": "What the values are about, opaque to this module.",
+          "primary": true
+        },
+        {
+          "name": "holder_id",
+          "type": "string",
+          "description": "Whose values these are, opaque to this module.",
+          "primary": true
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, opaque to callers, kept across every change."
+        },
+        {
+          "name": "doc",
+          "type": "json",
+          "description": "The holder's latest values, one key per field, replaced whole on every send.",
+          "required": true,
+          "matches": "json_object"
+        },
+        {
+          "name": "changes",
+          "type": "json",
+          "description": "The time of every send, oldest first, the first one included."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When the first values were sent."
+        },
+        {
+          "name": "last_updated",
+          "type": "timestamp",
+          "description": "When the latest values were sent."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "subject",
+          "description": "Lists one subject's records and counts them.",
+          "fields": [
+            "subject_id"
+          ]
+        }
+      ]
     }
   ]
 }

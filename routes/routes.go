@@ -34,6 +34,8 @@ var sentinels = map[string]error{
 	"ErrInvalidRun":          catalog.ErrInvalidRun,
 	"ErrInvalidSetting":      catalog.ErrInvalidSetting,
 	"ErrInvalidPageView":     catalog.ErrInvalidPageView,
+	"ErrInvalidRecord":       catalog.ErrInvalidRecord,
+	"ErrRecordsNotKept":      catalog.ErrRecordsNotKept,
 }
 
 // AnonymousActions is every operation a storefront reader may reach without

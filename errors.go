@@ -84,3 +84,7 @@ var ErrSettingNotFound = errors.New("setting not found")
 // ErrInvalidPageView is returned when a page view names an unrecognized
 // page, or carries a slug that does not match it.
 var ErrInvalidPageView = errors.New("invalid page view")
+
+var ErrInvalidRecord = errors.New("invalid record")
+
+var ErrRecordsNotKept = errors.New("records are not kept here")

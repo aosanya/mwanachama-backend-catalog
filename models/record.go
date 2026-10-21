@@ -9,7 +9,7 @@ type Record struct {
 	ID          string `json:"id"`
 	SubjectID   string `json:"subject_id"`
 	HolderID    string `json:"holder_id"`
-	Values      string `json:"values"`
+	Doc         string `json:"doc"`
 	Changes     string `json:"changes"`
 	CreatedAt   string `json:"created_at"`
 	LastUpdated string `json:"last_updated"`
@@ -32,7 +32,7 @@ func TallyRecords(records []Record) ([]FieldTally, error) {
 	sums := map[string]float64{}
 	for _, r := range records {
 		var values map[string]any
-		if err := json.Unmarshal([]byte(r.Values), &values); err != nil {
+		if err := json.Unmarshal([]byte(r.Doc), &values); err != nil {
 			return nil, err
 		}
 		for field, value := range values {

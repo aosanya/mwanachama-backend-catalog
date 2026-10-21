@@ -696,6 +696,46 @@
           "body": true
         }
       ]
+    },
+    "list_records": {
+      "method": "GET",
+      "path": "/records/{subject_id}",
+      "call": "ListRecords",
+      "action": "catalog.record.list",
+      "title": "List the records on one subject",
+      "description": "Every holder's latest values on one subject, oldest first, each with the time of every change. Never anonymous, and a mount grants it only to those who may read everybody's values; a holder's own values are the host's to show.",
+      "args": [
+        {
+          "from": "path",
+          "as": "subject_id",
+          "description": "The subject whose records to read."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "count_records": {
+      "method": "GET",
+      "path": "/records/{subject_id}/counts",
+      "call": "CountRecords",
+      "action": "catalog.record.count",
+      "title": "Count the records on one subject",
+      "description": "Per field, worked out from the latest records: yes and no for a true or false value, a tally per option for text and lists of text, and for numbers how many, their average, lowest and highest. Gated like the listing.",
+      "args": [
+        {
+          "from": "path",
+          "as": "subject_id",
+          "description": "The subject whose records to read."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -715,6 +755,8 @@
     "ErrInvalidComment": 400,
     "ErrInvalidRun": 400,
     "ErrInvalidSetting": 400,
-    "ErrInvalidPageView": 400
+    "ErrInvalidPageView": 400,
+    "ErrInvalidRecord": 400,
+    "ErrRecordsNotKept": 404
   }
 }

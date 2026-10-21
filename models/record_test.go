@@ -4,9 +4,9 @@ import "testing"
 
 func TestTallyRecordsCountsEachValueShape(t *testing.T) {
 	records := []Record{
-		{Values: `{"agree": true, "colour": "red", "picks": ["a", "b"], "amount": 10, "skipped": null}`},
-		{Values: `{"agree": false, "colour": "red", "picks": ["b"], "amount": 30}`},
-		{Values: `{"agree": true, "colour": "blue", "amount": 20}`},
+		{Doc: `{"agree": true, "colour": "red", "picks": ["a", "b"], "amount": 10, "skipped": null}`},
+		{Doc: `{"agree": false, "colour": "red", "picks": ["b"], "amount": 30}`},
+		{Doc: `{"agree": true, "colour": "blue", "amount": 20}`},
 	}
 	tallies, err := TallyRecords(records)
 	if err != nil {
@@ -38,7 +38,7 @@ func TestTallyRecordsCountsEachValueShape(t *testing.T) {
 }
 
 func TestTallyRecordsRefusesAValuesDocumentThatIsNotJSON(t *testing.T) {
-	if _, err := TallyRecords([]Record{{Values: "nope"}}); err == nil {
+	if _, err := TallyRecords([]Record{{Doc: "nope"}}); err == nil {
 		t.Fatal("want an error")
 	}
 }

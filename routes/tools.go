@@ -21,6 +21,7 @@ var carriers = map[string]string{
 	"run":                "MiningRun",
 	"setting":            "Setting",
 	"page_view":          "PageView",
+	"record":             "Record",
 }
 
 var storeOwned = map[string]bool{

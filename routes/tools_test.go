@@ -56,7 +56,7 @@ func properties(t *testing.T, tool routes.Tool) map[string]any {
 
 func TestEveryGatedOperationBecomesATool(t *testing.T) {
 	tools, _, _ := newTools(t)
-	if len(tools) != 27 {
+	if len(tools) != 29 {
 		t.Fatalf("built %d tools: %v", len(tools), tools)
 	}
 	for _, want := range []string{
@@ -199,6 +199,7 @@ func TestEveryDescribedFieldIsOneItsTypeCarries(t *testing.T) {
 		"MiningRun":         reflect.TypeOf(models.MiningRun{}),
 		"Setting":           reflect.TypeOf(models.Setting{}),
 		"PageView":          reflect.TypeOf(models.PageView{}),
+		"Record":            reflect.TypeOf(models.Record{}),
 		"ListFilter":        reflect.TypeOf(catalog.ListFilter{}),
 	}
 	for key := range fields {

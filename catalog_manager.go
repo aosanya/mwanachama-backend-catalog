@@ -29,6 +29,8 @@ type (
 	SuggestionSource  = models.SuggestionSource
 	CommentAuthor     = models.CommentAuthor
 	PageKind          = models.PageKind
+	Record            = models.Record
+	FieldTally        = models.FieldTally
 )
 
 const (
@@ -222,6 +224,12 @@ type CatalogManager interface {
 
 	// ListPageViews returns every counted page, most viewed first.
 	ListPageViews(ctx context.Context) ([]PageView, error)
+
+	PutRecord(ctx context.Context, r Record) (Record, error)
+
+	ListRecords(ctx context.Context, subjectID string) ([]Record, error)
+
+	CountRecords(ctx context.Context, subjectID string) ([]FieldTally, error)
 }
 
 type catalogManager struct {
@@ -237,7 +245,7 @@ type catalogManager struct {
 // is served: a declared column with no field to hold it, or a field with no
 // column to land in, fails here rather than dropping a value on every write.
 func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
-	st, err := newStore(db, s, map[string]any{
+	carriers := map[string]any{
 		roleEntry:             models.Entry{},
 		roleEntryPrivate:      models.EntryPrivate{},
 		roleShareLink:         models.ShareLink{},
@@ -247,7 +255,11 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 		roleRun:               models.MiningRun{},
 		roleSetting:           models.Setting{},
 		rolePageView:          models.PageView{},
-	})
+	}
+	if _, kept := s.ByRole(roleRecord); kept {
+		carriers[roleRecord] = models.Record{}
+	}
+	st, err := newStore(db, s, carriers)
 	if err != nil {
 		return nil, fmt.Errorf("NewCatalogManager: %w", err)
 	}
@@ -301,3 +313,5 @@ func (m *catalogManager) insert(ctx context.Context, role string, v any) error {
 	}
 	return m.q(ctx, role).Create(row).Error
 }
+
+func TallyRecords(records []Record) ([]FieldTally, error) { return models.TallyRecords(records) }
