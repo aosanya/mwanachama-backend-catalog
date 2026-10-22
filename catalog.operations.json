@@ -746,6 +746,39 @@
           "body": true
         }
       ]
+    },
+    "nearby_raised_items": {
+      "method": "GET",
+      "path": "/raised-items/nearby",
+      "call": "NearbyRaisedItems",
+      "action": "catalog.raised_item.list_nearby",
+      "title": "List raised items near a place",
+      "description": "Publishable raised items of one topic whose pin lies within a distance of a point, nearest first. Every item is seen as anybody but its raiser sees it: its area and street, its pin rounded to about a hundred metres, its typed address withheld, whoever is asking. Never anonymous.",
+      "args": [
+        {
+          "from": "query",
+          "as": "topic",
+          "required": true,
+          "description": "The topic to look in, such as streetlights."
+        },
+        {
+          "from": "query",
+          "as": "at",
+          "required": true,
+          "description": "The point to look around, as [longitude, latitude]."
+        },
+        {
+          "from": "query",
+          "as": "within",
+          "required": true,
+          "description": "How far from the point to look, in metres; more than zero."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -768,6 +801,8 @@
     "ErrInvalidSetting": 400,
     "ErrInvalidPageView": 400,
     "ErrInvalidRecord": 400,
-    "ErrRecordsNotKept": 404
+    "ErrRecordsNotKept": 404,
+    "ErrInvalidRaisedItem": 400,
+    "ErrRaisedItemsNotTaken": 404
   }
 }

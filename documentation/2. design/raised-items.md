@@ -80,7 +80,31 @@ Items with no pin are not near anything. The distance filter runs in Go over
 the topic's publishable rows; a spatial index is not needed until a topic
 holds more rows than that scan can afford.
 
-Not yet built: the declared addresses for these reads, and the street. The
-row says other readers get "the area and the street only", but the address
-is one typed line, so there is no street to keep apart from a house number;
-until that is decided the whole typed address is withheld from others.
+**The nearby read is declared.** `GET /raised-items/nearby?topic=&at=&within=`,
+action `catalog.raised_item.list_nearby`, calls `NearbyRaisedItems` through
+the dispatch table; `at` is a JSON `[longitude, latitude]` pair and `within`
+is metres. It binds no caller, because the answer is the same for everyone:
+every item comes back seen-by-others, so the raiser's own item in a nearby
+result is rounded too, and staff read exact pins through the host, not here.
+It is not on `AnonymousActions`, so a mount gates it like any other read. A
+missing topic, a distance of zero or less, or a point that is not a pair is
+400 (`ErrInvalidRaisedItem` or the dispatcher's binding refusal); a mount
+whose spec takes no raised items answers 404 (`ErrRaisedItemsNotTaken`).
+Pinned over the real table in `routes/raised_item_nearby_test.go`.
+
+**Not declared: the place-setting write.** The pin, address and picked area
+arrive on `RaiseItem`, and raising is not a declared operation yet because
+who `raised_by` is when a clerk files on someone's behalf is still the
+owner's (CAT55). Declaring it here would settle that.
+
+**Still the owner's, and kept as built:**
+
+- *Street versus typed address.* The row says other readers get "the area
+  and the street only", but the address is one typed line, so there is no
+  street to keep apart from a house number; until that is decided the whole
+  typed address is withheld from others.
+- *What "published" means for nearby.* Today it is `publishable = true`;
+  whether a moderator's approval or being on a board item should be needed
+  instead is not decided.
+- *A result cap.* The read keeps the manager's 200 nearest; whether the
+  route should take a smaller limit or page is not decided.
