@@ -15,6 +15,18 @@ import (
 
 func nowRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
 
+func (m *catalogManager) checkEntry(e *Entry) error {
+	at, ok := models.NormalizePublishAt(e.PublishAt)
+	if !ok {
+		return ErrInvalidEntry
+	}
+	e.PublishAt = at
+	if err := m.checks(roleEntry, *e); err != nil {
+		return ErrInvalidEntry
+	}
+	return nil
+}
+
 func (m *catalogManager) entries(ctx context.Context) *gorm.DB {
 	return m.q(ctx, roleEntry)
 }
@@ -31,8 +43,8 @@ func (m *catalogManager) findEntry(ctx context.Context, slug string) (Entry, err
 func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error) {
 	e.Visibility = models.VisibilityPending
 	e.ApprovedAt = ""
-	if err := m.checks(roleEntry, e); err != nil {
-		return Entry{}, ErrInvalidEntry
+	if err := m.checkEntry(&e); err != nil {
+		return Entry{}, err
 	}
 
 	now := m.now()
@@ -63,8 +75,8 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 		e.Visibility = models.VisibilityPending
 		e.ApprovedAt = ""
 	}
-	if err := m.checks(roleEntry, e); err != nil {
-		return Entry{}, ErrInvalidEntry
+	if err := m.checkEntry(&e); err != nil {
+		return Entry{}, err
 	}
 
 	e.ID = existing.ID
@@ -124,6 +136,9 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 	if err != nil {
 		return Entry{}, err
 	}
+	if !e.PublishedBy(m.now()) {
+		return Entry{}, ErrEntryNotFound
+	}
 
 	switch e.Visibility {
 	case models.VisibilityPublic:
@@ -153,8 +168,8 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 	if e.ID != "" && e.ID != existing.ID {
 		return Entry{}, ErrSlugImmutable
 	}
-	if err := m.checks(roleEntry, e); err != nil {
-		return Entry{}, ErrInvalidEntry
+	if err := m.checkEntry(&e); err != nil {
+		return Entry{}, err
 	}
 
 	e.ID = existing.ID
@@ -220,11 +235,18 @@ func (m *catalogManager) ListPublicEntries(ctx context.Context, f ListFilter) ([
 	if f.Limit <= 0 || f.Limit > models.MaxPublicEntryLimit {
 		f.Limit = models.MaxPublicEntryLimit
 	}
-	return m.ListEntries(ctx, f)
+	return m.listEntries(ctx, f, m.now())
 }
 
 func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
+	return m.listEntries(ctx, f, "")
+}
+
+func (m *catalogManager) listEntries(ctx context.Context, f ListFilter, publishedBy string) ([]Entry, error) {
 	q := m.entries(ctx).Where("deleted = ?", false)
+	if publishedBy != "" {
+		q = q.Where("(publish_at IS NULL OR publish_at = '' OR publish_at <= ?)", publishedBy)
+	}
 	if f.Visibility != "" {
 		q = q.Where("visibility = ?", string(f.Visibility))
 	}

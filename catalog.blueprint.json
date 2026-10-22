@@ -60,6 +60,11 @@
           "description": "When it last left pending. Cleared whenever the document changes, because the reviewed thing no longer exists."
         },
         {
+          "name": "publish_at",
+          "type": "timestamp",
+          "description": "When it goes public. Empty means as soon as it is public; a time still to come keeps every anonymous read answering exactly as for a missing entry until then."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When the row was created."

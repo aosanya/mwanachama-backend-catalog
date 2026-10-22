@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Entry struct {
 	ID          string     `json:"id"`
 	Slug        string     `json:"slug"`
@@ -9,9 +11,25 @@ type Entry struct {
 	Visibility  Visibility `json:"visibility"`
 	SubmittedBy string     `json:"submitted_by,omitempty"`
 	ApprovedAt  string     `json:"approved_at,omitempty"`
+	PublishAt   string     `json:"publish_at,omitempty"`
 	CreatedAt   string     `json:"created_at"`
 	UpdatedAt   string     `json:"updated_at"`
 	Deleted     bool       `json:"deleted"`
 }
 
 const MaxPublicEntryLimit = 100
+
+func NormalizePublishAt(at string) (string, bool) {
+	if at == "" {
+		return "", true
+	}
+	t, err := time.Parse(time.RFC3339, at)
+	if err != nil {
+		return "", false
+	}
+	return t.UTC().Format(time.RFC3339), true
+}
+
+func (e Entry) PublishedBy(now string) bool {
+	return e.PublishAt == "" || e.PublishAt <= now
+}
