@@ -1,17 +1,36 @@
 package models
 
+import "github.com/aosanya/mwanachama-backend-shared/geo"
+
 type RaisedItem struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Topic       string `json:"topic"`
-	Publishable bool   `json:"publishable"`
-	RaisedBy    string `json:"raised_by"`
-	FiledBy     string `json:"filed_by"`
-	Channel     string `json:"channel"`
-	BoardItemID string `json:"board_item_id"`
-	CreatedAt   string `json:"created_at"`
+	ID          string        `json:"id"`
+	Title       string        `json:"title"`
+	Topic       string        `json:"topic"`
+	Publishable bool          `json:"publishable"`
+	RaisedBy    string        `json:"raised_by"`
+	FiledBy     string        `json:"filed_by"`
+	Channel     string        `json:"channel"`
+	Pin         *geo.Geometry `json:"pin"`
+	Address     string        `json:"address"`
+	Area        string        `json:"area"`
+	BoardItemID string        `json:"board_item_id"`
+	CreatedAt   string        `json:"created_at"`
 }
 
 func (r RaisedItem) OnBehalfIsWhole() bool {
 	return (r.FiledBy == "") == (r.Channel == "")
+}
+
+func (r RaisedItem) PinIsAPoint() bool {
+	return r.Pin == nil || r.Pin.Kind == geo.KindPoint
+}
+
+func (r RaisedItem) AsSeenByOthers() RaisedItem {
+	seen := r
+	seen.Address = ""
+	if r.Pin != nil {
+		rounded := geo.NewPoint(geo.RoundForPublic(r.Pin.Point).Lon(), geo.RoundForPublic(r.Pin.Point).Lat())
+		seen.Pin = &rounded
+	}
+	return seen
 }

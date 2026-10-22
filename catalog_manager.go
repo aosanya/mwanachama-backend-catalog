@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
+	"github.com/aosanya/mwanachama-backend-shared/geo"
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
@@ -245,6 +246,10 @@ type CatalogManager interface {
 
 	ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error)
 
+	UseAreaResolver(resolve AreaResolver)
+
+	NearbyRaisedItems(ctx context.Context, topic string, at geo.Position, withinMetres float64) ([]RaisedItem, error)
+
 	PutOnBoard(ctx context.Context, b BoardItem) (BoardItem, error)
 
 	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
@@ -266,6 +271,8 @@ type catalogManager struct {
 	db  *gorm.DB
 	st  *store
 	now func() string
+
+	resolveArea AreaResolver
 }
 
 // NewCatalogManager builds a CatalogManager over db, reading and writing the

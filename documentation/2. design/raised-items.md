@@ -52,3 +52,35 @@ with `ErrRaisedItemNotFound`; `ListReplies` lists one raised item's replies by
 `created_at` then id. Timestamps are kept to the second, so two replies in the
 same second come back in id order rather than sending order. Who may read a
 reply, and declared operations for it, are not here yet.
+
+## A raised item's place (CAT81)
+
+Member app decisions 305, 306 and 310. An item carries an optional `pin`
+(a GeoJSON point, shared's S65 `geometry` type, nullable so "no pin" and a
+pin at 0,0 differ), a typed `address`, and an `area`.
+
+**The area is the host's to resolve.** This module knows no map of areas, so
+the host passes an `AreaResolver` through `UseAreaResolver`. `RaiseItem`
+asks it with the pin first; if that names no area, with the address; if that
+names none either, the area the raiser picked stands, and with no pick the
+item has no area. Without a resolver the picked area stands. A resolver error
+refuses the item rather than storing it with a guessed area. The order lives
+here so every host applies it the same way; what an area *is* stays opaque.
+
+**Who reads the exact pin.** `ListRaisedItems` is the raiser's own read and
+answers the item whole. Every other read goes through
+`RaisedItem.AsSeenByOthers`, which drops the typed address and rounds the
+pin with `geo.RoundForPublic` (three decimals, about 100 m). Staff reads are
+the host's: it reads the item whole and decides who is staff.
+
+**Nearby.** `NearbyRaisedItems(topic, at, withinMetres)` lists publishable
+items of one topic whose pin lies within the distance of `at` (great-circle,
+`geo.Distance`), nearest first, at most 200, each already seen-by-others.
+Items with no pin are not near anything. The distance filter runs in Go over
+the topic's publishable rows; a spatial index is not needed until a topic
+holds more rows than that scan can afford.
+
+Not yet built: the declared addresses for these reads, and the street. The
+row says other readers get "the area and the street only", but the address
+is one typed line, so there is no street to keep apart from a house number;
+until that is decided the whole typed address is withheld from others.

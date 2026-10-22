@@ -11,12 +11,17 @@ func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedIte
 	if !m.takesRaisedItems() {
 		return RaisedItem{}, ErrRaisedItemsNotTaken
 	}
-	if !r.OnBehalfIsWhole() {
+	if !r.OnBehalfIsWhole() || !r.PinIsAPoint() {
 		return RaisedItem{}, ErrInvalidRaisedItem
 	}
 	if err := m.checks(roleRaisedItem, r); err != nil {
 		return RaisedItem{}, ErrInvalidRaisedItem
 	}
+	area, err := m.placeOf(ctx, r)
+	if err != nil {
+		return RaisedItem{}, err
+	}
+	r.Area = area
 	r.ID = newID()
 	r.CreatedAt = m.now()
 	row, err := encode(m.st.Object(roleRaisedItem), r)
