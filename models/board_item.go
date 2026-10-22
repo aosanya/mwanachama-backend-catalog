@@ -12,3 +12,10 @@ type BoardItemTally struct {
 	RaisedBy int `json:"raised_by"`
 	MeToo    int `json:"me_too"`
 }
+
+type SharedBoardItem struct {
+	Title  string `json:"title"`
+	Theme  string `json:"theme"`
+	MeToo  int    `json:"me_too"`
+	Status string `json:"status"`
+}

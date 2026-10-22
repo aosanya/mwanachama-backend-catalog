@@ -34,6 +34,7 @@ type (
 	RaisedItem        = models.RaisedItem
 	BoardItem         = models.BoardItem
 	BoardItemTally    = models.BoardItemTally
+	SharedBoardItem   = models.SharedBoardItem
 	Reply             = models.Reply
 	FieldTally        = models.FieldTally
 )
@@ -253,6 +254,8 @@ type CatalogManager interface {
 	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
 
 	UngroupFromBoardItem(ctx context.Context, raisedItemID string) error
+
+	OpenSharedBoardItem(ctx context.Context, key string) (SharedBoardItem, error)
 
 	ReplyToRaisedItem(ctx context.Context, r Reply) (Reply, error)
 
