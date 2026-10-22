@@ -23,7 +23,7 @@ func (m *catalogManager) OpenSharedBoardItem(ctx context.Context, key string) (S
 	if len(grouped) == 0 {
 		return SharedBoardItem{}, ErrBoardItemNotFound
 	}
-	shared := SharedBoardItem{Title: b.Title, Theme: grouped[0].Topic, Status: b.Outcome}
+	shared := SharedBoardItem{Title: b.Title, Theme: grouped[0].Topic, Area: grouped[0].Area, Status: b.Outcome}
 	if shared.Files, err = m.publishedFilesOf(ctx, grouped); err != nil {
 		return SharedBoardItem{}, err
 	}

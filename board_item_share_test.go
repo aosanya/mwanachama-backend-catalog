@@ -1,11 +1,14 @@
 package mwanachamacatalog_test
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
+	"github.com/aosanya/mwanachama-backend-shared/geo"
 )
 
 func TestASharedBoardItemOpensWithItsTitleThemeMeTooAndStatus(t *testing.T) {
@@ -33,6 +36,38 @@ func TestASharedBoardItemOpensWithItsTitleThemeMeTooAndStatus(t *testing.T) {
 	want := catalog.SharedBoardItem{Title: "Streetlights out", Theme: "lighting", MeToo: 2, Status: "Reported to the utility", Files: []string{}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("shared = %+v, want %+v", got, want)
+	}
+}
+
+func TestASharedBoardItemCarriesTheAreaButNeverTheAddressPinOrRaiser(t *testing.T) {
+	cm, ctx := newManager(t)
+	b, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Streetlights out"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pin := geo.NewPoint(36.817223, -1.286389)
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Dark road", Topic: "lighting", Publishable: true, RaisedBy: "amina", Pin: &pin, Address: "12 Kenyatta Avenue", Area: "Central"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.GroupUnderBoardItem(ctx, r.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := cm.OpenSharedBoardItem(ctx, b.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Area != "Central" {
+		t.Fatalf("area = %q, want Central", got.Area)
+	}
+	raw, err := json.Marshal(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, leaked := range []string{"Kenyatta", "amina", "36.8", "1.28", r.ID} {
+		if strings.Contains(string(raw), leaked) {
+			t.Errorf("shared item %s carries %q", raw, leaked)
+		}
 	}
 }
 

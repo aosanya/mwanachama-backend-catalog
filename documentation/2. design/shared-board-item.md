@@ -12,6 +12,7 @@ what is left.
 | --- | --- |
 | `title` | the board item's `title` |
 | `theme` | the `topic` of the earliest publishable raised item grouped under it |
+| `area` | the `area` of that same earliest raised item, as stored when it was raised (CAT81: the host's resolution from pin, then address, then the raiser's pick) |
 | `me_too` | `CountEndorsements` on the board item, `0` where the domain counts none |
 | `status` | the board item's `outcome`, empty until there is one |
 
@@ -26,13 +27,20 @@ publishable raised item is grouped under it, so taking the last one off
 closes its link. Splitting these would let anyone tell an unpublished board
 item from one that never existed.
 
-Nothing else is answered: who raised it, how many raised it, and the raised
-items themselves stay off the link.
+Nothing else is answered: who raised it, how many raised it, the raised
+items themselves, their pins (rounded or not) and their typed addresses stay
+off the link. `TestASharedBoardItemCarriesTheAreaButNeverTheAddressPinOrRaiser`
+holds it by searching the encoded answer for the raiser, the address, the pin
+and the raised item's id.
 
 ## What is left
 
-- **Area and street.** A raised item has no place until CAT81 lands; the
-  link gains them then.
+- **Street.** The area is on the link since CAT81 landed. The street is not:
+  a raised item's address is one typed line, and whether "the street" is a
+  separate field or a part cut from that line is still the owner's (see
+  [raised-items.md](raised-items.md), "Street versus typed address"). Until
+  that is decided the link carries no street, the same way every other
+  reader's view withholds the whole address.
 - **An address.** The method is on the manager only. Board items have no
   operation in `catalog.operations.json` yet, so no route serves this, and
   nothing is added to `AnonymousActions`. Declaring the anonymous read is the
