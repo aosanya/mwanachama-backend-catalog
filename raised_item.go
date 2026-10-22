@@ -1,0 +1,40 @@
+package mwanachamacatalog
+
+import "context"
+
+func (m *catalogManager) takesRaisedItems() bool {
+	_, taken := m.st.Spec().ByRole(roleRaisedItem)
+	return taken
+}
+
+func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
+	if !m.takesRaisedItems() {
+		return RaisedItem{}, ErrRaisedItemsNotTaken
+	}
+	if !r.OnBehalfIsWhole() {
+		return RaisedItem{}, ErrInvalidRaisedItem
+	}
+	if err := m.checks(roleRaisedItem, r); err != nil {
+		return RaisedItem{}, ErrInvalidRaisedItem
+	}
+	r.ID = newID()
+	r.CreatedAt = m.now()
+	row, err := encode(m.st.Object(roleRaisedItem), r)
+	if err != nil {
+		return RaisedItem{}, err
+	}
+	if err := m.q(ctx, roleRaisedItem).Create(row).Error; err != nil {
+		return RaisedItem{}, err
+	}
+	return r, nil
+}
+
+func (m *catalogManager) ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error) {
+	if !m.takesRaisedItems() {
+		return nil, ErrRaisedItemsNotTaken
+	}
+	if raisedBy == "" {
+		return nil, ErrInvalidRaisedItem
+	}
+	return listOf[RaisedItem](m, m.q(ctx, roleRaisedItem).Where("raised_by = ?", raisedBy).Order("created_at, id"), roleRaisedItem)
+}

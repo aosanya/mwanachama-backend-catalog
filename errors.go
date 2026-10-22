@@ -92,3 +92,7 @@ var ErrRecordsNotKept = errors.New("records are not kept here")
 var ErrInvalidEndorsement = errors.New("invalid endorsement")
 
 var ErrEndorsementsNotCounted = errors.New("endorsements are not counted here")
+
+var ErrInvalidRaisedItem = errors.New("invalid raised item")
+
+var ErrRaisedItemsNotTaken = errors.New("raised items are not taken here")

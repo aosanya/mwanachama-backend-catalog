@@ -590,6 +590,64 @@
           ]
         }
       ]
+    },
+    {
+      "role": "raised_item",
+      "description": "Something a holder raised for the mounting host to answer, by themselves or filed on their behalf. A domain that takes no raised items fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "What was raised, in the raiser's words, one line.",
+          "required": true
+        },
+        {
+          "name": "topic",
+          "type": "string",
+          "description": "What it is about, from the domain's own list, opaque to this module."
+        },
+        {
+          "name": "publishable",
+          "type": "bool",
+          "description": "Whether the raiser agreed it may be shown to others; otherwise it stays between the raiser and the host."
+        },
+        {
+          "name": "raised_by",
+          "type": "string",
+          "description": "Whose item this is, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "filed_by",
+          "type": "string",
+          "description": "Who filed it on the raiser's behalf, empty when the raiser filed it."
+        },
+        {
+          "name": "channel",
+          "type": "string",
+          "description": "How it reached whoever filed it on the raiser's behalf, empty when the raiser filed it."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was raised."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "raiser",
+          "description": "Lists one raiser's items.",
+          "fields": [
+            "raised_by"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -31,6 +31,7 @@ type (
 	PageKind          = models.PageKind
 	Record            = models.Record
 	Endorsement       = models.Endorsement
+	RaisedItem        = models.RaisedItem
 	FieldTally        = models.FieldTally
 )
 
@@ -235,6 +236,10 @@ type CatalogManager interface {
 	Endorse(ctx context.Context, subjectID, holderID string) (int, error)
 
 	CountEndorsements(ctx context.Context, subjectID string) (int, error)
+
+	RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
+
+	ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error)
 }
 
 type catalogManager struct {
@@ -266,6 +271,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, counted := s.ByRole(roleEndorsement); counted {
 		carriers[roleEndorsement] = models.Endorsement{}
+	}
+	if _, taken := s.ByRole(roleRaisedItem); taken {
+		carriers[roleRaisedItem] = models.RaisedItem{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {
