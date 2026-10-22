@@ -248,6 +248,10 @@ type CatalogManager interface {
 	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
 
 	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
+
+	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
+
+	UngroupFromBoardItem(ctx context.Context, raisedItemID string) error
 }
 
 type catalogManager struct {

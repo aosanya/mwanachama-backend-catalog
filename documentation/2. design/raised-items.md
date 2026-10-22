@@ -32,3 +32,12 @@ number of publishable raised items grouped under it, and `me_too`, the
 `endorsement` count with the board item's id as subject (zero where the domain
 counts no endorsements). Visibility, place, replies and declared operations are
 not here yet.
+
+## Outcome and ungrouping
+
+`SetBoardItemOutcome` sets a board item's public `outcome`; an empty string
+clears it. `UngroupFromBoardItem` takes a raised item off whatever board item
+it sat under by clearing its `board_item_id`, so it stops counting towards that
+board item's `raised_by`. Both answer `ErrBoardItemNotFound` or
+`ErrRaisedItemNotFound` for an unknown id and `ErrBoardNotKept` where no board
+is kept. Neither is a declared operation yet.

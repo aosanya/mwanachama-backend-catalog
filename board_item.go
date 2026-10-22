@@ -72,3 +72,37 @@ func (m *catalogManager) ListBoardItems(ctx context.Context) ([]BoardItemTally, 
 	}
 	return out, nil
 }
+
+func (m *catalogManager) SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error {
+	if !m.keepsBoard() {
+		return ErrBoardNotKept
+	}
+	if boardItemID == "" {
+		return ErrInvalidBoardItem
+	}
+	res := m.q(ctx, roleBoardItem).Where("id = ?", boardItemID).Update("outcome", outcome)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrBoardItemNotFound
+	}
+	return nil
+}
+
+func (m *catalogManager) UngroupFromBoardItem(ctx context.Context, raisedItemID string) error {
+	if !m.keepsBoard() {
+		return ErrBoardNotKept
+	}
+	if raisedItemID == "" {
+		return ErrInvalidBoardItem
+	}
+	res := m.q(ctx, roleRaisedItem).Where("id = ?", raisedItemID).Update("board_item_id", "")
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrRaisedItemNotFound
+	}
+	return nil
+}

@@ -77,3 +77,41 @@ func TestOnlyAPublishableItemIsGroupedUnderABoardItem(t *testing.T) {
 		t.Fatalf("board = %+v (%v)", board, err)
 	}
 }
+
+func TestABoardItemTakesItsPublicOutcomeAndLetsAnItemGo(t *testing.T) {
+	cm, ctx := newManager(t)
+	b, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Broken bridge rail"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Rail", Publishable: true, RaisedBy: "amina"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.GroupUnderBoardItem(ctx, r.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.SetBoardItemOutcome(ctx, b.ID, "Rail repaired"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.UngroupFromBoardItem(ctx, r.ID); err != nil {
+		t.Fatal(err)
+	}
+	board, err := cm.ListBoardItems(ctx)
+	if err != nil || len(board) != 1 {
+		t.Fatalf("board = %+v (%v)", board, err)
+	}
+	if got := board[0]; got.Outcome != "Rail repaired" || got.RaisedBy != 0 {
+		t.Errorf("after outcome and ungrouping = %+v", got)
+	}
+	mine, err := cm.ListRaisedItems(ctx, "amina")
+	if err != nil || len(mine) != 1 || mine[0].BoardItemID != "" {
+		t.Fatalf("raised = %+v (%v)", mine, err)
+	}
+	if err := cm.SetBoardItemOutcome(ctx, "nobody", "x"); !errors.Is(err, catalog.ErrBoardItemNotFound) {
+		t.Errorf("unknown board item = %v", err)
+	}
+	if err := cm.UngroupFromBoardItem(ctx, "nobody"); !errors.Is(err, catalog.ErrRaisedItemNotFound) {
+		t.Errorf("unknown raised item = %v", err)
+	}
+}
