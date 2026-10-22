@@ -1,6 +1,10 @@
 package mwanachamacatalog
 
-import "github.com/aosanya/mwanachama-backend-catalog/models"
+import (
+	"context"
+
+	"github.com/aosanya/mwanachama-backend-catalog/models"
+)
 
 type (
 	ServiceTerms   = models.ServiceTerms
@@ -24,4 +28,33 @@ func ServiceEntry(slug, name, summary string, t ServiceTerms) (Entry, error) {
 		return Entry{}, err
 	}
 	return Entry{Slug: slug, Name: name, Summary: summary, Doc: doc}, nil
+}
+
+func WithServiceTerms(cm CatalogManager) CatalogManager {
+	return serviceTermsChecked{CatalogManager: cm}
+}
+
+type serviceTermsChecked struct {
+	CatalogManager
+}
+
+func (s serviceTermsChecked) CreateEntry(ctx context.Context, e Entry) (Entry, error) {
+	if _, err := ServiceTermsOf(e); err != nil {
+		return Entry{}, err
+	}
+	return s.CatalogManager.CreateEntry(ctx, e)
+}
+
+func (s serviceTermsChecked) UpsertEntry(ctx context.Context, e Entry) (Entry, error) {
+	if _, err := ServiceTermsOf(e); err != nil {
+		return Entry{}, err
+	}
+	return s.CatalogManager.UpsertEntry(ctx, e)
+}
+
+func (s serviceTermsChecked) UpdateEntry(ctx context.Context, e Entry) (Entry, error) {
+	if _, err := ServiceTermsOf(e); err != nil {
+		return Entry{}, err
+	}
+	return s.CatalogManager.UpdateEntry(ctx, e)
 }

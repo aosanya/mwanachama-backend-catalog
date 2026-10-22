@@ -42,16 +42,27 @@ opening that names a form or takes appointments, and any other opening.
 `ServiceEntry(slug, name, summary, terms)` builds the entry a staff edit or a
 template seed writes.
 
+## Checked on every write
+
+The host wraps a services mount's manager in `WithServiceTerms(cm)`, the
+same way it wraps one in `WithAudience`. The wrapped manager reads the terms
+out of the document on every `CreateEntry`, `UpsertEntry` and `UpdateEntry`
+and refuses a write whose terms do not hold with `ErrInvalidServiceTerms`
+before anything is stored. The operations' error map answers that sentinel
+400, so a staff edit or a template seed through the ordinary entry
+operations gets a clean refusal. Nothing else on the manager changes:
+visibility, deletion and reads pass straight through, and a mount not
+wrapped stores any document, as before. Which mount is the services mount
+stays the host's fact (WK198); the module never learns it.
+
 **Raise something is one service** (decision 326): an entry whose terms say
 `opens: raise`. The host opens the raise flow (CAT55) for it instead of a
 form.
 
 ## Not here yet
 
-- The terms are checked when read and when built through `ServiceEntry`, not
-  on every entry write: an entry write does not know its mount holds
-  services. Checking on write needs either CAT49's declared kinds or a
-  per-mount setting, and which is the owner's call.
+- Which mounts hold services is not declared yet: that needs CAT49's
+  declared kinds or a per-mount setting, and which is the owner's call.
 - No declared operations of their own: services are read and written through
   the existing entry operations on the services mount. Mounting it per agency
   is wakala-api's (WK198).

@@ -759,6 +759,7 @@
     "ErrSuggestionDuplicate": 409,
     "ErrSuggestionStatus": 409,
     "ErrInvalidEntry": 400,
+    "ErrInvalidServiceTerms": 400,
     "ErrInvalidPrivate": 400,
     "ErrInvalidSuggestion": 400,
     "ErrAttemptNeedsComment": 400,

@@ -74,3 +74,43 @@ func TestAServiceDefaultsToOpeningItsForm(t *testing.T) {
 		t.Fatalf("terms = %+v (%v)", terms, err)
 	}
 }
+
+func TestAServicesMountChecksTermsOnEveryEntryWrite(t *testing.T) {
+	base, ctx := newManager(t)
+	cm := catalog.WithServiceTerms(base)
+	good, err := catalog.ServiceEntry("permit", "Permit", "what it is", catalog.ServiceTerms{Form: "form-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cm.CreateEntry(ctx, good); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	bad := []string{``, `[]`, `{"opens":"form"}`, `{"opens":"raise","form":"form-1"}`, `{"opens":"raise","appointments":true}`, `{"opens":"elsewhere","form":"form-1"}`}
+	for _, doc := range bad {
+		e := catalog.Entry{Slug: "permit", Name: "Permit", Doc: doc}
+		if _, err := cm.UpdateEntry(ctx, e); !errors.Is(err, catalog.ErrInvalidServiceTerms) {
+			t.Fatalf("update %q: %v", doc, err)
+		}
+		if _, err := cm.UpsertEntry(ctx, e); !errors.Is(err, catalog.ErrInvalidServiceTerms) {
+			t.Fatalf("upsert %q: %v", doc, err)
+		}
+		e.Slug = "other"
+		if _, err := cm.CreateEntry(ctx, e); !errors.Is(err, catalog.ErrInvalidServiceTerms) {
+			t.Fatalf("create %q: %v", doc, err)
+		}
+	}
+	stored, err := base.GetEntry(ctx, "permit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if terms, err := catalog.ServiceTermsOf(stored); err != nil || terms.Form != "form-1" {
+		t.Fatalf("stored terms = %+v (%v)", terms, err)
+	}
+	if _, err := base.GetEntry(ctx, "other"); !errors.Is(err, catalog.ErrEntryNotFound) {
+		t.Fatalf("refused create stored: %v", err)
+	}
+	raise := catalog.Entry{Slug: "permit", Name: "Raise something", Visibility: catalog.VisibilityPending, Doc: `{"opens":"raise"}`}
+	if _, err := cm.UpdateEntry(ctx, raise); err != nil {
+		t.Fatalf("raise update: %v", err)
+	}
+}
