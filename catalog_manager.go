@@ -32,6 +32,8 @@ type (
 	Record            = models.Record
 	Endorsement       = models.Endorsement
 	RaisedItem        = models.RaisedItem
+	BoardItem         = models.BoardItem
+	BoardItemTally    = models.BoardItemTally
 	FieldTally        = models.FieldTally
 )
 
@@ -240,6 +242,12 @@ type CatalogManager interface {
 	RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
 
 	ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error)
+
+	PutOnBoard(ctx context.Context, b BoardItem) (BoardItem, error)
+
+	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
+
+	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
 }
 
 type catalogManager struct {
@@ -274,6 +282,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, taken := s.ByRole(roleRaisedItem); taken {
 		carriers[roleRaisedItem] = models.RaisedItem{}
+	}
+	if _, boarded := s.ByRole(roleBoardItem); boarded {
+		carriers[roleBoardItem] = models.BoardItem{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {

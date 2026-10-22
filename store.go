@@ -24,6 +24,7 @@ const (
 	roleRecord            = "record"
 	roleEndorsement       = "endorsement"
 	roleRaisedItem        = "raised_item"
+	roleBoardItem         = "board_item"
 )
 
 // store is the spec-driven store, which lives in

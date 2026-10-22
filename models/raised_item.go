@@ -8,6 +8,7 @@ type RaisedItem struct {
 	RaisedBy    string `json:"raised_by"`
 	FiledBy     string `json:"filed_by"`
 	Channel     string `json:"channel"`
+	BoardItemID string `json:"board_item_id"`
 	CreatedAt   string `json:"created_at"`
 }
 

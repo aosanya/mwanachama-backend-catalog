@@ -96,3 +96,13 @@ var ErrEndorsementsNotCounted = errors.New("endorsements are not counted here")
 var ErrInvalidRaisedItem = errors.New("invalid raised item")
 
 var ErrRaisedItemsNotTaken = errors.New("raised items are not taken here")
+
+var ErrInvalidBoardItem = errors.New("invalid board item")
+
+var ErrBoardNotKept = errors.New("no board is kept here")
+
+var ErrBoardItemNotFound = errors.New("board item not found")
+
+var ErrRaisedItemNotFound = errors.New("raised item not found")
+
+var ErrRaisedItemNotPublishable = errors.New("raised item is not publishable")

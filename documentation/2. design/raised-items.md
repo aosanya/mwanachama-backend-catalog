@@ -14,3 +14,21 @@ object for the role builds and answers `ErrRaisedItemsNotTaken`.
 Not here yet: where an item happened (whether place and ward are fields or
 document paths waits on the owner), grouping publishable items into board
 items, replies, the public outcome, and declared operations.
+
+## Board items
+
+The optional `board_item` role is one item on the public board: a `title` and
+a public `outcome`, empty until there is one. It is kept only where raised
+items are taken too; otherwise every board call answers `ErrBoardNotKept`.
+
+A raised item is grouped under a board item by its own `board_item_id`, so an
+item sits under at most one board item. `PutOnBoard` mints the id and time;
+`GroupUnderBoardItem` refuses an item that is not `publishable`
+(`ErrRaisedItemNotPublishable`), and answers `ErrRaisedItemNotFound` or
+`ErrBoardItemNotFound` for an unknown id.
+
+`ListBoardItems` lists board items oldest first, each with `raised_by`, the
+number of publishable raised items grouped under it, and `me_too`, the
+`endorsement` count with the board item's id as subject (zero where the domain
+counts no endorsements). Visibility, place, replies and declared operations are
+not here yet.

@@ -94,6 +94,12 @@
       "name": "raised_item",
       "table": "raised_items",
       "description": "An idea, report or complaint a resident raised, or a clerk filed on their behalf."
+    },
+    {
+      "role": "board_item",
+      "name": "board_item",
+      "table": "board_items",
+      "description": "An item on the public board, grouping what residents raised about the same thing."
     }
   ]
 }

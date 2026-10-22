@@ -634,6 +634,11 @@
           "description": "How it reached whoever filed it on the raiser's behalf, empty when the raiser filed it."
         },
         {
+          "name": "board_item_id",
+          "type": "string",
+          "description": "The board item this publishable item is grouped under, empty while ungrouped."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When it was raised."
@@ -646,6 +651,41 @@
           "fields": [
             "raised_by"
           ]
+        },
+        {
+          "name": "board_item",
+          "description": "Counts and lists the items grouped under one board item.",
+          "fields": [
+            "board_item_id"
+          ]
+        }
+      ]
+    },
+    {
+      "role": "board_item",
+      "description": "One item on the public board, grouping the publishable raised items that say the same thing. A domain without a board fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "What the grouped items raise, one line, as the board shows it.",
+          "required": true
+        },
+        {
+          "name": "outcome",
+          "type": "string",
+          "description": "What came of it, public text, empty until there is one."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was put on the board."
         }
       ]
     }
