@@ -37,6 +37,7 @@ type (
 	BoardItemTally    = models.BoardItemTally
 	SharedBoardItem   = models.SharedBoardItem
 	Reply             = models.Reply
+	RaisedItemFile    = models.RaisedItemFile
 	FieldTally        = models.FieldTally
 )
 
@@ -265,6 +266,9 @@ type CatalogManager interface {
 	ReplyToRaisedItem(ctx context.Context, r Reply) (Reply, error)
 
 	ListReplies(ctx context.Context, raisedItemID string) ([]Reply, error)
+	AttachFiles(ctx context.Context, raisedItemID, raiser string, fileIDs []string) ([]RaisedItemFile, error)
+	ApproveFileForPublishing(ctx context.Context, raisedItemID, fileID, approvedBy string) (RaisedItemFile, error)
+	ListRaisedItemFiles(ctx context.Context, raisedItemID string) ([]RaisedItemFile, error)
 }
 
 type catalogManager struct {
@@ -307,6 +311,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, replied := s.ByRole(roleReply); replied {
 		carriers[roleReply] = models.Reply{}
+	}
+	if _, attached := s.ByRole(roleRaisedItemFile); attached {
+		carriers[roleRaisedItemFile] = models.RaisedItemFile{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {

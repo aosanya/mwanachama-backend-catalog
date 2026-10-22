@@ -24,6 +24,9 @@ func (m *catalogManager) OpenSharedBoardItem(ctx context.Context, key string) (S
 		return SharedBoardItem{}, ErrBoardItemNotFound
 	}
 	shared := SharedBoardItem{Title: b.Title, Theme: grouped[0].Topic, Status: b.Outcome}
+	if shared.Files, err = m.publishedFilesOf(ctx, grouped); err != nil {
+		return SharedBoardItem{}, err
+	}
 	if m.countsEndorsements() {
 		if shared.MeToo, err = m.CountEndorsements(ctx, b.ID); err != nil {
 			return SharedBoardItem{}, err

@@ -110,3 +110,9 @@ var ErrRaisedItemNotPublishable = errors.New("raised item is not publishable")
 var ErrInvalidReply = errors.New("invalid reply")
 
 var ErrRepliesNotSent = errors.New("no replies are sent here")
+
+var ErrAttachmentsNotTaken = errors.New("attachments are not taken here")
+
+var ErrInvalidAttachment = errors.New("invalid attachment")
+
+var ErrAttachmentNotFound = errors.New("attachment not found")

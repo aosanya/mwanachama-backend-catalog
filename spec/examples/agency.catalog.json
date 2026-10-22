@@ -106,6 +106,12 @@
       "name": "reply",
       "table": "replies",
       "description": "An answer to something a resident raised."
+    },
+    {
+      "role": "raised_item_file",
+      "name": "raised_item_file",
+      "table": "raised_item_files",
+      "description": "A photo or file a resident attached to something they raised."
     }
   ]
 }

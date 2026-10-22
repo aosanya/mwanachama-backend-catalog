@@ -759,6 +759,62 @@
           ]
         }
       ]
+    },
+    {
+      "role": "raised_item_file",
+      "description": "One file attached to a raised item, held by its id in the file store the mounting host keeps. Seen by the raiser and by whoever answers for the host; seen by the public only once approved for publishing on a publishable item. A domain that takes no attachments fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "raised_item_id",
+          "type": "string",
+          "description": "The raised item the file is attached to.",
+          "required": true
+        },
+        {
+          "name": "file_id",
+          "type": "string",
+          "description": "The file's id in the host's file store, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "attached_by",
+          "type": "string",
+          "description": "Who attached it: the raiser, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "attached_at",
+          "type": "timestamp",
+          "description": "When it was attached."
+        },
+        {
+          "name": "approved_by",
+          "type": "string",
+          "description": "Who approved it for publishing, opaque to this module; empty until approved."
+        },
+        {
+          "name": "approved_at",
+          "type": "string",
+          "description": "When it was approved for publishing; empty until approved."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "raised_item_file",
+          "description": "One file at most once per raised item.",
+          "fields": [
+            "raised_item_id",
+            "file_id"
+          ],
+          "unique": true
+        }
+      ]
     }
   ]
 }

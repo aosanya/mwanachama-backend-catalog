@@ -2,6 +2,7 @@ package mwanachamacatalog_test
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
@@ -29,8 +30,8 @@ func TestASharedBoardItemOpensWithItsTitleThemeMeTooAndStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := catalog.SharedBoardItem{Title: "Streetlights out", Theme: "lighting", MeToo: 2, Status: "Reported to the utility"}
-	if got != want {
+	want := catalog.SharedBoardItem{Title: "Streetlights out", Theme: "lighting", MeToo: 2, Status: "Reported to the utility", Files: []string{}}
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("shared = %+v, want %+v", got, want)
 	}
 }
@@ -57,7 +58,7 @@ func TestEveryMissOnASharedBoardItemAnswersTheSame(t *testing.T) {
 	}
 	for _, key := range []string{"", "no-such-key", unpublished.ID, ungrouped.ID} {
 		got, err := cm.OpenSharedBoardItem(ctx, key)
-		if !errors.Is(err, catalog.ErrBoardItemNotFound) || err.Error() != catalog.ErrBoardItemNotFound.Error() || got != (catalog.SharedBoardItem{}) {
+		if !errors.Is(err, catalog.ErrBoardItemNotFound) || err.Error() != catalog.ErrBoardItemNotFound.Error() || !reflect.DeepEqual(got, catalog.SharedBoardItem{}) {
 			t.Errorf("key %q: %+v, %v", key, got, err)
 		}
 	}

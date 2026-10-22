@@ -14,8 +14,9 @@ type BoardItemTally struct {
 }
 
 type SharedBoardItem struct {
-	Title  string `json:"title"`
-	Theme  string `json:"theme"`
-	MeToo  int    `json:"me_too"`
-	Status string `json:"status"`
+	Title  string   `json:"title"`
+	Theme  string   `json:"theme"`
+	MeToo  int      `json:"me_too"`
+	Status string   `json:"status"`
+	Files  []string `json:"files"`
 }
