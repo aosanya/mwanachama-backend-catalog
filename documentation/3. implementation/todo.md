@@ -9,6 +9,7 @@ why the split runs that way.
 
 | Task | Title | Status | Notes |
 |------|-------|--------|-------|
+| CAT59 | 🧭 **Catalogue settings** (member app decisions 280, 281, 2026-10-22): a mount's kinds and fields (with CAT49) and its seed rows, declared through S64. | ⏸️ | S64 |
 | CAT49 | 🧭 **Typed record kinds** (member app decisions 228, 2026-10-21; CAT15's first real case): declared kinds person, household, business/trader, property, each with its fields (ward, source, language, reach, consent, accessibility, reference; a household's members; an occupant or trader's property), validated on write and queryable by field. 23:16 run: nothing built; where the kinds and their fields are declared (role-less domain objects, one `register_record` role with a shared spec feature, or kinds as rows) waits on the owner. | 📋 | Unblocks CAT50–CAT54. |
 | CAT50 | 🧭 **The register per agency, and importing a list** (member app decisions 228, 230): a register of CAT49 records per agency; a list import (rows plus the list's source name) that previews each row's problems and imports the good ones, the source kept per record; single create and edit. | ⏸️ | CAT49 |
 | CAT51 | 🧭 **Pending records and reconciling** (member app decisions 230): field-captured records arrive pending; a reconcile action merges a pending record into an existing one, adds it as new, or discards it, with who and when. | ⏸️ | CAT49 |
