@@ -25,6 +25,7 @@ var carriers = map[string]string{
 	"endorsement":        "Endorsement",
 	"raised_item":        "RaisedItem",
 	"board_item":         "BoardItem",
+	"reply":              "Reply",
 }
 
 var storeOwned = map[string]bool{

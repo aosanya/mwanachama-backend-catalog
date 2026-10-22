@@ -100,6 +100,12 @@
       "name": "board_item",
       "table": "board_items",
       "description": "An item on the public board, grouping what residents raised about the same thing."
+    },
+    {
+      "role": "reply",
+      "name": "reply",
+      "table": "replies",
+      "description": "An answer to something a resident raised."
     }
   ]
 }

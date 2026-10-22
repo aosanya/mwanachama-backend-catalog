@@ -111,8 +111,8 @@ func TestShippedExampleMigratesIdempotently(t *testing.T) {
 			t.Fatalf("migrate %d: %v", i, err)
 		}
 	}
-	if n := len(tableNames(t, db)); n != 13 {
-		t.Errorf("tables = %d, want 13", n)
+	if n := len(tableNames(t, db)); n != 14 {
+		t.Errorf("tables = %d, want 14", n)
 	}
 }
 

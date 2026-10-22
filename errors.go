@@ -106,3 +106,7 @@ var ErrBoardItemNotFound = errors.New("board item not found")
 var ErrRaisedItemNotFound = errors.New("raised item not found")
 
 var ErrRaisedItemNotPublishable = errors.New("raised item is not publishable")
+
+var ErrInvalidReply = errors.New("invalid reply")
+
+var ErrRepliesNotSent = errors.New("no replies are sent here")

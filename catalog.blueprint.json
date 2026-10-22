@@ -688,6 +688,50 @@
           "description": "When it was put on the board."
         }
       ]
+    },
+    {
+      "role": "reply",
+      "description": "An answer to a raised item, from whoever answers for the mounting host. A domain that sends no replies fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "raised_item_id",
+          "type": "string",
+          "description": "The raised item this answers.",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "description": "The answer, as the raiser reads it.",
+          "required": true
+        },
+        {
+          "name": "replied_by",
+          "type": "string",
+          "description": "Who answered, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was sent."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "raised_item",
+          "description": "Lists the replies to one raised item.",
+          "fields": [
+            "raised_item_id"
+          ]
+        }
+      ]
     }
   ]
 }

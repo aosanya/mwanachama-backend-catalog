@@ -41,3 +41,14 @@ it sat under by clearing its `board_item_id`, so it stops counting towards that
 board item's `raised_by`. Both answer `ErrBoardItemNotFound` or
 `ErrRaisedItemNotFound` for an unknown id and `ErrBoardNotKept` where no board
 is kept. Neither is a declared operation yet.
+
+## Replies
+
+The optional `reply` role is one answer to a raised item: `raised_item_id`,
+`body` and `replied_by`, all required. It is sent only where raised items are
+taken too; otherwise both calls answer `ErrRepliesNotSent`.
+`ReplyToRaisedItem` mints the id and time and refuses an unknown raised item
+with `ErrRaisedItemNotFound`; `ListReplies` lists one raised item's replies by
+`created_at` then id. Timestamps are kept to the second, so two replies in the
+same second come back in id order rather than sending order. Who may read a
+reply, and declared operations for it, are not here yet.

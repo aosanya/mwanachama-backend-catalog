@@ -34,6 +34,7 @@ type (
 	RaisedItem        = models.RaisedItem
 	BoardItem         = models.BoardItem
 	BoardItemTally    = models.BoardItemTally
+	Reply             = models.Reply
 	FieldTally        = models.FieldTally
 )
 
@@ -252,6 +253,10 @@ type CatalogManager interface {
 	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
 
 	UngroupFromBoardItem(ctx context.Context, raisedItemID string) error
+
+	ReplyToRaisedItem(ctx context.Context, r Reply) (Reply, error)
+
+	ListReplies(ctx context.Context, raisedItemID string) ([]Reply, error)
 }
 
 type catalogManager struct {
@@ -289,6 +294,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, boarded := s.ByRole(roleBoardItem); boarded {
 		carriers[roleBoardItem] = models.BoardItem{}
+	}
+	if _, replied := s.ByRole(roleReply); replied {
+		carriers[roleReply] = models.Reply{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {
