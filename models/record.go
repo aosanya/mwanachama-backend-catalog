@@ -9,6 +9,7 @@ type Record struct {
 	ID          string `json:"id"`
 	SubjectID   string `json:"subject_id"`
 	HolderID    string `json:"holder_id"`
+	ScopeID     string `json:"scope_id"`
 	Doc         string `json:"doc"`
 	Changes     string `json:"changes"`
 	CreatedAt   string `json:"created_at"`

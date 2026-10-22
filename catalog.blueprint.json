@@ -522,6 +522,12 @@
           "primary": true
         },
         {
+          "name": "scope_id",
+          "type": "string",
+          "description": "Which of the holder's standings the values were sent under, opaque to this module; a holder sending under two keeps two records, each counted under its own. Empty when the host keeps one record per holder.",
+          "primary": true
+        },
+        {
           "name": "id",
           "type": "string",
           "description": "Storage key, opaque to callers, kept across every change."

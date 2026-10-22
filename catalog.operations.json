@@ -703,12 +703,17 @@
       "call": "ListRecords",
       "action": "catalog.record.list",
       "title": "List the records on one subject",
-      "description": "Every holder's latest values on one subject, oldest first, each with the time of every change. Never anonymous, and a mount grants it only to those who may read everybody's values; a holder's own values are the host's to show.",
+      "description": "Every holder's latest values on one subject, one per holder per standing, oldest first, each with the time of every change. Never anonymous, and a mount grants it only to those who may read everybody's values; a holder's own values are the host's to show.",
       "args": [
         {
           "from": "path",
           "as": "subject_id",
           "description": "The subject whose records to read."
+        },
+        {
+          "from": "query",
+          "as": "scope_id",
+          "description": "Only the records sent under this standing; absent means every record, so a holder who sent under two standings is counted once in each."
         }
       ],
       "returns": [
@@ -729,6 +734,11 @@
           "from": "path",
           "as": "subject_id",
           "description": "The subject whose records to read."
+        },
+        {
+          "from": "query",
+          "as": "scope_id",
+          "description": "Only the records sent under this standing; absent means every record, so a holder who sent under two standings is counted once in each."
         }
       ],
       "returns": [

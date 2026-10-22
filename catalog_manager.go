@@ -232,9 +232,9 @@ type CatalogManager interface {
 
 	PutRecord(ctx context.Context, r Record) (Record, error)
 
-	ListRecords(ctx context.Context, subjectID string) ([]Record, error)
+	ListRecords(ctx context.Context, subjectID, scopeID string) ([]Record, error)
 
-	CountRecords(ctx context.Context, subjectID string) ([]FieldTally, error)
+	CountRecords(ctx context.Context, subjectID, scopeID string) ([]FieldTally, error)
 
 	Endorse(ctx context.Context, subjectID, holderID string) (int, error)
 

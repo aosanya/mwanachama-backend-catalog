@@ -40,7 +40,7 @@ func (m *catalogManager) PutRecord(ctx context.Context, r Record) (Record, error
 func (m *catalogManager) putRecord(ctx context.Context, tx *gorm.DB, r Record) (Record, error) {
 	at := m.now()
 	of := func() *gorm.DB {
-		return tx.Table(m.st.Table(roleRecord)).Where("subject_id = ? AND holder_id = ?", r.SubjectID, r.HolderID)
+		return tx.Table(m.st.Table(roleRecord)).Where("subject_id = ? AND holder_id = ? AND scope_id = ?", r.SubjectID, r.HolderID, r.ScopeID)
 	}
 	var existing Record
 	err := m.take(of(), roleRecord, &existing, errNoRecord)
@@ -78,18 +78,22 @@ func changesWith(stored, at string) string {
 	return string(raw)
 }
 
-func (m *catalogManager) ListRecords(ctx context.Context, subjectID string) ([]Record, error) {
+func (m *catalogManager) ListRecords(ctx context.Context, subjectID, scopeID string) ([]Record, error) {
 	if !m.keepsRecords() {
 		return nil, ErrRecordsNotKept
 	}
 	if subjectID == "" {
 		return nil, ErrInvalidRecord
 	}
-	return listOf[Record](m, m.records(ctx).Where("subject_id = ?", subjectID).Order("created_at, holder_id"), roleRecord)
+	q := m.records(ctx).Where("subject_id = ?", subjectID)
+	if scopeID != "" {
+		q = q.Where("scope_id = ?", scopeID)
+	}
+	return listOf[Record](m, q.Order("created_at, holder_id, scope_id"), roleRecord)
 }
 
-func (m *catalogManager) CountRecords(ctx context.Context, subjectID string) ([]FieldTally, error) {
-	records, err := m.ListRecords(ctx, subjectID)
+func (m *catalogManager) CountRecords(ctx context.Context, subjectID, scopeID string) ([]FieldTally, error) {
+	records, err := m.ListRecords(ctx, subjectID, scopeID)
 	if err != nil {
 		return nil, err
 	}

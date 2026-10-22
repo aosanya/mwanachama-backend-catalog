@@ -28,7 +28,7 @@ func TestASecondSendReplacesTheHoldersRecordAndKeepsEveryChangeTime(t *testing.T
 	if second.ID != first.ID || second.CreatedAt != first.CreatedAt {
 		t.Fatalf("second send minted a new record: %+v then %+v", first, second)
 	}
-	records, err := cm.ListRecords(ctx, "form-1")
+	records, err := cm.ListRecords(ctx, "form-1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestCountsAreWorkedOutFromEachSubjectsLatestRecordsOnly(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	tallies, err := cm.CountRecords(ctx, "form-1")
+	tallies, err := cm.CountRecords(ctx, "form-1", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,41 @@ func TestADomainThatKeepsNoRecordsStillBuildsAndRefusesThem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("a spec without records must still build: %v", err)
 	}
-	if _, err := cm.ListRecords(t.Context(), "form-1"); !errors.Is(err, catalog.ErrRecordsNotKept) {
+	if _, err := cm.ListRecords(t.Context(), "form-1", ""); !errors.Is(err, catalog.ErrRecordsNotKept) {
 		t.Fatalf("ListRecords = %v, want ErrRecordsNotKept", err)
+	}
+}
+
+func TestAHolderSendingUnderTwoStandingsKeepsTwoRecordsCountedUnderEach(t *testing.T) {
+	cm, ctx := newManager(t)
+	for _, r := range []catalog.Record{
+		{SubjectID: "form-1", HolderID: "amina", ScopeID: "traders", Doc: `{"agree": true}`},
+		{SubjectID: "form-1", HolderID: "amina", ScopeID: "teachers", Doc: `{"agree": false}`},
+		{SubjectID: "form-1", HolderID: "amina", ScopeID: "traders", Doc: `{"agree": false}`},
+		{SubjectID: "form-1", HolderID: "baraka", ScopeID: "traders", Doc: `{"agree": true}`},
+	} {
+		if _, err := cm.PutRecord(ctx, r); err != nil {
+			t.Fatal(err)
+		}
+	}
+	all, err := cm.ListRecords(ctx, "form-1", "")
+	if err != nil || len(all) != 3 {
+		t.Fatalf("records = %+v (%v), want one per holder per standing", all, err)
+	}
+	agree := func(scope string) catalog.FieldTally {
+		tallies, err := cm.CountRecords(ctx, "form-1", scope)
+		if err != nil || len(tallies) != 1 {
+			t.Fatalf("CountRecords(%q) = %+v (%v)", scope, tallies, err)
+		}
+		return tallies[0]
+	}
+	if got := agree("traders"); got.Yes != 1 || got.No != 1 || got.Counted != 2 {
+		t.Errorf("traders = %+v, want amina's resend and baraka", got)
+	}
+	if got := agree("teachers"); got.Yes != 0 || got.No != 1 || got.Counted != 1 {
+		t.Errorf("teachers = %+v, want amina once", got)
+	}
+	if got := agree(""); got.Yes != 1 || got.No != 2 || got.Counted != 3 {
+		t.Errorf("overall = %+v, want amina counted under each standing", got)
 	}
 }

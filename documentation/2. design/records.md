@@ -1,4 +1,4 @@
-# Records: one per holder per subject (CAT48)
+# Records: one per holder per standing per subject (CAT48, CAT58)
 
 A record is the latest set of values one holder sent about one subject,
 with the time of every change kept beside it. The catalog does not know
@@ -7,14 +7,32 @@ and the person answering as the holder, but nothing here names either.
 
 ## Shape
 
-`models.Record` carries `subject_id`, `holder_id`, `doc` (a JSON object,
+`models.Record` carries `subject_id`, `holder_id`, `scope_id`, `doc` (a JSON object,
 one key per field the host's subject asks about), `changes` (the history of
 change times) and the two timestamps. The column is `doc` rather than
 `values` because `values` is an SQL keyword and the table would not create.
 
-The `record` role is keyed on `(subject_id, holder_id)`, so there is one row
-per holder per subject by construction, with an index on `subject_id` for
-the listing and the counts.
+The `record` role is keyed on `(subject_id, holder_id, scope_id)`, so there
+is one row per holder per standing per subject by construction, with an
+index on `subject_id` for the listing and the counts.
+
+`scope_id` is the standing the holder sent under, opaque here. A forms mount
+passes the group the member answered as (member app decision 247, amending
+208): a trader who is also a teacher answers once as each and keeps two
+records, each replaced only by a resend under its own standing. A host that
+keeps one record per holder leaves it empty, and an empty standing is a key
+like any other.
+
+## Counted per standing and overall
+
+`catalog.record.list` and `catalog.record.count` take an optional
+`scope_id` query parameter. Given, they read only the records sent under
+that standing. Absent, they read every record on the subject, so a holder
+who sent under two standings is counted once in each and twice in the
+overall figure: each record is one answer, and the overall count is the sum
+of the standings' counts. There is no way to filter to the empty standing
+alone; a host that mixes empty and named standings on one subject reads the
+empty ones from the full listing.
 
 ## Counts are read off the value's own JSON shape
 
