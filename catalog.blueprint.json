@@ -65,6 +65,11 @@
           "description": "When it goes public. Empty means as soon as it is public; a time still to come keeps every anonymous read answering exactly as for a missing entry until then."
         },
         {
+          "name": "dispose_at",
+          "type": "timestamp",
+          "description": "When its retention ends. Empty means it is kept until somebody deletes it; once the time has passed, the host's scheduled sweep disposes of it the way a delete would."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When the row was created."

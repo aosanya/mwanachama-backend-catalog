@@ -21,6 +21,11 @@ func (m *catalogManager) checkEntry(e *Entry) error {
 		return ErrInvalidEntry
 	}
 	e.PublishAt = at
+	disposeAt, ok := models.NormalizePublishAt(e.DisposeAt)
+	if !ok {
+		return ErrInvalidEntry
+	}
+	e.DisposeAt = disposeAt
 	if err := m.checks(roleEntry, *e); err != nil {
 		return ErrInvalidEntry
 	}

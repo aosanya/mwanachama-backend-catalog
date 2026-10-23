@@ -3,6 +3,7 @@ package mwanachamacatalog
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -153,6 +154,7 @@ type CatalogManager interface {
 
 	// DeleteEntry soft-deletes an Entry.
 	DeleteEntry(ctx context.Context, slug string) error
+	DisposeExpired(ctx context.Context, now time.Time) ([]string, error)
 
 	// ListEntries returns the cards matching f, ordered by name, never
 	// carrying Doc.

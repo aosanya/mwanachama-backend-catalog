@@ -12,6 +12,7 @@ type Entry struct {
 	SubmittedBy string     `json:"submitted_by,omitempty"`
 	ApprovedAt  string     `json:"approved_at,omitempty"`
 	PublishAt   string     `json:"publish_at,omitempty"`
+	DisposeAt   string     `json:"dispose_at,omitempty"`
 	CreatedAt   string     `json:"created_at"`
 	UpdatedAt   string     `json:"updated_at"`
 	Deleted     bool       `json:"deleted"`
@@ -32,4 +33,8 @@ func NormalizePublishAt(at string) (string, bool) {
 
 func (e Entry) PublishedBy(now string) bool {
 	return e.PublishAt == "" || e.PublishAt <= now
+}
+
+func (e Entry) RetainedAt(now string) bool {
+	return e.DisposeAt == "" || e.DisposeAt > now
 }
