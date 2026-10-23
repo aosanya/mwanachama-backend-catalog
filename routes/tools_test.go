@@ -56,7 +56,7 @@ func properties(t *testing.T, tool routes.Tool) map[string]any {
 
 func TestEveryGatedOperationBecomesATool(t *testing.T) {
 	tools, _, _ := newTools(t)
-	if len(tools) != 32 {
+	if len(tools) != 44 {
 		t.Fatalf("built %d tools: %v", len(tools), tools)
 	}
 	for _, want := range []string{

@@ -845,6 +845,284 @@
           "body": true
         }
       ]
+    },
+    "raise_item": {
+      "method": "POST",
+      "path": "/raised-items",
+      "call": "RaiseItem",
+      "action": "catalog.raised_item.raise",
+      "status": 201,
+      "title": "Raise an item",
+      "description": "Raise an item as the caller. The raiser is the caller, never the body. Never anonymous.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        },
+        {
+          "from": "caller",
+          "as": "raised_by",
+          "into": "RaisedBy",
+          "description": "Who raised the item, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "file_raised_item": {
+      "method": "POST",
+      "path": "/raised-items/filed",
+      "call": "RaiseItem",
+      "action": "catalog.raised_item.file",
+      "status": 201,
+      "title": "File an item on someone's behalf",
+      "description": "File an item for somebody else: the body names who raised it, by their register entry's id, and the channel it came through; the filer is the caller, never the body. Never anonymous.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        },
+        {
+          "from": "caller",
+          "as": "filed_by",
+          "into": "FiledBy",
+          "description": "Who filed the item, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_my_raised_items": {
+      "method": "GET",
+      "path": "/raised-items/mine",
+      "call": "ListRaisedItems",
+      "action": "catalog.raised_item.list_mine",
+      "title": "List my raised items",
+      "description": "The items the caller raised, newest first. Never anonymous.",
+      "args": [
+        {
+          "from": "caller",
+          "as": "raised_by",
+          "description": "Whose items to list, supplied by the mount."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "put_on_board": {
+      "method": "POST",
+      "path": "/board-items",
+      "call": "PutOnBoard",
+      "action": "catalog.board_item.put",
+      "status": 201,
+      "title": "Put an item on the board",
+      "description": "Start a board item that raised items can be grouped under. Never anonymous.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_board_items": {
+      "method": "GET",
+      "path": "/board-items",
+      "call": "ListBoardItems",
+      "action": "catalog.board_item.list",
+      "title": "List board items",
+      "description": "Every board item with how many raised it and how many said Me too. Never anonymous.",
+      "args": [],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "group_under_board_item": {
+      "method": "PUT",
+      "path": "/raised-items/{raisedItemID}/board-item",
+      "call": "GroupUnderBoardItem",
+      "action": "catalog.raised_item.group",
+      "title": "Group a raised item under a board item",
+      "description": "Put a raised item under a board item. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "description": "The raised item to group."
+        },
+        {
+          "from": "body",
+          "as": "board_item_id",
+          "required": true,
+          "field": "RaisedItem.board_item_id"
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ],
+      "status": 204
+    },
+    "ungroup_from_board_item": {
+      "method": "DELETE",
+      "path": "/raised-items/{raisedItemID}/board-item",
+      "call": "UngroupFromBoardItem",
+      "action": "catalog.raised_item.ungroup",
+      "status": 204,
+      "title": "Ungroup a raised item",
+      "description": "Take a raised item out from under its board item. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "description": "The raised item to ungroup."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "set_board_item_outcome": {
+      "method": "PUT",
+      "path": "/board-items/{boardItemID}/outcome",
+      "call": "SetBoardItemOutcome",
+      "action": "catalog.board_item.set_outcome",
+      "status": 204,
+      "title": "Set a board item's outcome",
+      "description": "Record what came of a board item. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item."
+        },
+        {
+          "from": "body",
+          "as": "outcome",
+          "required": true,
+          "field": "BoardItem.outcome"
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "endorse": {
+      "method": "POST",
+      "path": "/endorsements/{subject_id}",
+      "call": "Endorse",
+      "action": "catalog.endorsement.add",
+      "title": "Say Me too",
+      "description": "Add the caller's Me too to a subject, at most once, and answer the count. The holder is the caller, never the body. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "subject_id",
+          "description": "The subject to endorse."
+        },
+        {
+          "from": "caller",
+          "as": "holder_id",
+          "description": "Who says Me too, supplied by the mount."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "count_endorsements": {
+      "method": "GET",
+      "path": "/endorsements/{subject_id}",
+      "call": "CountEndorsements",
+      "action": "catalog.endorsement.count",
+      "title": "Count Me toos",
+      "description": "How many said Me too to a subject. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "subject_id",
+          "description": "The subject to count."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "reply_to_raised_item": {
+      "method": "POST",
+      "path": "/raised-items/{raisedItemID}/replies",
+      "call": "ReplyToRaisedItem",
+      "action": "catalog.reply.send",
+      "status": 201,
+      "title": "Reply to a raised item",
+      "description": "Send a reply on a raised item. The replier is the caller, never the body. Never anonymous.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        },
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "into": "RaisedItemID",
+          "description": "The raised item replied to."
+        },
+        {
+          "from": "caller",
+          "as": "replied_by",
+          "into": "RepliedBy",
+          "description": "Who replied, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_replies": {
+      "method": "GET",
+      "path": "/raised-items/{raisedItemID}/replies",
+      "call": "ListReplies",
+      "action": "catalog.reply.list",
+      "title": "List replies",
+      "description": "The replies on one raised item, oldest first. Never anonymous; a mount grants it only to the raiser, staff and the filing clerk.",
+      "args": [
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "description": "The raised item whose replies to read."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -872,6 +1150,11 @@
     "ErrRaisedItemsNotTaken": 404,
     "ErrBoardItemNotFound": 404,
     "ErrInvalidBoardItem": 400,
-    "ErrBoardNotKept": 404
+    "ErrBoardNotKept": 404,
+    "ErrRaisedItemNotFound": 404,
+    "ErrInvalidReply": 400,
+    "ErrRepliesNotSent": 404,
+    "ErrInvalidEndorsement": 400,
+    "ErrEndorsementsNotCounted": 404
   }
 }

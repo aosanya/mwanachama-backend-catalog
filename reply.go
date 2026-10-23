@@ -34,5 +34,8 @@ func (m *catalogManager) ListReplies(ctx context.Context, raisedItemID string) (
 	if !m.sendsReplies() {
 		return nil, ErrRepliesNotSent
 	}
+	if raisedItemID == "" {
+		return nil, ErrInvalidReply
+	}
 	return listOf[Reply](m, m.q(ctx, roleReply).Where("raised_item_id = ?", raisedItemID).Order("created_at, id"), roleReply)
 }

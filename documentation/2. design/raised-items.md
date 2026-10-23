@@ -118,3 +118,30 @@ owner's (CAT55). Declaring it here would settle that.
   instead is not decided.
 - *A result cap.* The read keeps the manager's 200 nearest; whether the
   route should take a smaller limit or page is not decided.
+
+## Declared addresses (CAT55)
+
+Raising, filing, the board, Me too and replies are declared in
+`catalog.operations.json`, every one gated:
+
+| Address | Action | Who is bound from the caller |
+| --- | --- | --- |
+| `POST /raised-items` | `catalog.raised_item.raise` | `raised_by` |
+| `POST /raised-items/filed` | `catalog.raised_item.file` | `filed_by`; `raised_by` is the register entry's id from the body (decision 374) |
+| `GET /raised-items/mine` | `catalog.raised_item.list_mine` | the raiser |
+| `POST /board-items`, `GET /board-items` | `catalog.board_item.put`, `.list` | — |
+| `PUT`/`DELETE /raised-items/{raisedItemID}/board-item` | `catalog.raised_item.group`, `.ungroup` | — |
+| `PUT /board-items/{boardItemID}/outcome` | `catalog.board_item.set_outcome` | — |
+| `POST`/`GET /endorsements/{subject_id}` | `catalog.endorsement.add`, `.count` | the Me too holder |
+| `POST`/`GET /raised-items/{raisedItemID}/replies` | `catalog.reply.send`, `.list` | the replier |
+
+Raising and filing are two actions so a mount grants filing on someone's
+behalf to clerks alone. Listing replies with no raised item is refused.
+
+Still open: reply reads limited to the raiser, staff and the filing clerk
+(decision 375) are only the mount's grant today; the member raise route
+does not yet clear a `filed_by`/`channel` the body claims; and leaving a
+board item with nothing grouped under it out of public reads (decision 373)
+needs `ListBoardItems` split into a staff read and a public one, because
+three tests (outcome after ungrouping, removal, unpublishable grouping)
+rely on the staff read listing an empty board item.
