@@ -142,13 +142,31 @@ func TestAHolderSendingUnderTwoStandingsKeepsTwoRecordsCountedUnderEach(t *testi
 		}
 		return tallies[0]
 	}
-	if got := agree("traders"); got.Yes != 1 || got.No != 1 || got.Counted != 2 {
+	if got := agree("traders"); got.Yes != 1 || got.No != 1 || got.Counted != 2 || got.Holders != 2 {
 		t.Errorf("traders = %+v, want amina's resend and baraka", got)
 	}
-	if got := agree("teachers"); got.Yes != 0 || got.No != 1 || got.Counted != 1 {
+	if got := agree("teachers"); got.Yes != 0 || got.No != 1 || got.Counted != 1 || got.Holders != 1 {
 		t.Errorf("teachers = %+v, want amina once", got)
 	}
-	if got := agree(""); got.Yes != 1 || got.No != 2 || got.Counted != 3 {
+	if got := agree(""); got.Yes != 1 || got.No != 2 || got.Counted != 3 || got.Holders != 2 {
 		t.Errorf("overall = %+v, want amina counted under each standing", got)
+	}
+}
+
+func TestAnOverallCountCountsAPersonAnsweringAsTwoGroupsOnce(t *testing.T) {
+	cm, ctx := newManager(t)
+	for _, scope := range []string{"traders", "teachers"} {
+		if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "form-1", HolderID: "amina", ScopeID: scope, Doc: `{"agree": true}`}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, scope := range []string{"", "traders", "teachers"} {
+		tallies, err := cm.CountRecords(ctx, "form-1", scope)
+		if err != nil || len(tallies) != 1 {
+			t.Fatalf("CountRecords(%q) = %+v (%v)", scope, tallies, err)
+		}
+		if tallies[0].Holders != 1 {
+			t.Errorf("CountRecords(%q).Holders = %d, want amina once", scope, tallies[0].Holders)
+		}
 	}
 }

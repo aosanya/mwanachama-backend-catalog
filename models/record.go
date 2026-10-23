@@ -19,6 +19,7 @@ type Record struct {
 type FieldTally struct {
 	Field   string         `json:"field"`
 	Counted int            `json:"counted"`
+	Holders int            `json:"holders"`
 	Yes     int            `json:"yes,omitempty"`
 	No      int            `json:"no,omitempty"`
 	Options map[string]int `json:"options,omitempty"`
@@ -31,6 +32,7 @@ type FieldTally struct {
 func TallyRecords(records []Record) ([]FieldTally, error) {
 	tallies := map[string]*FieldTally{}
 	sums := map[string]float64{}
+	holders := map[string]map[string]bool{}
 	for _, r := range records {
 		var values map[string]any
 		if err := json.Unmarshal([]byte(r.Doc), &values); err != nil {
@@ -44,6 +46,7 @@ func TallyRecords(records []Record) ([]FieldTally, error) {
 			}
 			if countValue(t, sums, value) {
 				t.Counted++
+				holders[field] = withHolder(holders[field], r.HolderID)
 			}
 		}
 	}
@@ -53,6 +56,7 @@ func TallyRecords(records []Record) ([]FieldTally, error) {
 			average := sums[field] / float64(t.Numbers)
 			t.Average = &average
 		}
+		t.Holders = len(holders[field])
 		out = append(out, *t)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Field < out[j].Field })
@@ -101,4 +105,12 @@ func addNumber(t *FieldTally, sums map[string]float64, n float64) {
 		high := n
 		t.Highest = &high
 	}
+}
+
+func withHolder(seen map[string]bool, holder string) map[string]bool {
+	if seen == nil {
+		seen = map[string]bool{}
+	}
+	seen[holder] = true
+	return seen
 }

@@ -23,16 +23,25 @@ records, each replaced only by a resend under its own standing. A host that
 keeps one record per holder leaves it empty, and an empty standing is a key
 like any other.
 
-## Counted per standing and overall
+## Counted per standing and overall (CAT58, CAT128)
 
 `catalog.record.list` and `catalog.record.count` take an optional
 `scope_id` query parameter. Given, they read only the records sent under
-that standing. Absent, they read every record on the subject, so a holder
-who sent under two standings is counted once in each and twice in the
-overall figure: each record is one answer, and the overall count is the sum
-of the standings' counts. There is no way to filter to the empty standing
-alone; a host that mixes empty and named standings on one subject reads the
-empty ones from the full listing.
+that standing. Absent, they read every record on the subject. There is no
+way to filter to the empty standing alone; a host that mixes empty and named
+standings on one subject reads the empty ones from the full listing.
+
+Every field's tally carries two counts. `counted` is the number of records
+that carried a countable value, so each standing keeps the answer sent for
+it (member app decision 247) and a holder who sent under two standings adds
+two to the overall `counted`. `holders` is the number of distinct holders
+behind those records, so the overall figure counts each person once (member
+app decision 384, CAT128). Under one standing a holder has at most one
+record, and the two counts agree.
+
+The yes/no, option and number tallies stay per record: a holder who answered
+differently under two standings shows both answers overall, because which
+one would stand for the person is not decided.
 
 ## Counts are read off the value's own JSON shape
 
