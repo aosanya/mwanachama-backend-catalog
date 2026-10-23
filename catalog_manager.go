@@ -261,6 +261,7 @@ type CatalogManager interface {
 	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
 
 	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
+	SetBoardItemHidden(ctx context.Context, boardItemID string, hidden bool) error
 
 	UngroupFromBoardItem(ctx context.Context, raisedItemID string) error
 

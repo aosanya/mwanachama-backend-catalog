@@ -4,6 +4,7 @@ type BoardItem struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
 	Outcome   string `json:"outcome"`
+	Hidden    bool   `json:"hidden"`
 	CreatedAt string `json:"created_at"`
 }
 

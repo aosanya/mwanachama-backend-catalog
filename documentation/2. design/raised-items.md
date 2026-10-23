@@ -42,6 +42,16 @@ board item's `raised_by`. Both answer `ErrBoardItemNotFound` or
 `ErrRaisedItemNotFound` for an unknown id and `ErrBoardNotKept` where no board
 is kept. Neither is a declared operation yet.
 
+## Hiding a board item
+
+A board item carries `hidden`, false when it is put on the board.
+`SetBoardItemHidden` sets or clears it (member app decision 373), answering
+`ErrBoardItemNotFound` for an unknown id, `ErrInvalidBoardItem` for an empty
+one and `ErrBoardNotKept` where no board is kept. A hidden board item is left
+out of `ListBoardItems`, and `OpenSharedBoardItem` answers it exactly as a
+missing one, so hiding ends its share link; clearing the flag brings both
+back. Not a declared operation yet.
+
 ## Replies
 
 The optional `reply` role is one answer to a raised item: `raised_item_id`,

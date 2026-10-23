@@ -715,6 +715,11 @@
           "description": "What came of it, public text, empty until there is one."
         },
         {
+          "name": "hidden",
+          "type": "bool",
+          "description": "Whether staff have taken it off the public board; a hidden board item is left out of every public read and its share link stops opening."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When it was put on the board."

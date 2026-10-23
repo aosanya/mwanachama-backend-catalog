@@ -16,6 +16,9 @@ func (m *catalogManager) OpenSharedBoardItem(ctx context.Context, key string) (S
 		}
 		return SharedBoardItem{}, err
 	}
+	if b.Hidden {
+		return SharedBoardItem{}, ErrBoardItemNotFound
+	}
 	grouped, err := listOf[RaisedItem](m, m.q(ctx, roleRaisedItem).Where("board_item_id = ? AND publishable = ?", b.ID, true).Order("created_at, id"), roleRaisedItem)
 	if err != nil {
 		return SharedBoardItem{}, err

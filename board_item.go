@@ -51,7 +51,7 @@ func (m *catalogManager) ListBoardItems(ctx context.Context) ([]BoardItemTally, 
 	if !m.keepsBoard() {
 		return nil, ErrBoardNotKept
 	}
-	items, err := listOf[BoardItem](m, m.q(ctx, roleBoardItem).Order("created_at, id"), roleBoardItem)
+	items, err := listOf[BoardItem](m, m.q(ctx, roleBoardItem).Where("hidden = ?", false).Order("created_at, id"), roleBoardItem)
 	if err != nil {
 		return nil, err
 	}
@@ -105,4 +105,18 @@ func (m *catalogManager) UngroupFromBoardItem(ctx context.Context, raisedItemID 
 		return ErrRaisedItemNotFound
 	}
 	return nil
+}
+
+func (m *catalogManager) SetBoardItemHidden(ctx context.Context, boardItemID string, hidden bool) error {
+	if !m.keepsBoard() {
+		return ErrBoardNotKept
+	}
+	if boardItemID == "" {
+		return ErrInvalidBoardItem
+	}
+	var b BoardItem
+	if err := m.take(m.q(ctx, roleBoardItem).Where("id = ?", boardItemID), roleBoardItem, &b, ErrBoardItemNotFound); err != nil {
+		return err
+	}
+	return m.q(ctx, roleBoardItem).Where("id = ?", boardItemID).Update("hidden", hidden).Error
 }
