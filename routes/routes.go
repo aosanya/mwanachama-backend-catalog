@@ -40,6 +40,8 @@ var sentinels = map[string]error{
 	"ErrRaisedItemsNotTaken": catalog.ErrRaisedItemsNotTaken,
 	"ErrInvalidServiceTerms": catalog.ErrInvalidServiceTerms,
 	"ErrBoardItemNotFound":   catalog.ErrBoardItemNotFound,
+	"ErrInvalidBoardItem":    catalog.ErrInvalidBoardItem,
+	"ErrBoardNotKept":        catalog.ErrBoardNotKept,
 }
 
 // AnonymousActions is every operation a storefront reader may reach without

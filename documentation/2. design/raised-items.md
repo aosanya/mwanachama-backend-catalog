@@ -50,7 +50,7 @@ A board item carries `hidden`, false when it is put on the board.
 one and `ErrBoardNotKept` where no board is kept. A hidden board item is left
 out of `ListBoardItems`, and `OpenSharedBoardItem` answers it exactly as a
 missing one, so hiding ends its share link; clearing the flag brings both
-back. Not a declared operation yet.
+back. Declared as `PUT /board-items/{boardItemID}/hidden` (`catalog.board_item.set_hidden`, body `{"hidden": bool}`, 204), gated: it is not on `AnonymousActions`.
 
 ## Replies
 

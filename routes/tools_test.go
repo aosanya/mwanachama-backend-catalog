@@ -56,13 +56,14 @@ func properties(t *testing.T, tool routes.Tool) map[string]any {
 
 func TestEveryGatedOperationBecomesATool(t *testing.T) {
 	tools, _, _ := newTools(t)
-	if len(tools) != 31 {
+	if len(tools) != 32 {
 		t.Fatalf("built %d tools: %v", len(tools), tools)
 	}
 	for _, want := range []string{
 		"catalog_entry_upsert", "catalog_entry_list", "catalog_entry_read",
 		"catalog_entry_write_private", "catalog_run_record", "catalog_setting_read",
 		"catalog_suggestion_match_attach", "catalog_suggestion_match_list_for_entry", "catalog_raised_item_list_nearby",
+		"catalog_board_item_set_hidden",
 	} {
 		if _, ok := tools[want]; !ok {
 			t.Fatalf("no tool named %s", want)

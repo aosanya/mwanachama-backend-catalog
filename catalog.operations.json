@@ -819,6 +819,32 @@
           "body": true
         }
       ]
+    },
+    "set_board_item_hidden": {
+      "method": "PUT",
+      "path": "/board-items/{boardItemID}/hidden",
+      "call": "SetBoardItemHidden",
+      "action": "catalog.board_item.set_hidden",
+      "status": 204,
+      "title": "Hide or show a board item",
+      "description": "Take a board item off the public board, or put it back. A hidden board item is left out of every public read and its share link answers 'not found'. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item to hide or show."
+        },
+        {
+          "from": "body",
+          "as": "hidden",
+          "field": "BoardItem.hidden"
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -844,6 +870,8 @@
     "ErrRecordsNotKept": 404,
     "ErrInvalidRaisedItem": 400,
     "ErrRaisedItemsNotTaken": 404,
-    "ErrBoardItemNotFound": 404
+    "ErrBoardItemNotFound": 404,
+    "ErrInvalidBoardItem": 400,
+    "ErrBoardNotKept": 404
   }
 }
