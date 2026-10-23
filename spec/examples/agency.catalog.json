@@ -108,6 +108,12 @@
       "description": "An answer to something a resident raised."
     },
     {
+      "role": "removal",
+      "name": "removal",
+      "table": "removals",
+      "description": "Something a resident raised that was taken off the board, and why."
+    },
+    {
       "role": "raised_item_file",
       "name": "raised_item_file",
       "table": "raised_item_files",

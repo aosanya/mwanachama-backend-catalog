@@ -761,6 +761,50 @@
       ]
     },
     {
+      "role": "removal",
+      "description": "A raised item taken off the board, with the ground it was taken down on, which its raiser reads. A domain that removes nothing fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "raised_item_id",
+          "type": "string",
+          "description": "The raised item taken down.",
+          "required": true
+        },
+        {
+          "name": "ground",
+          "type": "string",
+          "description": "Why it was taken down, as its raiser reads it.",
+          "required": true
+        },
+        {
+          "name": "removed_by",
+          "type": "string",
+          "description": "Who took it down, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was taken down."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "raised_item",
+          "description": "Finds the removal of one raised item.",
+          "fields": [
+            "raised_item_id"
+          ]
+        }
+      ]
+    },
+    {
       "role": "raised_item_file",
       "description": "One file attached to a raised item, held by its id in the file store the mounting host keeps. Seen by the raiser and by whoever answers for the host; seen by the public only once approved for publishing on a publishable item. A domain that takes no attachments fills no object for this role.",
       "fields": [

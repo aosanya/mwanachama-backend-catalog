@@ -116,3 +116,9 @@ var ErrAttachmentsNotTaken = errors.New("attachments are not taken here")
 var ErrInvalidAttachment = errors.New("invalid attachment")
 
 var ErrAttachmentNotFound = errors.New("attachment not found")
+
+var ErrInvalidRemoval = errors.New("invalid removal")
+
+var ErrRemovalsNotMade = errors.New("nothing is removed here")
+
+var ErrRaisedItemAlreadyRemoved = errors.New("raised item already removed")

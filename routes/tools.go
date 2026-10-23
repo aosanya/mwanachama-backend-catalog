@@ -26,6 +26,7 @@ var carriers = map[string]string{
 	"raised_item":        "RaisedItem",
 	"board_item":         "BoardItem",
 	"reply":              "Reply",
+	"removal":            "Removal",
 	"raised_item_file":   "RaisedItemFile",
 }
 

@@ -37,6 +37,7 @@ type (
 	BoardItemTally    = models.BoardItemTally
 	SharedBoardItem   = models.SharedBoardItem
 	Reply             = models.Reply
+	Removal           = models.Removal
 	RaisedItemFile    = models.RaisedItemFile
 	FieldTally        = models.FieldTally
 )
@@ -269,6 +270,8 @@ type CatalogManager interface {
 	AttachFiles(ctx context.Context, raisedItemID, raiser string, fileIDs []string) ([]RaisedItemFile, error)
 	ApproveFileForPublishing(ctx context.Context, raisedItemID, fileID, approvedBy string) (RaisedItemFile, error)
 	ListRaisedItemFiles(ctx context.Context, raisedItemID string) ([]RaisedItemFile, error)
+	RemoveRaisedItem(ctx context.Context, r Removal) (Removal, error)
+	ListRemovalsOfMine(ctx context.Context, raisedBy string) ([]Removal, error)
 }
 
 type catalogManager struct {
@@ -314,6 +317,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, attached := s.ByRole(roleRaisedItemFile); attached {
 		carriers[roleRaisedItemFile] = models.RaisedItemFile{}
+	}
+	if _, removes := s.ByRole(roleRemoval); removes {
+		carriers[roleRemoval] = models.Removal{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {
