@@ -779,6 +779,26 @@
           "body": true
         }
       ]
+    },
+    "open_shared_board_item": {
+      "method": "GET",
+      "path": "/board-items/{key}/shared",
+      "call": "OpenSharedBoardItem",
+      "action": "catalog.board_item.open_shared",
+      "title": "Open a shared board item",
+      "description": "Read one board item through its share link, without signing in: its title, theme, area, Me too count, status and the files approved for publishing. Never the address, the pin or who raised it. A board item with no publishable item grouped under it, an unknown key and a catalog that keeps no board are all the same 'not found'.",
+      "args": [
+        {
+          "from": "path",
+          "as": "key",
+          "description": "The share link's key, which is the board item's id."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -803,6 +823,7 @@
     "ErrInvalidRecord": 400,
     "ErrRecordsNotKept": 404,
     "ErrInvalidRaisedItem": 400,
-    "ErrRaisedItemsNotTaken": 404
+    "ErrRaisedItemsNotTaken": 404,
+    "ErrBoardItemNotFound": 404
   }
 }

@@ -118,9 +118,10 @@ from `catalog.operations.json`. Nothing here is hand-written: 27 tools, one per
 gated operation, named from the action with its dots turned into underscores —
 `catalog.entry.upsert` becomes `catalog_entry_upsert`.
 
-**The two reader operations are not tools.** `operatorOnly` drops whatever
-`AnonymousActions` names, so `catalog.entry.open` and
-`catalog.page_view.record` — a storefront's two anonymous acts — have no tool.
+**The reader operations are not tools.** `operatorOnly` drops whatever
+`AnonymousActions` names, so `catalog.entry.open`,
+`catalog.page_view.record` and `catalog.board_item.open_shared` (a board
+item's share link, CAT123) — the anonymous acts — have no tool.
 An agent holding a credential reads with `catalog_entry_read`, which does not
 need a share key and does not pretend to be a visitor; counting a page view it
 did not cause would be a lie in the table.

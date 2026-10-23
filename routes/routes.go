@@ -39,6 +39,7 @@ var sentinels = map[string]error{
 	"ErrInvalidRaisedItem":   catalog.ErrInvalidRaisedItem,
 	"ErrRaisedItemsNotTaken": catalog.ErrRaisedItemsNotTaken,
 	"ErrInvalidServiceTerms": catalog.ErrInvalidServiceTerms,
+	"ErrBoardItemNotFound":   catalog.ErrBoardItemNotFound,
 }
 
 // AnonymousActions is every operation a storefront reader may reach without
@@ -48,6 +49,7 @@ var sentinels = map[string]error{
 var AnonymousActions = []string{
 	"catalog.entry.open",
 	"catalog.page_view.record",
+	"catalog.board_item.open_shared",
 }
 
 type Mount struct {

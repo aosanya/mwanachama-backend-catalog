@@ -41,11 +41,13 @@ and the raised item's id.
   [raised-items.md](raised-items.md), "Street versus typed address"). Until
   that is decided the link carries no street, the same way every other
   reader's view withholds the whole address.
-- **An address.** The method is on the manager only. Board items have no
-  operation in `catalog.operations.json` yet, so no route serves this, and
-  nothing is added to `AnonymousActions`. Declaring the anonymous read is the
-  deliberate step that publishes it, and is the host's (wakala-api WK196) or a
-  follow-up here.
+- **An address (CAT123, 2026-10-23).** `GET /board-items/{key}/shared`,
+  action `catalog.board_item.open_shared`, calls `OpenSharedBoardItem` and is
+  on `AnonymousActions`, because decision 311 says the link opens without
+  signing in. `ErrBoardItemNotFound` answers 404, so an unknown key and a
+  board item with nothing publishable grouped under it read the same. Like
+  every anonymous action it is not an MCP tool. A host with its own
+  allowlist (`Mount.Anonymous`) names the action itself to publish it.
 - **Me too through the link.** `Endorse` already records one per holder; that
   the holder is a signed-in member is the mount's to enforce, by binding the
   holder from the caller, never from the link.
