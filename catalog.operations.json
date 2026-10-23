@@ -780,6 +780,26 @@
         }
       ]
     },
+    "overdue_raised_items": {
+      "method": "GET",
+      "path": "/raised-items/overdue",
+      "call": "ListOverdueRaisedItems",
+      "action": "catalog.raised_item.list_overdue",
+      "title": "List overdue raised items",
+      "description": "Raised items still open once the answer clock has run: raised at or before the given time less the days the raised_item.answer_within_days setting holds, with no reply and no removal. Oldest first. The setting unset is 'not found'; a value that is not a whole number of days of at least one is refused. A host's scheduled sweep calls this; the module schedules nothing. Never anonymous.",
+      "args": [
+        {
+          "from": "query",
+          "as": "at",
+          "description": "The time to age the items against, RFC 3339. Empty means now."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "open_shared_board_item": {
       "method": "GET",
       "path": "/board-items/{key}/shared",

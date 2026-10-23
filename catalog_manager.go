@@ -274,6 +274,7 @@ type CatalogManager interface {
 	ListRaisedItemFiles(ctx context.Context, raisedItemID string) ([]RaisedItemFile, error)
 	RemoveRaisedItem(ctx context.Context, r Removal) (Removal, error)
 	ListRemovalsOfMine(ctx context.Context, raisedBy string) ([]Removal, error)
+	ListOverdueRaisedItems(ctx context.Context, at string) ([]RaisedItem, error)
 }
 
 type catalogManager struct {
