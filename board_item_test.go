@@ -76,6 +76,9 @@ func TestOnlyAPublishableItemIsGroupedUnderABoardItem(t *testing.T) {
 	if err != nil || len(board) != 1 || board[0].RaisedBy != 0 {
 		t.Fatalf("board = %+v (%v)", board, err)
 	}
+	if public, err := cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+		t.Errorf("a board item with only an unpublishable item reached the public board: %+v (%v)", public, err)
+	}
 }
 
 func TestABoardItemTakesItsPublicOutcomeAndLetsAnItemGo(t *testing.T) {
@@ -104,6 +107,9 @@ func TestABoardItemTakesItsPublicOutcomeAndLetsAnItemGo(t *testing.T) {
 	if got := board[0]; got.Outcome != "Rail repaired" || got.RaisedBy != 0 {
 		t.Errorf("after outcome and ungrouping = %+v", got)
 	}
+	if public, err := cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+		t.Errorf("an emptied board item stayed on the public board: %+v (%v)", public, err)
+	}
 	mine, err := cm.ListRaisedItems(ctx, "amina")
 	if err != nil || len(mine) != 1 || mine[0].BoardItemID != "" {
 		t.Fatalf("raised = %+v (%v)", mine, err)
@@ -113,5 +119,38 @@ func TestABoardItemTakesItsPublicOutcomeAndLetsAnItemGo(t *testing.T) {
 	}
 	if err := cm.UngroupFromBoardItem(ctx, "nobody"); !errors.Is(err, catalog.ErrRaisedItemNotFound) {
 		t.Errorf("unknown raised item = %v", err)
+	}
+}
+
+func TestThePublicBoardLeavesOutABoardItemWithNothingGroupedUnderIt(t *testing.T) {
+	cm, ctx := newManager(t)
+	grouped, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Street lights"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	empty, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Market drainage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Dark road", Publishable: true, RaisedBy: "amina"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.GroupUnderBoardItem(ctx, r.ID, grouped.ID); err != nil {
+		t.Fatal(err)
+	}
+	staff, err := cm.ListBoardItems(ctx)
+	if err != nil || len(staff) != 2 {
+		t.Fatalf("staff board = %+v (%v)", staff, err)
+	}
+	public, err := cm.ListPublicBoardItems(ctx)
+	if err != nil || len(public) != 1 || public[0].ID != grouped.ID {
+		t.Fatalf("public board = %+v (%v), want only %s and never %s", public, err, grouped.ID, empty.ID)
+	}
+	if err := cm.UngroupFromBoardItem(ctx, r.ID); err != nil {
+		t.Fatal(err)
+	}
+	if public, err = cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+		t.Fatalf("public board after ungrouping = %+v (%v)", public, err)
 	}
 }

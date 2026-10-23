@@ -16,7 +16,7 @@ func TestARaisedItemIsListedForItsRaiserAlone(t *testing.T) {
 	if mine.ID == "" || mine.ID == "chosen" || mine.CreatedAt == "" {
 		t.Fatalf("store-owned fields not minted: %+v", mine)
 	}
-	if _, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Market drainage", RaisedBy: "baraka", FiledBy: "clerk-1", Channel: "counter"}); err != nil {
+	if _, err := cm.FileRaisedItem(ctx, catalog.RaisedItem{Title: "Market drainage", RaisedBy: "baraka", FiledBy: "clerk-1", Channel: "counter"}); err != nil {
 		t.Fatal(err)
 	}
 	listed, err := cm.ListRaisedItems(ctx, "amina")
@@ -37,11 +37,26 @@ func TestARaisedItemNeedsATitleARaiserAndAWholeOnBehalf(t *testing.T) {
 		"filer no channel": {Title: "Potholes", RaisedBy: "amina", FiledBy: "clerk-1"},
 		"channel no filer": {Title: "Potholes", RaisedBy: "amina", Channel: "phone"},
 	} {
-		if _, err := cm.RaiseItem(ctx, r); !errors.Is(err, catalog.ErrInvalidRaisedItem) {
+		if _, err := cm.FileRaisedItem(ctx, r); !errors.Is(err, catalog.ErrInvalidRaisedItem) {
 			t.Errorf("%s: %v", name, err)
 		}
 	}
 	if _, err := cm.ListRaisedItems(ctx, ""); !errors.Is(err, catalog.ErrInvalidRaisedItem) {
 		t.Errorf("no raiser listed: %v", err)
+	}
+}
+
+func TestARaiseDropsAFilerAndChannelTheBodyClaims(t *testing.T) {
+	cm, ctx := newManager(t)
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Dark road", RaisedBy: "amina", FiledBy: "forged", Channel: "phone"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.FiledBy != "" || r.Channel != "" {
+		t.Fatalf("raise kept filed_by %q channel %q", r.FiledBy, r.Channel)
+	}
+	mine, err := cm.ListRaisedItems(ctx, "amina")
+	if err != nil || len(mine) != 1 || mine[0].FiledBy != "" || mine[0].Channel != "" {
+		t.Fatalf("stored = %+v (%v)", mine, err)
 	}
 }

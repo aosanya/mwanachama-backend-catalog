@@ -853,7 +853,7 @@
       "action": "catalog.raised_item.raise",
       "status": 201,
       "title": "Raise an item",
-      "description": "Raise an item as the caller. The raiser is the caller, never the body. Never anonymous.",
+      "description": "Raise an item as the caller. The raiser is the caller, never the body, and a filer or channel the body claims is dropped. Never anonymous.",
       "args": [
         {
           "from": "body",
@@ -875,7 +875,7 @@
     "file_raised_item": {
       "method": "POST",
       "path": "/raised-items/filed",
-      "call": "RaiseItem",
+      "call": "FileRaisedItem",
       "action": "catalog.raised_item.file",
       "status": 201,
       "title": "File an item on someone's behalf",
@@ -944,7 +944,21 @@
       "call": "ListBoardItems",
       "action": "catalog.board_item.list",
       "title": "List board items",
-      "description": "Every board item with how many raised it and how many said Me too. Never anonymous.",
+      "description": "Every board item that is not hidden, with how many raised it and how many said Me too, including one with nothing grouped under it. The staff read. Never anonymous.",
+      "args": [],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_public_board_items": {
+      "method": "GET",
+      "path": "/board-items/public",
+      "call": "ListPublicBoardItems",
+      "action": "catalog.board_item.list_public",
+      "title": "List the public board",
+      "description": "The board as the public sees it: every board item that is not hidden and has at least one publishable item grouped under it, with how many raised it and how many said Me too. Never anonymous.",
       "args": [],
       "returns": [
         {

@@ -8,6 +8,12 @@ func (m *catalogManager) takesRaisedItems() bool {
 }
 
 func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
+	r.FiledBy = ""
+	r.Channel = ""
+	return m.FileRaisedItem(ctx, r)
+}
+
+func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
 	if !m.takesRaisedItems() {
 		return RaisedItem{}, ErrRaisedItemsNotTaken
 	}

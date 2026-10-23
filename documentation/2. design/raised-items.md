@@ -7,7 +7,10 @@ on the raiser's behalf sets `filed_by` and `channel` together; one without the
 other is refused, so an item either was filed by its raiser or says who filed
 it and how it arrived.
 
-`RaiseItem` mints the id and the time, whatever the caller sent.
+`RaiseItem` mints the id and the time, whatever the caller sent, and drops a
+`filed_by` and `channel` the body claims: a member raising for themselves is
+never a filing. `FileRaisedItem` is the clerk's write and keeps both, still
+refusing one without the other.
 `ListRaisedItems` lists one raiser's items, oldest first. A domain filling no
 object for the role builds and answers `ErrRaisedItemsNotTaken`.
 
@@ -130,6 +133,7 @@ Raising, filing, the board, Me too and replies are declared in
 | `POST /raised-items/filed` | `catalog.raised_item.file` | `filed_by`; `raised_by` is the register entry's id from the body (decision 374) |
 | `GET /raised-items/mine` | `catalog.raised_item.list_mine` | the raiser |
 | `POST /board-items`, `GET /board-items` | `catalog.board_item.put`, `.list` | — |
+| `GET /board-items/public` | `catalog.board_item.list_public` | — |
 | `PUT`/`DELETE /raised-items/{raisedItemID}/board-item` | `catalog.raised_item.group`, `.ungroup` | — |
 | `PUT /board-items/{boardItemID}/outcome` | `catalog.board_item.set_outcome` | — |
 | `POST`/`GET /endorsements/{subject_id}` | `catalog.endorsement.add`, `.count` | the Me too holder |
@@ -138,10 +142,17 @@ Raising, filing, the board, Me too and replies are declared in
 Raising and filing are two actions so a mount grants filing on someone's
 behalf to clerks alone. Listing replies with no raised item is refused.
 
+`POST /raised-items` calls `RaiseItem`, which clears a `filed_by` and
+`channel` the body claims; `POST /raised-items/filed` calls `FileRaisedItem`.
+
+The board has two reads (decision 373). `ListBoardItems` is the staff read:
+every board item that is not hidden, including one with nothing grouped
+under it, so staff can see a board item they have just started or emptied.
+`ListPublicBoardItems` is the public read: the same list less every board
+item with no publishable item grouped under it, so a board item emptied by
+ungrouping or by a removal leaves the public board. Both are gated; whether
+the public read is anonymous on a given mount is that mount's allowlist.
+
 Still open: reply reads limited to the raiser, staff and the filing clerk
-(decision 375) are only the mount's grant today; the member raise route
-does not yet clear a `filed_by`/`channel` the body claims; and leaving a
-board item with nothing grouped under it out of public reads (decision 373)
-needs `ListBoardItems` split into a staff read and a public one, because
-three tests (outcome after ungrouping, removal, unpublishable grouping)
-rely on the staff read listing an empty board item.
+(decision 375) are only the mount's grant today, because limiting them
+needs a host seam saying who is staff.

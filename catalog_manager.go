@@ -247,6 +247,7 @@ type CatalogManager interface {
 	CountEndorsements(ctx context.Context, subjectID string) (int, error)
 
 	RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
+	FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
 
 	ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error)
 
@@ -259,6 +260,7 @@ type CatalogManager interface {
 	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
 
 	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
+	ListPublicBoardItems(ctx context.Context) ([]BoardItemTally, error)
 
 	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
 	SetBoardItemHidden(ctx context.Context, boardItemID string, hidden bool) error

@@ -53,14 +53,14 @@ func sendTo(h http.Handler, method, path, body string) *httptest.ResponseRecorde
 
 func TestARaisedItemIsTheCallersWhateverTheBodyClaims(t *testing.T) {
 	gated, _, _ := callerMount(t, "amina")
-	rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Dark road","raised_by":"someone-else"}`)
+	rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Dark road","raised_by":"someone-else","filed_by":"forged","channel":"phone"}`)
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("raise = %d %s", rec.Code, rec.Body)
 	}
 	var r catalog.RaisedItem
 	_ = json.Unmarshal(rec.Body.Bytes(), &r)
-	if r.RaisedBy != "amina" || r.FiledBy != "" {
-		t.Fatalf("raised_by %q filed_by %q, want amina and nobody", r.RaisedBy, r.FiledBy)
+	if r.RaisedBy != "amina" || r.FiledBy != "" || r.Channel != "" {
+		t.Fatalf("raised_by %q filed_by %q channel %q, want amina, nobody and none", r.RaisedBy, r.FiledBy, r.Channel)
 	}
 	rec = sendTo(gated, http.MethodGet, "/raised-items/mine", "")
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Dark road") {

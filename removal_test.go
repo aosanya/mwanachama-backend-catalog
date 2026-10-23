@@ -49,6 +49,9 @@ func TestARemovalNeedsAGroundAndShowsItToTheRaiserAlone(t *testing.T) {
 	if err != nil || len(tallies) != 1 || tallies[0].RaisedBy != 0 {
 		t.Errorf("removed item still counted on the board: %+v (%v)", tallies, err)
 	}
+	if public, err := cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+		t.Errorf("a board item emptied by a removal stayed public: %+v (%v)", public, err)
+	}
 	if err := cm.GroupUnderBoardItem(ctx, r.ID, b.ID); !errors.Is(err, catalog.ErrRaisedItemNotPublishable) {
 		t.Errorf("removed item regrouped = %v", err)
 	}

@@ -73,6 +73,20 @@ func (m *catalogManager) ListBoardItems(ctx context.Context) ([]BoardItemTally, 
 	return out, nil
 }
 
+func (m *catalogManager) ListPublicBoardItems(ctx context.Context) ([]BoardItemTally, error) {
+	all, err := m.ListBoardItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BoardItemTally, 0, len(all))
+	for _, t := range all {
+		if t.RaisedBy > 0 {
+			out = append(out, t)
+		}
+	}
+	return out, nil
+}
+
 func (m *catalogManager) SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error {
 	if !m.keepsBoard() {
 		return ErrBoardNotKept
