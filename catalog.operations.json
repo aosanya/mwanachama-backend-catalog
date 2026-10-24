@@ -918,6 +918,27 @@
         }
       ]
     },
+    "list_subject_raised_items": {
+      "method": "GET",
+      "path": "/raised-items/by-subject",
+      "call": "ListRaisedItemsOfSubject",
+      "action": "catalog.raised_item.list_of_subject",
+      "title": "List the items one subject raised",
+      "description": "The items raised with this entry named as their raiser's subject, oldest first. An item raised by nobody the catalog holds is never among them. Never anonymous.",
+      "args": [
+        {
+          "from": "query",
+          "as": "subject_id",
+          "required": true,
+          "description": "The id of the entry whose raised items to list."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "put_on_board": {
       "method": "POST",
       "path": "/board-items",

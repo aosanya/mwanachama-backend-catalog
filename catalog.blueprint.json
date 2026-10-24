@@ -671,6 +671,11 @@
           "description": "The board item this publishable item is grouped under, empty while ungrouped."
         },
         {
+          "name": "subject_id",
+          "type": "string",
+          "description": "The id of the entry in this catalog that the raiser is, when the raiser is known to it; empty means the raiser is not in it, and the item is an arrival tied to nobody."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When it was raised."
@@ -689,6 +694,13 @@
           "description": "Counts and lists the items grouped under one board item.",
           "fields": [
             "board_item_id"
+          ]
+        },
+        {
+          "name": "subject",
+          "description": "Lists the items raised by one entry's subject.",
+          "fields": [
+            "subject_id"
           ]
         }
       ]

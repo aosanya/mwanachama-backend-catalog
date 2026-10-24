@@ -14,6 +14,7 @@ type RaisedItem struct {
 	Address     string        `json:"address"`
 	Area        string        `json:"area"`
 	BoardItemID string        `json:"board_item_id"`
+	SubjectID   string        `json:"subject_id"`
 	CreatedAt   string        `json:"created_at"`
 }
 

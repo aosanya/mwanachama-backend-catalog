@@ -156,3 +156,23 @@ the public read is anonymous on a given mount is that mount's allowlist.
 Still open: reply reads limited to the raiser, staff and the filing clerk
 (decision 375) are only the mount's grant today, because limiting them
 needs a host seam saying who is staff.
+
+## A raiser the catalog holds (CAT75)
+
+An item may be raised with no account and no contact details, so who raised
+it is, at best, a contact string. Asking "who else has raised something this
+year" or "is this area raising less than it used to" of `raised_by` asks about
+arrivals, not people. `subject_id` is the optional answer: the id of an entry
+in this same mount that the raiser is.
+
+- Empty means the raiser is not in the catalog, and the item is tied to
+  nobody. Every item raised before the field existed reads this way.
+- When given, on a raise or a filing, it must name an entry of this mount that
+  is not deleted. Anything else is refused with `ErrEntryNotFound` (404) before
+  a row is written, the same answer an unknown slug gets.
+- `ListRaisedItemsOfSubject`, declared as `GET /raised-items/by-subject`
+  (`catalog.raised_item.list_of_subject`), lists the items naming one entry,
+  oldest first. It is gated like every other raised-item read and is not on
+  `AnonymousActions`.
+- The module checks only that the entry exists. Whether the caller may name
+  that entry as themselves is the mount's to decide, and is not decided here.

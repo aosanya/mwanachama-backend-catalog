@@ -23,6 +23,9 @@ func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (Rais
 	if err := m.checks(roleRaisedItem, r); err != nil {
 		return RaisedItem{}, ErrInvalidRaisedItem
 	}
+	if err := m.subjectIsAnEntry(ctx, r.SubjectID); err != nil {
+		return RaisedItem{}, err
+	}
 	area, err := m.placeOf(ctx, r)
 	if err != nil {
 		return RaisedItem{}, err

@@ -250,6 +250,7 @@ type CatalogManager interface {
 	FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
 
 	ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error)
+	ListRaisedItemsOfSubject(ctx context.Context, subjectID string) ([]RaisedItem, error)
 
 	UseAreaResolver(resolve AreaResolver)
 
