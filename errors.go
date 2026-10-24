@@ -89,6 +89,8 @@ var ErrInvalidRecord = errors.New("invalid record")
 
 var ErrRecordsNotKept = errors.New("records are not kept here")
 
+var ErrRecordHolderSpoke = errors.New("this holder already has a record on this subject")
+
 var ErrInvalidEndorsement = errors.New("invalid endorsement")
 
 var ErrEndorsementsNotCounted = errors.New("endorsements are not counted here")

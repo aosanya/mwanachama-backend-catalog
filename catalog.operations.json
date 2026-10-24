@@ -1160,6 +1160,7 @@
     "ErrInvalidPageView": 400,
     "ErrInvalidRecord": 400,
     "ErrRecordsNotKept": 404,
+    "ErrRecordHolderSpoke": 409,
     "ErrInvalidRaisedItem": 400,
     "ErrRaisedItemsNotTaken": 404,
     "ErrBoardItemNotFound": 404,

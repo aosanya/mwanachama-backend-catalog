@@ -36,6 +36,7 @@ var sentinels = map[string]error{
 	"ErrInvalidPageView":        catalog.ErrInvalidPageView,
 	"ErrInvalidRecord":          catalog.ErrInvalidRecord,
 	"ErrRecordsNotKept":         catalog.ErrRecordsNotKept,
+	"ErrRecordHolderSpoke":      catalog.ErrRecordHolderSpoke,
 	"ErrInvalidRaisedItem":      catalog.ErrInvalidRaisedItem,
 	"ErrRaisedItemsNotTaken":    catalog.ErrRaisedItemsNotTaken,
 	"ErrInvalidServiceTerms":    catalog.ErrInvalidServiceTerms,

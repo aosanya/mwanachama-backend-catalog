@@ -87,3 +87,19 @@ agency's owners and agents and the subject's group leaders, never a holder
 (member app decisions 208, 209). The catalog itself cannot tell a leader
 from a member, so the grant is wakala-api's to make when it mounts records
 (WK153).
+
+## One record per holder per subject, opt-in (CAT66)
+
+A host that needs one voice per holder on a subject, whatever standing they
+send under, sets the setting `record.one_per_holder` to `true`
+(`SettingOneRecordPerHolder`). `PutRecord` then refuses a write by a holder
+who already has a record on that subject under a different standing, with
+`ErrRecordHolderSpoke` (409). A resend under the same standing still replaces
+the record, so the holder can change their answer but not add a second one.
+The check runs in the write's transaction; the setting is read once before
+it. Unset, records stay one per holder per standing per subject, as above.
+
+The municipality template's consultation response maps here: the round is the
+subject and the respondent the holder. The holder is whatever the host
+passes; a host must bind it from the signed-in caller, never from a body,
+since this module has no write route for records of its own.

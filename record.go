@@ -28,8 +28,14 @@ func (m *catalogManager) PutRecord(ctx context.Context, r Record) (Record, error
 	if err := m.checks(roleRecord, r); err != nil {
 		return Record{}, ErrInvalidRecord
 	}
+	onePerHolder := m.onePerHolder(ctx)
 	var out Record
 	err := m.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if onePerHolder {
+			if err := m.refuseASecondStanding(tx, r); err != nil {
+				return err
+			}
+		}
 		var err error
 		out, err = m.putRecord(ctx, tx, r)
 		return err
@@ -98,6 +104,27 @@ func (m *catalogManager) CountRecords(ctx context.Context, subjectID, scopeID st
 		return nil, err
 	}
 	return TallyRecords(records)
+}
+
+const SettingOneRecordPerHolder = "record.one_per_holder"
+
+func (m *catalogManager) onePerHolder(ctx context.Context) bool {
+	s, err := m.GetSetting(ctx, SettingOneRecordPerHolder)
+	return err == nil && s.Value == "true"
+}
+
+func (m *catalogManager) refuseASecondStanding(tx *gorm.DB, r Record) error {
+	var n int64
+	err := tx.Table(m.st.Table(roleRecord)).
+		Where("subject_id = ? AND holder_id = ? AND scope_id <> ?", r.SubjectID, r.HolderID, r.ScopeID).
+		Count(&n).Error
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return ErrRecordHolderSpoke
+	}
+	return nil
 }
 
 var errNoRecord = errors.New("catalog: no record stored")

@@ -170,3 +170,35 @@ func TestAnOverallCountCountsAPersonAnsweringAsTwoGroupsOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestOnePerHolderRefusesASecondStandingAndKeepsTheResend(t *testing.T) {
+	cm, ctx := newManager(t)
+	if _, err := cm.PutSetting(ctx, catalog.SettingOneRecordPerHolder, "true"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "round-1", HolderID: "amina", ScopeID: "ward-1", Doc: `{"agree": true}`}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "round-1", HolderID: "amina", ScopeID: "ward-1", Doc: `{"agree": false}`}); err != nil {
+		t.Fatalf("resend under the same standing: %v", err)
+	}
+	if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "round-1", HolderID: "amina", ScopeID: "ward-2", Doc: `{"agree": true}`}); !errors.Is(err, catalog.ErrRecordHolderSpoke) {
+		t.Fatalf("second standing = %v, want ErrRecordHolderSpoke", err)
+	}
+	if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "round-2", HolderID: "amina", ScopeID: "ward-2", Doc: `{"agree": true}`}); err != nil {
+		t.Fatalf("another subject: %v", err)
+	}
+	records, err := cm.ListRecords(ctx, "round-1", "")
+	if err != nil || len(records) != 1 {
+		t.Fatalf("records = %+v (%v)", records, err)
+	}
+}
+
+func TestWithoutOnePerHolderAHolderKeepsOneRecordPerStanding(t *testing.T) {
+	cm, ctx := newManager(t)
+	for _, scope := range []string{"ward-1", "ward-2"} {
+		if _, err := cm.PutRecord(ctx, catalog.Record{SubjectID: "round-1", HolderID: "amina", ScopeID: scope, Doc: `{"agree": true}`}); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
