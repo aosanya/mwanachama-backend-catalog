@@ -679,6 +679,11 @@
           "name": "created_at",
           "type": "timestamp",
           "description": "When it was raised."
+        },
+        {
+          "name": "follow_key_hash",
+          "type": "string",
+          "description": "SHA-256 of the key that lets the raiser follow this item and the replies written to it without signing in, hex-encoded. Empty until a key is issued; the raw key is returned once and never stored, and issuing another retires this one."
         }
       ],
       "indexes": [

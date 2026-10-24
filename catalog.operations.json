@@ -1139,6 +1139,47 @@
         }
       ]
     },
+    "issue_follow_key": {
+      "method": "POST",
+      "path": "/raised-items/{raisedItemID}/follow-key",
+      "call": "IssueFollowKey",
+      "action": "catalog.raised_item.issue_follow_key",
+      "status": 201,
+      "title": "Issue a follow key",
+      "description": "Mint the key that opens one raised item and the replies written to it, for a raiser who has no account. The raw key is returned once and stored only as its hash; issuing again retires the previous key. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "description": "The raised item the key opens."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "open_followed_raised_item": {
+      "method": "GET",
+      "path": "/followed-items/{key}",
+      "call": "OpenFollowedRaisedItem",
+      "action": "catalog.raised_item.open_followed",
+      "title": "Open a followed raised item",
+      "description": "Read one raised item and the replies written to it through its follow key, without signing in. An unknown key, a retired key, a missing item and a catalog that takes no raised items are all the same 'not found'.",
+      "args": [
+        {
+          "from": "path",
+          "as": "key",
+          "description": "The follow key returned when it was issued."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "list_replies": {
       "method": "GET",
       "path": "/raised-items/{raisedItemID}/replies",

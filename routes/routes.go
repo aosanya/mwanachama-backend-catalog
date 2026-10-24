@@ -58,6 +58,7 @@ var AnonymousActions = []string{
 	"catalog.entry.open",
 	"catalog.page_view.record",
 	"catalog.board_item.open_shared",
+	"catalog.raised_item.open_followed",
 }
 
 type Mount struct {

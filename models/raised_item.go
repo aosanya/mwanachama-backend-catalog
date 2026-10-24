@@ -3,19 +3,20 @@ package models
 import "github.com/aosanya/mwanachama-backend-shared/geo"
 
 type RaisedItem struct {
-	ID          string        `json:"id"`
-	Title       string        `json:"title"`
-	Topic       string        `json:"topic"`
-	Publishable bool          `json:"publishable"`
-	RaisedBy    string        `json:"raised_by"`
-	FiledBy     string        `json:"filed_by"`
-	Channel     string        `json:"channel"`
-	Pin         *geo.Geometry `json:"pin"`
-	Address     string        `json:"address"`
-	Area        string        `json:"area"`
-	BoardItemID string        `json:"board_item_id"`
-	SubjectID   string        `json:"subject_id"`
-	CreatedAt   string        `json:"created_at"`
+	ID            string        `json:"id"`
+	Title         string        `json:"title"`
+	Topic         string        `json:"topic"`
+	Publishable   bool          `json:"publishable"`
+	RaisedBy      string        `json:"raised_by"`
+	FiledBy       string        `json:"filed_by"`
+	Channel       string        `json:"channel"`
+	Pin           *geo.Geometry `json:"pin"`
+	Address       string        `json:"address"`
+	Area          string        `json:"area"`
+	BoardItemID   string        `json:"board_item_id"`
+	SubjectID     string        `json:"subject_id"`
+	CreatedAt     string        `json:"created_at"`
+	FollowKeyHash string        `json:"-"`
 }
 
 func (r RaisedItem) OnBehalfIsWhole() bool {
@@ -34,4 +35,14 @@ func (r RaisedItem) AsSeenByOthers() RaisedItem {
 		seen.Pin = &rounded
 	}
 	return seen
+}
+
+type FollowKey struct {
+	RaisedItemID string `json:"raised_item_id"`
+	Key          string `json:"key"`
+}
+
+type FollowedRaisedItem struct {
+	Item    RaisedItem `json:"item"`
+	Replies []Reply    `json:"replies"`
 }
