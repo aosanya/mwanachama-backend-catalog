@@ -105,10 +105,9 @@ missing topic, a distance of zero or less, or a point that is not a pair is
 whose spec takes no raised items answers 404 (`ErrRaisedItemsNotTaken`).
 Pinned over the real table in `routes/raised_item_nearby_test.go`.
 
-**Not declared: the place-setting write.** The pin, address and picked area
-arrive on `RaiseItem`, and raising is not a declared operation yet because
-who `raised_by` is when a clerk files on someone's behalf is still the
-owner's (CAT55). Declaring it here would settle that.
+**The place-setting write** is `RaiseItem` itself: the pin, address and
+picked area arrive on `POST /raised-items` (or `POST /raised-items/filed`
+for a clerk), both declared below.
 
 **Still the owner's, and kept as built:**
 
@@ -138,6 +137,8 @@ Raising, filing, the board, Me too and replies are declared in
 | `PUT /board-items/{boardItemID}/outcome` | `catalog.board_item.set_outcome` | — |
 | `POST`/`GET /endorsements/{subject_id}` | `catalog.endorsement.add`, `.count` | the Me too holder |
 | `POST`/`GET /raised-items/{raisedItemID}/replies` | `catalog.reply.send`, `.list` | the replier |
+| `POST /raised-items/{raisedItemID}/removal` | `catalog.raised_item.remove` | the remover (CAT132, see [removals.md](removals.md)) |
+| `GET /raised-items/mine/removals` | `catalog.removal.list_mine` | the raiser |
 
 Raising and filing are two actions so a mount grants filing on someone's
 behalf to clerks alone. Listing replies with no raised item is refused.

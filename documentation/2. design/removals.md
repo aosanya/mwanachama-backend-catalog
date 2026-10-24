@@ -27,21 +27,38 @@ either.
 `removed_by` and `raisedBy` are arguments here; a mount binds both from the
 caller, never from a body, as the other raised-item writes do.
 
-## Not declared
+## Declared addresses (CAT132)
 
-Neither call is a declared operation. Raising and replying are not declared
-either, because who may call them is still the owner's question (CAT55);
-declaring removal would settle the same question for it.
+Member app decision 422 settled the MVP: staff remove a raised item with a
+free-text ground, and the raiser reads why. Both calls are declared in
+`catalog.operations.json`, neither is on `AnonymousActions`, and both are
+pinned over the real route table in `routes/raised_item_removal_test.go`.
 
-## Open for the owner
+| Address | Action | Who is bound from the caller |
+| --- | --- | --- |
+| `POST /raised-items/{raisedItemID}/removal` | `catalog.raised_item.remove` | `removed_by`; the item is the path's, whatever the body names |
+| `GET /raised-items/mine/removals` | `catalog.removal.list_mine` | the raiser |
 
-- Can a removal be undone, and if so is the undoing an act with its own
-  ground?
-- Can the raiser dispute a removal, and who decides the dispute?
-- Should the ground be free text, or one of a declared set of reasons with
-  free text beside it?
-- Who besides the raiser reads removals: every holder of the moderation power,
-  or only the remover and those above them? There is no staff read yet.
-- Does a removal also apply to a board item as a whole, or only to what one
-  resident raised?
-- Should the raiser be notified (through comm) when a removal is recorded?
+The body of a removal carries only `ground`; an `id`, `created_at`,
+`removed_by` or `raised_item_id` it claims is overwritten. A blank ground is
+400 (`ErrInvalidRemoval`), an unknown item 404 (`ErrRaisedItemNotFound`), a
+second removal of one item 409 (`ErrRaisedItemAlreadyRemoved`), and a mount
+whose spec fills no `removal` object 404 (`ErrRemovalsNotMade`).
+
+Who may remove is the mount's grant: the host gives
+`catalog.raised_item.remove` to staff (owners, agents and holders of a staff
+role, decision 411).
+
+**Telling the raiser is the host's.** Decision 422 has the raiser told by an
+Inbox line they cannot mute, as for their other item notices (decision 376).
+That line is raised by wakala-api when its removal route succeeds (WK165);
+this module records the removal and answers the raiser's read, and sends
+nothing.
+
+## Later, by decision 422
+
+- Undoing a removal, and disputing one.
+- A staff list of removals.
+- A declared set of grounds; the ground stays free text for now.
+- Hiding a whole board item stays Hide and Show again (decisions 373, 392);
+  a removal applies to one raised item.

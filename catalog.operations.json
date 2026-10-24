@@ -1200,6 +1200,58 @@
         }
       ]
     },
+    "remove_raised_item": {
+      "method": "POST",
+      "path": "/raised-items/{raisedItemID}/removal",
+      "call": "RemoveRaisedItem",
+      "action": "catalog.raised_item.remove",
+      "status": 201,
+      "title": "Remove a raised item",
+      "description": "Remove a raised item with a free-text ground: it becomes unpublishable and leaves any board item in the same write. An item is removed at most once. The remover is the caller, never the body; id and created_at are the store's. Never anonymous; a mount grants it to staff.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        },
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "into": "RaisedItemID",
+          "description": "The raised item removed."
+        },
+        {
+          "from": "caller",
+          "as": "removed_by",
+          "into": "RemovedBy",
+          "description": "Who removed it, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_my_removals": {
+      "method": "GET",
+      "path": "/raised-items/mine/removals",
+      "call": "ListRemovalsOfMine",
+      "action": "catalog.removal.list_mine",
+      "title": "List removals of my items",
+      "description": "The removals of the items the caller raised, each with its ground and who removed it, and nothing of anybody else's. Never anonymous.",
+      "args": [
+        {
+          "from": "caller",
+          "as": "raised_by",
+          "description": "Whose items' removals to list, supplied by the mount."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "record_scope_figure": {
       "method": "POST",
       "path": "/scope-figures",
@@ -1298,6 +1350,9 @@
     "ErrRaisedItemNotFound": 404,
     "ErrInvalidReply": 400,
     "ErrRepliesNotSent": 404,
+    "ErrInvalidRemoval": 400,
+    "ErrRemovalsNotMade": 404,
+    "ErrRaisedItemAlreadyRemoved": 409,
     "ErrInvalidScopeFigure": 400,
     "ErrFiguresNotKept": 404,
     "ErrScopeFigureNotFound": 404,

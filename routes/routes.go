@@ -52,6 +52,10 @@ var sentinels = map[string]error{
 	"ErrScopeFigureNotFound":    catalog.ErrScopeFigureNotFound,
 	"ErrInvalidEndorsement":     catalog.ErrInvalidEndorsement,
 	"ErrEndorsementsNotCounted": catalog.ErrEndorsementsNotCounted,
+
+	"ErrInvalidRemoval":           catalog.ErrInvalidRemoval,
+	"ErrRemovalsNotMade":          catalog.ErrRemovalsNotMade,
+	"ErrRaisedItemAlreadyRemoved": catalog.ErrRaisedItemAlreadyRemoved,
 }
 
 // AnonymousActions is every operation a storefront reader may reach without
