@@ -299,6 +299,7 @@ type CatalogManager interface {
 	ReplyToRaisedItem(ctx context.Context, r Reply) (Reply, error)
 
 	ListReplies(ctx context.Context, raisedItemID string) ([]Reply, error)
+	ListMyReplies(ctx context.Context, raisedItemID, caller string) ([]Reply, error)
 	IssueFollowKey(ctx context.Context, raisedItemID string) (FollowKey, error)
 	OpenFollowedRaisedItem(ctx context.Context, key string) (FollowedRaisedItem, error)
 	RecordScopeFigure(ctx context.Context, f ScopeFigure) (ScopeFigure, error)

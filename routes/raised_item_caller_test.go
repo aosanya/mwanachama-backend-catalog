@@ -153,3 +153,41 @@ func TestABoardItemIsAssignedAndClosedThroughTheDeclaredTableByTheCaller(t *test
 		}
 	}
 }
+
+func mountAs(cm catalog.CatalogManager, caller string) http.Handler {
+	mux := http.NewServeMux()
+	for _, r := range routes.RoutesFor(cm, routes.Mount{Caller: func(context.Context) string { return caller }}) {
+		mux.Handle(r.Method+" "+r.Path, r.Handler)
+	}
+	return mux
+}
+
+func TestMyRepliesAnswerOnlyTheRaiserAndTheFilingClerkAndNotFoundToAnyoneElse(t *testing.T) {
+	staff, anon, cm := callerMount(t, "staff-1")
+	var raised, filed catalog.RaisedItem
+	_ = json.Unmarshal(sendTo(mountAs(cm, "amina"), http.MethodPost, "/raised-items", `{"title":"Dark road"}`).Body.Bytes(), &raised)
+	_ = json.Unmarshal(sendTo(mountAs(cm, "clerk-1"), http.MethodPost, "/raised-items/filed", `{"title":"Drainage","raised_by":"entry-9","channel":"counter"}`).Body.Bytes(), &filed)
+	for _, id := range []string{raised.ID, filed.ID} {
+		if rec := sendTo(staff, http.MethodPost, "/raised-items/"+id+"/replies", `{"body":"On it"}`); rec.Code != http.StatusCreated {
+			t.Fatalf("reply = %d %s", rec.Code, rec.Body)
+		}
+	}
+	allowed := map[string][]string{raised.ID: {"amina"}, filed.ID: {"clerk-1", "entry-9"}}
+	for id, readers := range allowed {
+		for _, who := range readers {
+			if rec := sendTo(mountAs(cm, who), http.MethodGet, "/raised-items/"+id+"/replies/mine", ""); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "On it") {
+				t.Fatalf("%s reading %s = %d %s", who, id, rec.Code, rec.Body)
+			}
+		}
+	}
+	missing := sendTo(mountAs(cm, "baraka"), http.MethodGet, "/raised-items/no-such-item/replies/mine", "")
+	for _, c := range [][2]string{{"baraka", raised.ID}, {"amina", filed.ID}, {"clerk-1", raised.ID}, {"", raised.ID}} {
+		rec := sendTo(mountAs(cm, c[0]), http.MethodGet, "/raised-items/"+c[1]+"/replies/mine", "")
+		if rec.Code != http.StatusNotFound || rec.Body.String() != missing.Body.String() {
+			t.Fatalf("%q reading %s = %d %s, want the same not found as a missing item (%d %s)", c[0], c[1], rec.Code, rec.Body, missing.Code, missing.Body)
+		}
+	}
+	if rec := sendTo(anon, http.MethodGet, "/raised-items/"+raised.ID+"/replies/mine", ""); rec.Code == http.StatusOK {
+		t.Fatalf("anonymous mine = %d", rec.Code)
+	}
+}

@@ -39,3 +39,21 @@ func (m *catalogManager) ListReplies(ctx context.Context, raisedItemID string) (
 	}
 	return listOf[Reply](m, m.q(ctx, roleReply).Where("raised_item_id = ?", raisedItemID).Order("created_at, id"), roleReply)
 }
+
+func (m *catalogManager) ListMyReplies(ctx context.Context, raisedItemID, caller string) ([]Reply, error) {
+	if !m.sendsReplies() {
+		return nil, ErrRepliesNotSent
+	}
+	if raisedItemID == "" {
+		return nil, ErrInvalidReply
+	}
+	if caller == "" {
+		return nil, ErrRaisedItemNotFound
+	}
+	var raised RaisedItem
+	mine := m.q(ctx, roleRaisedItem).Where("id = ? AND (raised_by = ? OR filed_by = ?)", raisedItemID, caller, caller)
+	if err := m.take(mine, roleRaisedItem, &raised, ErrRaisedItemNotFound); err != nil {
+		return nil, err
+	}
+	return m.ListReplies(ctx, raisedItemID)
+}

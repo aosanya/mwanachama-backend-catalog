@@ -137,6 +137,7 @@ Raising, filing, the board, Me too and replies are declared in
 | `PUT /board-items/{boardItemID}/outcome` | `catalog.board_item.set_outcome` | — |
 | `POST`/`GET /endorsements/{subject_id}` | `catalog.endorsement.add`, `.count` | the Me too holder |
 | `POST`/`GET /raised-items/{raisedItemID}/replies` | `catalog.reply.send`, `.list` | the replier |
+| `GET /raised-items/{raisedItemID}/replies/mine` | `catalog.reply.list_mine` | the reader |
 | `POST /raised-items/{raisedItemID}/removal` | `catalog.raised_item.remove` | the remover (CAT132, see [removals.md](removals.md)) |
 | `GET /raised-items/mine/removals` | `catalog.removal.list_mine` | the raiser |
 
@@ -154,9 +155,14 @@ item with no publishable item grouped under it, so a board item emptied by
 ungrouping or by a removal leaves the public board. Both are gated; whether
 the public read is anonymous on a given mount is that mount's allowlist.
 
-Still open: reply reads limited to the raiser, staff and the filing clerk
-(decision 375) are only the mount's grant today, because limiting them
-needs a host seam saying who is staff.
+Replies have two reads, split as the board's are (decision 411).
+`catalog.reply.list` (`ListReplies`) is the staff read: any item's replies,
+and who is staff is the mount's grant, never this module's answer.
+`catalog.reply.list_mine` (`ListMyReplies`) binds the reader from the caller
+and answers an item's replies only when the reader is its `raised_by` or its
+`filed_by`; to anybody else, and to a caller the mount supplies as empty, the
+item answers exactly as a missing one (`ErrRaisedItemNotFound`, 404), so the
+read cannot be used to learn which items exist.
 
 ## A raiser the catalog holds (CAT75)
 

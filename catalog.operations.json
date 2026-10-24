@@ -1266,12 +1266,37 @@
       "call": "ListReplies",
       "action": "catalog.reply.list",
       "title": "List replies",
-      "description": "The replies on one raised item, oldest first. Never anonymous; a mount grants it only to the raiser, staff and the filing clerk.",
+      "description": "The staff read: the replies on any raised item, oldest first. Who is staff is the mount's grant. Never anonymous.",
       "args": [
         {
           "from": "path",
           "as": "raisedItemID",
           "description": "The raised item whose replies to read."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_my_replies": {
+      "method": "GET",
+      "path": "/raised-items/{raisedItemID}/replies/mine",
+      "call": "ListMyReplies",
+      "action": "catalog.reply.list_mine",
+      "title": "List the replies on my item",
+      "description": "The replies on one raised item, oldest first, answered only to the item's raiser or the clerk who filed it; to anybody else the item answers as not found. The reader is the caller, never the request. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "raisedItemID",
+          "description": "The raised item whose replies to read."
+        },
+        {
+          "from": "caller",
+          "as": "reader",
+          "description": "Who is reading, supplied by the mount. Never read from the request."
         }
       ],
       "returns": [
