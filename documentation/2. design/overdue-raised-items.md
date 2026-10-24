@@ -19,21 +19,35 @@ the read testable against a stepped clock, and it lets a host age the queue
 against the time its own sweep fired rather than the time the query ran.
 
 "Open" is the module's own facts only: a reply or a removal closes an item.
-Grouping an item under a board item, or a board item's outcome, does not —
-those say what the board shows, not whether the person was answered.
+A reply is always to the raiser — it is sent on the raised item and is what
+the raiser reads — so "only a reply to the raiser answers an item" (decision
+390) is exactly this rule. Grouping an item under a board item, or a board
+item's outcome, does not close it — those say what the board shows, not
+whether the person was answered. `TestOnlyAReplyToTheRaiserTakesAnItemOffTheOverdueList`
+pins it: an item grouped under a board item with an outcome set is still on
+the list, and drops off only once a reply is sent.
 
 ## The clock
 
 The setting `raised_item.answer_within_days` (exported as
-`AnswerClockSetting`) holds a whole number of days of at least one. There is
-no default: unset, the read answers `ErrSettingNotFound` (404), and a value
-that is not such a number answers `ErrInvalidSetting` (400). A default would
-be a policy the module chose for every domain; the municipality template
-suggests ten, but marks it as the first number a council changes.
+`AnswerClockSetting`) holds a whole number of days of at least one. Unset, it
+defaults to ten (`DefaultAnswerClock`), the template's answer clock (decision
+389); a value that is not such a number answers `ErrInvalidSetting` (400).
 
-Days are calendar days. The template speaks of working days; counting them
-needs a calendar of the domain's own (weekends, holidays), which this module
-does not hold.
+Days are weekdays, Monday to Friday, with no holidays (decision 390): an item
+is overdue once `at`, counted back that many weekdays, falls at or after the
+moment it was raised. Counting back steps one calendar day at a time and
+counts only the steps that land on a weekday, so a clock read on a Saturday
+or Sunday counts from the Friday before. Holidays are not counted because
+they are a calendar of the domain's own, which this module does not hold.
+
+## The acknowledgement clock
+
+Not built. Decision 233 asks for both clocks to be listed — the five-weekday
+acknowledgement clock beside the ten-weekday answer clock — but a raised item
+carries no acknowledged date and there is no Acknowledge operation to stamp
+one. Both are CAT56's to add; a second list keyed on the acknowledged date
+follows once they exist, counted in the same weekdays.
 
 ## What is not here
 

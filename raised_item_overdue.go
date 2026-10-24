@@ -2,14 +2,21 @@ package mwanachamacatalog
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 )
 
-const AnswerClockSetting = "raised_item.answer_within_days"
+const (
+	AnswerClockSetting = "raised_item.answer_within_days"
+	DefaultAnswerClock = 10
+)
 
-func (m *catalogManager) answerClock(ctx context.Context) (time.Duration, error) {
+func (m *catalogManager) answerClock(ctx context.Context) (int, error) {
 	s, err := m.GetSetting(ctx, AnswerClockSetting)
+	if errors.Is(err, ErrSettingNotFound) {
+		return DefaultAnswerClock, nil
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -17,7 +24,22 @@ func (m *catalogManager) answerClock(ctx context.Context) (time.Duration, error)
 	if err != nil || days < 1 {
 		return 0, ErrInvalidSetting
 	}
-	return time.Duration(days) * 24 * time.Hour, nil
+	return days, nil
+}
+
+func isWeekday(t time.Time) bool {
+	d := t.Weekday()
+	return d != time.Saturday && d != time.Sunday
+}
+
+func weekdaysBefore(t time.Time, n int) time.Time {
+	for n > 0 {
+		t = t.AddDate(0, 0, -1)
+		if isWeekday(t) {
+			n--
+		}
+	}
+	return t
 }
 
 func (m *catalogManager) ListOverdueRaisedItems(ctx context.Context, at string) ([]RaisedItem, error) {
@@ -31,11 +53,11 @@ func (m *catalogManager) ListOverdueRaisedItems(ctx context.Context, at string) 
 	if err != nil {
 		return nil, ErrInvalidRaisedItem
 	}
-	clock, err := m.answerClock(ctx)
+	days, err := m.answerClock(ctx)
 	if err != nil {
 		return nil, err
 	}
-	cutoff := when.UTC().Add(-clock).Format(time.RFC3339)
+	cutoff := weekdaysBefore(when.UTC(), days).Format(time.RFC3339)
 	q := m.q(ctx, roleRaisedItem).Where("created_at <= ?", cutoff)
 	if m.sendsReplies() {
 		q = q.Where("id NOT IN (?)", m.q(ctx, roleReply).Select("raised_item_id"))
