@@ -51,6 +51,9 @@ func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error
 	if err := m.checkEntry(&e); err != nil {
 		return Entry{}, err
 	}
+	if err := m.checkKind(ctx, e.Doc); err != nil {
+		return Entry{}, err
+	}
 
 	now := m.now()
 	e.ID = newID()
@@ -81,6 +84,9 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 		e.ApprovedAt = ""
 	}
 	if err := m.checkEntry(&e); err != nil {
+		return Entry{}, err
+	}
+	if err := m.checkKind(ctx, e.Doc); err != nil {
 		return Entry{}, err
 	}
 
@@ -174,6 +180,9 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 		return Entry{}, ErrSlugImmutable
 	}
 	if err := m.checkEntry(&e); err != nil {
+		return Entry{}, err
+	}
+	if err := m.checkKind(ctx, e.Doc); err != nil {
 		return Entry{}, err
 	}
 

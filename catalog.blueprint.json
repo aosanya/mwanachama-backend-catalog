@@ -943,5 +943,13 @@
         }
       ]
     }
+  ],
+  "settings": [
+    {
+      "name": "kinds",
+      "type": "json",
+      "description": "The kinds an entry may name in its document's kind key, each with the fields its document carries: a name, a type (string, number, boolean, object or array) and whether it is required. An entry naming no kind, or a mount declaring none, is not checked.",
+      "default": []
+    }
   ]
 }

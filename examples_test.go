@@ -111,8 +111,8 @@ func TestShippedExampleMigratesIdempotently(t *testing.T) {
 			t.Fatalf("migrate %d: %v", i, err)
 		}
 	}
-	if n := len(tableNames(t, db)); n != 17 {
-		t.Errorf("tables = %d, want 17", n)
+	if n := len(tableNames(t, db)); n != 17+len(s.SettingsTables()) {
+		t.Errorf("tables = %d, want %d", n, 17+len(s.SettingsTables()))
 	}
 }
 
@@ -227,6 +227,7 @@ func declaredTables(specs ...*spec.Spec) []string {
 		for _, o := range s.Objects {
 			out = append(out, s.TableFor(o))
 		}
+		out = append(out, s.SettingsTables()...)
 	}
 	sort.Strings(out)
 	return out

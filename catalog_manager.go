@@ -290,9 +290,10 @@ type CatalogManager interface {
 }
 
 type catalogManager struct {
-	db  *gorm.DB
-	st  *store
-	now func() string
+	db   *gorm.DB
+	st   *store
+	spec *spec.Spec
+	now  func() string
 
 	resolveArea AreaResolver
 }
@@ -343,7 +344,7 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("NewCatalogManager: %w", err)
 	}
-	return &catalogManager{db: db, st: st, now: nowRFC3339}, nil
+	return &catalogManager{db: db, st: st, spec: s, now: nowRFC3339}, nil
 }
 
 // q starts a query against the table playing one role.

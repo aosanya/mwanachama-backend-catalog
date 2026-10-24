@@ -19,6 +19,8 @@ var ErrEntryExists = errors.New("entry slug already in use")
 // that is not a JSON object.
 var ErrInvalidEntry = errors.New("invalid entry")
 
+var ErrEntryKind = errors.New("entry does not fit its kind")
+
 // ErrSlugImmutable is returned by [CatalogManager.UpdateEntry] when the
 // caller tries to change a slug. It is the URL key and the foreign key the
 // private parts and share links hang off.
