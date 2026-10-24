@@ -137,6 +137,16 @@ choices are worth knowing:
 one with neither settings nor suggestions, runs the entry operations through
 both, and holds each refusal to `ErrRoleNotDeclared`.
 
+## The host writes a template's settings through `PutDefinition`
+
+A template's `settings` (its `kinds`, its `seeds`) reach the definition layer
+only when the host writes them. `PutDefinition(db, spec, values)` is that one
+call: it parses `kinds` with the same rules the write check reads and refuses
+a malformed set with `ErrKindsMalformed` before anything is stored, then
+replaces the definition layer through `spec.PutDefinitionSettings`. A mount
+whose host has not called it checks nothing, because the module default for
+`kinds` is empty. `definition_test.go` holds both halves.
+
 ## Left open
 
 - **When seeds apply** — on provisioning only, on every boot, or on a
