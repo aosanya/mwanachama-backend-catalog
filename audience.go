@@ -65,14 +65,29 @@ func (f audienceFenced) OpenEntry(ctx context.Context, slug, key string) (Entry,
 	if !f.admits(ctx) {
 		return Entry{}, ErrEntryNotFound
 	}
-	return f.CatalogManager.OpenEntry(ctx, slug, key)
+	e, err := f.CatalogManager.OpenEntry(ctx, slug, key)
+	if err != nil {
+		return Entry{}, err
+	}
+	return f.publishedOnlyBelowStaff(ctx, e)
+}
+
+func (f audienceFenced) publishedOnlyBelowStaff(ctx context.Context, e Entry) (Entry, error) {
+	if e.Visibility == VisibilityPending && !f.staff(ctx) {
+		return Entry{}, ErrEntryNotFound
+	}
+	return e, nil
 }
 
 func (f audienceFenced) GetEntry(ctx context.Context, slug string) (Entry, error) {
 	if !f.admits(ctx) {
 		return Entry{}, ErrEntryNotFound
 	}
-	return f.CatalogManager.GetEntry(ctx, slug)
+	e, err := f.CatalogManager.GetEntry(ctx, slug)
+	if err != nil {
+		return Entry{}, err
+	}
+	return f.publishedOnlyBelowStaff(ctx, e)
 }
 
 func (f audienceFenced) ListPublicEntries(ctx context.Context, filter ListFilter) ([]Entry, error) {
@@ -86,7 +101,29 @@ func (f audienceFenced) ListEntries(ctx context.Context, filter ListFilter) ([]E
 	if !f.admits(ctx) {
 		return []Entry{}, nil
 	}
-	return f.CatalogManager.ListEntries(ctx, filter)
+	if f.staff(ctx) {
+		return f.CatalogManager.ListEntries(ctx, filter)
+	}
+	if filter.Visibility == VisibilityPending {
+		return []Entry{}, nil
+	}
+	limit := filter.Limit
+	filter.Limit = 0
+	all, err := f.CatalogManager.ListEntries(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	published := make([]Entry, 0, len(all))
+	for _, e := range all {
+		if e.Visibility == VisibilityPending {
+			continue
+		}
+		published = append(published, e)
+		if limit > 0 && len(published) == limit {
+			break
+		}
+	}
+	return published, nil
 }
 
 func (f audienceFenced) GetPrivate(ctx context.Context, slug string) (EntryPrivate, error) {

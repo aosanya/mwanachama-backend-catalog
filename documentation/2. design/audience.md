@@ -29,6 +29,22 @@ single read and an empty list for a listing — never a distinct refusal, so a
 members catalogue cannot be told apart from an empty one by somebody signed
 out.
 
+## Below staff, only published entries (CAT129)
+
+Member app decision 395, 2026-10-24: a reader the audience admits but who is
+not staff sees only published entries. An entry still `pending` review
+answers `GetEntry` and `OpenEntry` with `ErrEntryNotFound`, exactly as a
+missing slug does, and is left out of `ListEntries`; a listing asking for
+`visibility=pending` comes back empty. Staff keep every entry, pending
+included. The audience check runs first, so a signed-out reader of a members
+catalogue still gets not found for every entry, published or not (CAT61).
+
+`ListEntries` below staff asks the manager with no limit, drops the pending
+entries, then applies the caller's limit, so a limit counts published entries
+only and a pending one never takes a published one's place.
+`TestBelowStaffAPendingEntryAnswersExactlyAsAMissingSlug` was mutation-checked
+by disabling the pending check.
+
 Writes are not fenced by the audience; they are gated by the mount's
 authorizer as before.
 

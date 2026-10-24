@@ -138,3 +138,70 @@ func TestAMembersOnlyMountAnswersAnAnonymousRequestNotFound(t *testing.T) {
 		t.Fatalf("member request: want 200, got %d", code)
 	}
 }
+
+func TestBelowStaffAPendingEntryAnswersExactlyAsAMissingSlug(t *testing.T) {
+	cm, f, ctx := fenced(t, catalog.AudienceMembers)
+	seed(t, cm, ctx, "published-one", catalog.VisibilityPublic)
+	seed(t, cm, ctx, "pending-one", catalog.VisibilityPending)
+	member := as(ctx, catalog.StandingMember)
+
+	_, missingGet := f.GetEntry(member, "no-such-entry")
+	_, pendingGet := f.GetEntry(member, "pending-one")
+	if !errors.Is(pendingGet, catalog.ErrEntryNotFound) || pendingGet.Error() != missingGet.Error() {
+		t.Fatalf("member get of pending: want %v, got %v", missingGet, pendingGet)
+	}
+	_, missingOpen := f.OpenEntry(member, "no-such-entry", "")
+	_, pendingOpen := f.OpenEntry(member, "pending-one", "")
+	if !errors.Is(pendingOpen, catalog.ErrEntryNotFound) || pendingOpen.Error() != missingOpen.Error() {
+		t.Fatalf("member open of pending: want %v, got %v", missingOpen, pendingOpen)
+	}
+	if _, err := f.GetEntry(member, "published-one"); err != nil {
+		t.Fatalf("member get of published: %v", err)
+	}
+
+	list, err := f.ListEntries(member, catalog.ListFilter{})
+	if err != nil || len(list) != 1 || list[0].Slug != "published-one" {
+		t.Fatalf("member list: want only published-one, got %+v, err %v", list, err)
+	}
+	list, err = f.ListEntries(member, catalog.ListFilter{Visibility: catalog.VisibilityPending})
+	if err != nil || len(list) != 0 {
+		t.Fatalf("member list of pending: want nothing, got %+v, err %v", list, err)
+	}
+}
+
+func TestBelowStaffAListingLimitCountsPublishedEntriesOnly(t *testing.T) {
+	cm, f, ctx := fenced(t, catalog.AudienceMembers)
+	seed(t, cm, ctx, "a-pending", catalog.VisibilityPending)
+	seed(t, cm, ctx, "b-published", catalog.VisibilityPublic)
+	list, err := f.ListEntries(as(ctx, catalog.StandingMember), catalog.ListFilter{Limit: 1})
+	if err != nil || len(list) != 1 || list[0].Slug != "b-published" {
+		t.Fatalf("member list with limit 1: want b-published, got %+v, err %v", list, err)
+	}
+}
+
+func TestStaffStillReadEveryEntry(t *testing.T) {
+	cm, f, ctx := fenced(t, catalog.AudienceMembers)
+	seed(t, cm, ctx, "published-one", catalog.VisibilityPublic)
+	seed(t, cm, ctx, "pending-one", catalog.VisibilityPending)
+	staff := as(ctx, catalog.StandingStaff)
+
+	if _, err := f.GetEntry(staff, "pending-one"); err != nil {
+		t.Fatalf("staff get of pending: %v", err)
+	}
+	list, err := f.ListEntries(staff, catalog.ListFilter{})
+	if err != nil || len(list) != 2 {
+		t.Fatalf("staff list: want 2 entries, got %d, err %v", len(list), err)
+	}
+}
+
+func TestASignedOutReaderOfAMembersCatalogueStillGetsNotFound(t *testing.T) {
+	cm, f, ctx := fenced(t, catalog.AudienceMembers)
+	seed(t, cm, ctx, "published-one", catalog.VisibilityPublic)
+	if _, err := f.GetEntry(ctx, "published-one"); !errors.Is(err, catalog.ErrEntryNotFound) {
+		t.Fatalf("signed-out get: want ErrEntryNotFound, got %v", err)
+	}
+	list, err := f.ListEntries(ctx, catalog.ListFilter{})
+	if err != nil || len(list) != 0 {
+		t.Fatalf("signed-out list: want nothing, got %d, err %v", len(list), err)
+	}
+}
