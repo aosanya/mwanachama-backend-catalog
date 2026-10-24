@@ -43,6 +43,7 @@ type (
 	Removal            = models.Removal
 	RaisedItemFile     = models.RaisedItemFile
 	FieldTally         = models.FieldTally
+	ScopeFigure        = models.ScopeFigure
 )
 
 const (
@@ -277,6 +278,9 @@ type CatalogManager interface {
 	ListReplies(ctx context.Context, raisedItemID string) ([]Reply, error)
 	IssueFollowKey(ctx context.Context, raisedItemID string) (FollowKey, error)
 	OpenFollowedRaisedItem(ctx context.Context, key string) (FollowedRaisedItem, error)
+	RecordScopeFigure(ctx context.Context, f ScopeFigure) (ScopeFigure, error)
+	CurrentScopeFigure(ctx context.Context, scopeID string) (ScopeFigure, error)
+	ListScopeFigures(ctx context.Context, scopeID string) ([]ScopeFigure, error)
 	AttachFiles(ctx context.Context, raisedItemID, raiser string, fileIDs []string) ([]RaisedItemFile, error)
 	ApproveFileForPublishing(ctx context.Context, raisedItemID, fileID, approvedBy string) (RaisedItemFile, error)
 	ListRaisedItemFiles(ctx context.Context, raisedItemID string) ([]RaisedItemFile, error)
@@ -331,6 +335,9 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, removes := s.ByRole(roleRemoval); removes {
 		carriers[roleRemoval] = models.Removal{}
+	}
+	if _, kept := s.ByRole(roleScopeFigure); kept {
+		carriers[roleScopeFigure] = models.ScopeFigure{}
 	}
 	st, err := newStore(db, s, carriers)
 	if err != nil {

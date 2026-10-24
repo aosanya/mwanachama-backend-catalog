@@ -28,6 +28,7 @@ var carriers = map[string]string{
 	"reply":              "Reply",
 	"removal":            "Removal",
 	"raised_item_file":   "RaisedItemFile",
+	"scope_figure":       "ScopeFigure",
 }
 
 var storeOwned = map[string]bool{

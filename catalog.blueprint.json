@@ -886,6 +886,62 @@
           "unique": true
         }
       ]
+    },
+    {
+      "role": "scope_figure",
+      "description": "A dated, sourced figure about a scope, recorded from outside this module so a count of rows has a denominator beside it. Append-only; the newest by as_of is the current figure. A domain that keeps no figures fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "scope_id",
+          "type": "string",
+          "description": "The scope the figure is about, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "value",
+          "type": "int",
+          "description": "The figure itself, a whole number."
+        },
+        {
+          "name": "as_of",
+          "type": "timestamp",
+          "description": "When the figure was true, as its source states it.",
+          "required": true
+        },
+        {
+          "name": "source",
+          "type": "string",
+          "description": "Where the figure came from, as a reader would cite it.",
+          "required": true
+        },
+        {
+          "name": "recorded_by",
+          "type": "string",
+          "description": "Who recorded it, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When it was recorded."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "scope",
+          "description": "Reads one scope's figures, newest first.",
+          "fields": [
+            "scope_id",
+            "as_of"
+          ]
+        }
+      ]
     }
   ]
 }

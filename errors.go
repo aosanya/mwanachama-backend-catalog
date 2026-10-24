@@ -124,3 +124,9 @@ var ErrInvalidRemoval = errors.New("invalid removal")
 var ErrRemovalsNotMade = errors.New("nothing is removed here")
 
 var ErrRaisedItemAlreadyRemoved = errors.New("raised item already removed")
+
+var ErrInvalidScopeFigure = errors.New("invalid figure")
+
+var ErrFiguresNotKept = errors.New("no figures are kept here")
+
+var ErrScopeFigureNotFound = errors.New("figure not found")

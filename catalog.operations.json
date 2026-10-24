@@ -1199,6 +1199,72 @@
           "body": true
         }
       ]
+    },
+    "record_scope_figure": {
+      "method": "POST",
+      "path": "/scope-figures",
+      "call": "RecordScopeFigure",
+      "action": "catalog.scope_figure.record",
+      "status": 201,
+      "title": "Record a scope figure",
+      "description": "Record a dated, sourced figure about one scope. Append-only: a newer figure is a new row. The recorder is the caller, never the body; id and created_at are the store's. Never anonymous.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        },
+        {
+          "from": "caller",
+          "as": "recorded_by",
+          "into": "RecordedBy",
+          "description": "Who recorded it, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "current_scope_figure": {
+      "method": "GET",
+      "path": "/scope-figures/{scope_id}",
+      "call": "CurrentScopeFigure",
+      "action": "catalog.scope_figure.read",
+      "title": "Read a scope's current figure",
+      "description": "The figure with the latest as_of for one scope. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "scope_id",
+          "description": "The scope whose figure to read."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_scope_figures": {
+      "method": "GET",
+      "path": "/scope-figures/{scope_id}/history",
+      "call": "ListScopeFigures",
+      "action": "catalog.scope_figure.list",
+      "title": "List a scope's figures",
+      "description": "Every figure recorded for one scope, newest as_of first, at most one hundred. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "scope_id",
+          "description": "The scope whose figures to list."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -1231,6 +1297,9 @@
     "ErrRaisedItemNotFound": 404,
     "ErrInvalidReply": 400,
     "ErrRepliesNotSent": 404,
+    "ErrInvalidScopeFigure": 400,
+    "ErrFiguresNotKept": 404,
+    "ErrScopeFigureNotFound": 404,
     "ErrInvalidEndorsement": 400,
     "ErrEndorsementsNotCounted": 404
   }

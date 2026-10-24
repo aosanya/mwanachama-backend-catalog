@@ -108,6 +108,12 @@
       "description": "An answer to something a resident raised."
     },
     {
+      "role": "scope_figure",
+      "name": "scope_figure",
+      "table": "scope_figures",
+      "description": "A dated, sourced estimate of how many people live in a ward, the denominator a coverage count is read against."
+    },
+    {
       "role": "removal",
       "name": "removal",
       "table": "removals",

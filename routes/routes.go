@@ -46,6 +46,9 @@ var sentinels = map[string]error{
 	"ErrRaisedItemNotFound":     catalog.ErrRaisedItemNotFound,
 	"ErrInvalidReply":           catalog.ErrInvalidReply,
 	"ErrRepliesNotSent":         catalog.ErrRepliesNotSent,
+	"ErrInvalidScopeFigure":     catalog.ErrInvalidScopeFigure,
+	"ErrFiguresNotKept":         catalog.ErrFiguresNotKept,
+	"ErrScopeFigureNotFound":    catalog.ErrScopeFigureNotFound,
 	"ErrInvalidEndorsement":     catalog.ErrInvalidEndorsement,
 	"ErrEndorsementsNotCounted": catalog.ErrEndorsementsNotCounted,
 }
