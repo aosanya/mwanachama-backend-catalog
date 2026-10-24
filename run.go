@@ -2,6 +2,7 @@ package mwanachamacatalog
 
 import (
 	"context"
+	"fmt"
 
 	"gorm.io/gorm"
 
@@ -21,6 +22,9 @@ func (m *catalogManager) views(ctx context.Context) *gorm.DB {
 }
 
 func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun, error) {
+	if err := m.needs(roleRun); err != nil {
+		return MiningRun{}, err
+	}
 	if r.TemplatesFiled < 0 {
 		return MiningRun{}, ErrInvalidRun
 	}
@@ -33,6 +37,9 @@ func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun,
 }
 
 func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, error) {
+	if err := m.needs(roleRun); err != nil {
+		return nil, err
+	}
 	q := m.runs(ctx).Order("created_at DESC, id DESC")
 	if limit > 0 {
 		q = q.Limit(limit)
@@ -41,6 +48,9 @@ func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, 
 }
 
 func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Setting, error) {
+	if err := m.needs(roleSetting); err != nil {
+		return Setting{}, err
+	}
 	if key == "" {
 		return Setting{}, ErrInvalidSetting
 	}
@@ -64,6 +74,9 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 }
 
 func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, error) {
+	if err := m.needs(roleSetting); err != nil {
+		return Setting{}, fmt.Errorf("%w: %w", err, ErrSettingNotFound)
+	}
 	var s Setting
 	err := m.take(m.settings(ctx).Where("key = ?", key), roleSetting, &s, ErrSettingNotFound)
 	if err != nil {
@@ -73,6 +86,9 @@ func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, e
 }
 
 func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug string) error {
+	if err := m.needs(rolePageView); err != nil {
+		return err
+	}
 	if page == models.PageKindIndex {
 		slug = ""
 	}
@@ -107,5 +123,8 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 }
 
 func (m *catalogManager) ListPageViews(ctx context.Context) ([]PageView, error) {
+	if err := m.needs(rolePageView); err != nil {
+		return nil, err
+	}
 	return listOf[PageView](m, m.views(ctx).Order("views DESC, page, slug"), rolePageView)
 }

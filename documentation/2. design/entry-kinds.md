@@ -101,15 +101,41 @@ checked document carries.
 
 Checked on 2026-10-24 by loading that spec, writing the setting and saving
 one record of each kind, three refused ones, and four filtered listings, on
-SQLite. Two things are not done here:
+SQLite. One thing is not done here:
 
 - **The host does not yet write a template's `settings` to the definition
   layer.** No importer reads module configs (the template's own `status`
   says so); until one does, a running mount holds no kinds and checks
   nothing.
-- **The register spec fills only `entry`, `entry_private` and
-  `share_link`**, so `NewCatalogManager` refuses it as it stands; the check
-  above filled the other six roles in a scratch copy.
+
+## A mount declares only the roles it uses (decision 443)
+
+`entry`, `entry_private` and `share_link` are the roles every catalog
+declares. Every other role is optional: `suggestion`, `suggestion_comment`,
+`suggestion_match`, `run`, `setting` and `page_view` join `record`,
+`endorsement`, `raised_item` and the rest, so `NewCatalogManager` builds over
+a spec that leaves any of them out and checks a carrier only for the roles
+the spec declares. The register's set — entry, entry_private, share_link,
+setting, suggestion and suggestion_match — builds a manager as it stands.
+
+A method that needs an undeclared role answers `ErrRoleNotDeclared`, naming
+the role, mapped to 404 on the wire, before it reaches a table. Three
+choices are worth knowing:
+
+- **`GetSetting` with no `setting` role answers `ErrRoleNotDeclared` and
+  `ErrSettingNotFound` together**, so every caller that falls back to a
+  default on a missing setting (the answer clock, one record per holder)
+  keeps doing so on a mount that keeps no settings. `PutSetting` refuses.
+- **A failed build attempt still counts with no `suggestion_comment`
+  role.** `RecordSuggestionAttempt` moves the counter and the stall as
+  before and skips the comment it would have logged; commenting by hand
+  and listing comments refuse.
+- **Attaching, fulfilling and listing matches need `suggestion_match`**, and
+  `ListEntryMatches` needs only that role.
+
+`declared_roles_test.go` builds a manager over the register's set and over
+one with neither settings nor suggestions, runs the entry operations through
+both, and holds each refusal to `ErrRoleNotDeclared`.
 
 ## Left open
 

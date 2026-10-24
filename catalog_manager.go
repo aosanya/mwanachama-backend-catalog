@@ -310,15 +310,21 @@ type catalogManager struct {
 // column to land in, fails here rather than dropping a value on every write.
 func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	carriers := map[string]any{
-		roleEntry:             models.Entry{},
-		roleEntryPrivate:      models.EntryPrivate{},
-		roleShareLink:         models.ShareLink{},
+		roleEntry:        models.Entry{},
+		roleEntryPrivate: models.EntryPrivate{},
+		roleShareLink:    models.ShareLink{},
+	}
+	for role, carrier := range map[string]any{
 		roleSuggestion:        models.Suggestion{},
 		roleSuggestionComment: models.SuggestionComment{},
 		roleSuggestionMatch:   models.SuggestionMatch{},
 		roleRun:               models.MiningRun{},
 		roleSetting:           models.Setting{},
 		rolePageView:          models.PageView{},
+	} {
+		if _, declared := s.ByRole(role); declared {
+			carriers[role] = carrier
+		}
 	}
 	if _, kept := s.ByRole(roleRecord); kept {
 		carriers[roleRecord] = models.Record{}

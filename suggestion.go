@@ -29,6 +29,9 @@ func (m *catalogManager) findSuggestion(ctx context.Context, id string) (Suggest
 }
 
 func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Suggestion, error) {
+	if err := m.needs(roleSuggestion); err != nil {
+		return Suggestion{}, err
+	}
 	s.Status = models.SuggestionStatusProposed
 	s.Attempts = 0
 	s.DecidedAt = ""
@@ -69,10 +72,16 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 }
 
 func (m *catalogManager) GetSuggestion(ctx context.Context, id string) (Suggestion, error) {
+	if err := m.needs(roleSuggestion); err != nil {
+		return Suggestion{}, err
+	}
 	return m.findSuggestion(ctx, id)
 }
 
 func (m *catalogManager) ListSuggestions(ctx context.Context, statuses ...SuggestionStatus) ([]Suggestion, error) {
+	if err := m.needs(roleSuggestion); err != nil {
+		return nil, err
+	}
 	q := m.suggestions(ctx)
 	if len(statuses) > 0 {
 		in := make([]string, 0, len(statuses))
@@ -85,6 +94,9 @@ func (m *catalogManager) ListSuggestions(ctx context.Context, statuses ...Sugges
 }
 
 func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority int) (Suggestion, error) {
+	if err := m.needs(roleSuggestion); err != nil {
+		return Suggestion{}, err
+	}
 	// Built is reached by fulfilling a suggestion, never by deciding one —
 	// otherwise the catalog would claim an archetype exists that nothing
 	// built.
@@ -117,6 +129,9 @@ func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status
 }
 
 func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runID, comment string) (Suggestion, error) {
+	if err := m.needs(roleSuggestion); err != nil {
+		return Suggestion{}, err
+	}
 	// An attempt without a reason tells the next run nothing, so the count
 	// would rise toward the stall with no record of why.
 	if strings.TrimSpace(comment) == "" {
@@ -150,6 +165,9 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runID,
 		Body:         strings.TrimSpace(comment),
 		CreatedAt:    m.now(),
 	}
+	if !m.declares(roleSuggestionComment) {
+		return m.GetSuggestion(ctx, id)
+	}
 	if err := m.insert(ctx, roleSuggestionComment, note); err != nil {
 		return Suggestion{}, err
 	}
@@ -157,6 +175,9 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runID,
 }
 
 func (m *catalogManager) CommentOnSuggestion(ctx context.Context, id string, author CommentAuthor, body string) (SuggestionComment, error) {
+	if err := m.needs(roleSuggestion, roleSuggestionComment); err != nil {
+		return SuggestionComment{}, err
+	}
 	// The suggestion is read before the comment is checked, where the order
 	// used to be the other way round: suggestion_id is one of the declared
 	// required fields, so the comment cannot be checked as a whole until it
@@ -184,6 +205,9 @@ func (m *catalogManager) CommentOnSuggestion(ctx context.Context, id string, aut
 }
 
 func (m *catalogManager) ListSuggestionComments(ctx context.Context, id string) ([]SuggestionComment, error) {
+	if err := m.needs(roleSuggestion, roleSuggestionComment); err != nil {
+		return nil, err
+	}
 	if _, err := m.findSuggestion(ctx, id); err != nil {
 		return nil, err
 	}
@@ -218,6 +242,9 @@ func (m *catalogManager) upsertMatch(ctx context.Context, suggestionID, slug, ru
 }
 
 func (m *catalogManager) AttachSuggestion(ctx context.Context, id, slug, note string) (SuggestionMatch, error) {
+	if err := m.needs(roleSuggestion, roleSuggestionMatch); err != nil {
+		return SuggestionMatch{}, err
+	}
 	existing, err := m.findSuggestion(ctx, id)
 	if err != nil {
 		return SuggestionMatch{}, err
@@ -226,6 +253,9 @@ func (m *catalogManager) AttachSuggestion(ctx context.Context, id, slug, note st
 }
 
 func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, note string) (Suggestion, error) {
+	if err := m.needs(roleSuggestion, roleSuggestionMatch); err != nil {
+		return Suggestion{}, err
+	}
 	existing, err := m.findSuggestion(ctx, id)
 	if err != nil {
 		return Suggestion{}, err
@@ -246,6 +276,9 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runID, 
 }
 
 func (m *catalogManager) ListSuggestionMatches(ctx context.Context, id string) ([]SuggestionMatch, error) {
+	if err := m.needs(roleSuggestion, roleSuggestionMatch); err != nil {
+		return nil, err
+	}
 	if _, err := m.findSuggestion(ctx, id); err != nil {
 		return nil, err
 	}
@@ -255,6 +288,9 @@ func (m *catalogManager) ListSuggestionMatches(ctx context.Context, id string) (
 }
 
 func (m *catalogManager) ListEntryMatches(ctx context.Context, slug string) ([]SuggestionMatch, error) {
+	if err := m.needs(roleSuggestionMatch); err != nil {
+		return nil, err
+	}
 	if _, err := m.findEntry(ctx, slug); err != nil {
 		return nil, err
 	}

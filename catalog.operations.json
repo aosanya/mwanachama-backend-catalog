@@ -1438,6 +1438,7 @@
     "ErrFiguresNotKept": 404,
     "ErrScopeFigureNotFound": 404,
     "ErrInvalidEndorsement": 400,
-    "ErrEndorsementsNotCounted": 404
+    "ErrEndorsementsNotCounted": 404,
+    "ErrRoleNotDeclared": 404
   }
 }
