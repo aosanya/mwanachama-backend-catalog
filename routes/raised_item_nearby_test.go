@@ -50,12 +50,22 @@ func raisedItemsMount(t *testing.T) (gated, anon http.Handler, cm catalog.Catalo
 func raiseAt(t *testing.T, cm catalog.CatalogManager, title, topic string, publishable bool, lon, lat float64) {
 	t.Helper()
 	p := geo.NewPoint(lon, lat)
-	_, err := cm.RaiseItem(context.Background(), catalog.RaisedItem{
+	r, err := cm.RaiseItem(context.Background(), catalog.RaisedItem{
 		Title: title, RaisedBy: "amina", Topic: topic, Publishable: publishable,
 		Pin: &p, Address: "12 Riverside Road",
 	})
 	if err != nil {
 		t.Fatalf("raise %s: %v", title, err)
+	}
+	if !publishable {
+		return
+	}
+	b, err := cm.PutOnBoard(context.Background(), catalog.BoardItem{Title: title})
+	if err != nil {
+		t.Fatalf("board %s: %v", title, err)
+	}
+	if err := cm.GroupUnderBoardItem(context.Background(), r.ID, b.ID); err != nil {
+		t.Fatalf("group %s: %v", title, err)
 	}
 }
 

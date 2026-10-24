@@ -42,7 +42,11 @@ func (m *catalogManager) NearbyRaisedItems(ctx context.Context, topic string, at
 	if topic == "" || !(withinMetres > 0) {
 		return nil, ErrInvalidRaisedItem
 	}
-	candidates, err := listOf[RaisedItem](m, m.q(ctx, roleRaisedItem).Where("topic = ? AND publishable = ?", topic, true), roleRaisedItem)
+	if !m.keepsBoard() {
+		return []RaisedItem{}, nil
+	}
+	shown := m.q(ctx, roleBoardItem).Select("id").Where("hidden = ?", false)
+	candidates, err := listOf[RaisedItem](m, m.q(ctx, roleRaisedItem).Where("topic = ? AND publishable = ? AND board_item_id IN (?)", topic, true, shown), roleRaisedItem)
 	if err != nil {
 		return nil, err
 	}

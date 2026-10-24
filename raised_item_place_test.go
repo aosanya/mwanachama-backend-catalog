@@ -111,8 +111,12 @@ func TestNearbyListsPublishedItemsOfOneThemeWithinTheDistance(t *testing.T) {
 		{Title: "no pin", Topic: "roads", Publishable: true, Address: "Riverside Road"},
 	} {
 		r.RaisedBy = "amina"
-		if _, err := cm.RaiseItem(ctx, r); err != nil {
+		raised, err := cm.RaiseItem(ctx, r)
+		if err != nil {
 			t.Fatal(err)
+		}
+		if raised.Publishable {
+			groupOnBoard(t, cm, ctx, raised.ID, false)
 		}
 	}
 	got, err := cm.NearbyRaisedItems(ctx, "roads", centre, 500)
@@ -130,5 +134,45 @@ func TestNearbyListsPublishedItemsOfOneThemeWithinTheDistance(t *testing.T) {
 		if err := call(); !errors.Is(err, catalog.ErrInvalidRaisedItem) {
 			t.Errorf("%s: %v", name, err)
 		}
+	}
+}
+
+func groupOnBoard(t *testing.T, cm catalog.CatalogManager, ctx context.Context, raisedItemID string, hidden bool) {
+	t.Helper()
+	b, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "board " + raisedItemID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.GroupUnderBoardItem(ctx, raisedItemID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	if hidden {
+		if err := cm.SetBoardItemHidden(ctx, b.ID, true); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestNearbyListsOnlyItemsOnThePublicBoard(t *testing.T) {
+	cm, ctx := newManager(t)
+	centre := geo.Position{36.8219, -1.2921}
+	place := func(title string) catalog.RaisedItem {
+		r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: title, RaisedBy: "amina", Topic: "roads", Publishable: true, Pin: pin(36.8220, -1.2921)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return r
+	}
+	place("ungrouped")
+	groupOnBoard(t, cm, ctx, place("hidden").ID, true)
+	groupOnBoard(t, cm, ctx, place("shown").ID, false)
+	ungrouped := place("ungrouped again")
+	groupOnBoard(t, cm, ctx, ungrouped.ID, false)
+	if err := cm.UngroupFromBoardItem(ctx, ungrouped.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := cm.NearbyRaisedItems(ctx, "roads", centre, 500)
+	if err != nil || len(got) != 1 || got[0].Title != "shown" {
+		t.Fatalf("nearby = %+v (%v), want only the item grouped under a shown board item", got, err)
 	}
 }

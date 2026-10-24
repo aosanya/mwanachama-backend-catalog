@@ -86,11 +86,14 @@ answers the item whole. Every other read goes through
 pin with `geo.RoundForPublic` (three decimals, about 100 m). Staff reads are
 the host's: it reads the item whole and decides who is staff.
 
-**Nearby.** `NearbyRaisedItems(topic, at, withinMetres)` lists publishable
-items of one topic whose pin lies within the distance of `at` (great-circle,
-`geo.Distance`), nearest first, at most 200, each already seen-by-others.
+**Nearby.** `NearbyRaisedItems(topic, at, withinMetres)` lists published
+items of one topic, where published means on the public board (decision 373):
+publishable and grouped under a board item that is not hidden. An item never
+grouped, ungrouped, or grouped under a hidden board item is left out, and a
+mount that keeps no board answers an empty list. It lists the items whose
+pin lies within the distance of `at` (great-circle, `geo.Distance`), nearest first, at most 200, each already seen-by-others.
 Items with no pin are not near anything. The distance filter runs in Go over
-the topic's publishable rows; a spatial index is not needed until a topic
+the topic's published rows; a spatial index is not needed until a topic
 holds more rows than that scan can afford.
 
 **The nearby read is declared.** `GET /raised-items/nearby?topic=&at=&within=`,
@@ -115,9 +118,6 @@ for a clerk), both declared below.
   and the street only", but the address is one typed line, so there is no
   street to keep apart from a house number; until that is decided the whole
   typed address is withheld from others.
-- *What "published" means for nearby.* Today it is `publishable = true`;
-  whether a moderator's approval or being on a board item should be needed
-  instead is not decided.
 - *A result cap.* The read keeps the manager's 200 nearest; whether the
   route should take a smaller limit or page is not decided.
 
