@@ -8,17 +8,22 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestARaisedItemsSubjectIsCheckedAndListedThroughTheMux(t *testing.T) {
+func TestAResidentRaiseDropsItsSubjectAndAFiledOneIsListedBySubjectThroughTheMux(t *testing.T) {
 	gated, anon, cm := callerMount(t, "amina")
 	holder, err := cm.CreateEntry(t.Context(), catalog.Entry{Slug: "holder-one", Name: "Holder one", Doc: `{}`})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Dark road","subject_id":"no-such-entry"}`); rec.Code != http.StatusNotFound {
-		t.Fatalf("unknown subject raise = %d %s", rec.Code, rec.Body)
+	if rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Streetlight","subject_id":"`+holder.ID+`"}`); rec.Code != http.StatusCreated || json.Unmarshal(rec.Body.Bytes(), &struct{}{}) != nil {
+		t.Fatalf("resident raise naming a subject = %d %s", rec.Code, rec.Body)
+	} else {
+		var raised catalog.RaisedItem
+		if json.Unmarshal(rec.Body.Bytes(), &raised) != nil || raised.SubjectID != "" {
+			t.Fatalf("resident raise kept subject %q", raised.SubjectID)
+		}
 	}
-	if rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Dark road","subject_id":"`+holder.ID+`"}`); rec.Code != http.StatusCreated {
-		t.Fatalf("known subject raise = %d %s", rec.Code, rec.Body)
+	if _, err := cm.FileRaisedItem(t.Context(), catalog.RaisedItem{Title: "Dark road", RaisedBy: "amina", FiledBy: "clerk-1", Channel: "phone", SubjectID: holder.ID}); err != nil {
+		t.Fatal(err)
 	}
 	if rec := sendTo(gated, http.MethodPost, "/raised-items", `{"title":"Pothole"}`); rec.Code != http.StatusCreated {
 		t.Fatalf("no subject raise = %d %s", rec.Code, rec.Body)
