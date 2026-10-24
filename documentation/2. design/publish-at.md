@@ -30,7 +30,9 @@ not there, answering exactly as for a missing slug:
 - `ListPublicEntries` leaves it out.
 
 The operator's `GetEntry` and `ListEntries` still see it, because an operator
-has to be able to find what is scheduled.
+has to be able to find what is scheduled. Under `WithAudience` only staff do:
+below staff those two read the way anonymous reads do (CAT131, see
+[audience.md](audience.md)).
 
 ## What is left
 

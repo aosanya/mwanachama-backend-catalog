@@ -45,6 +45,28 @@ only and a pending one never takes a published one's place.
 `TestBelowStaffAPendingEntryAnswersExactlyAsAMissingSlug` was mutation-checked
 by disabling the pending check.
 
+## Below staff, nothing private or scheduled either (CAT131)
+
+Member app decisions 290 and 403, 2026-10-24: below staff, a catalogue reads
+the way an anonymous reader's does. A private entry opens only through its
+share key, for a member as for anybody signed out, and is never listed; an
+entry whose `publish_at` is still to come is not there yet (CAT62).
+
+- `GetEntry` below staff is the manager's `OpenEntry` with no key, so a
+  pending entry, a private one and a scheduled one all answer
+  `ErrEntryNotFound` in the same words as a missing slug.
+- `OpenEntry` below staff is the manager's own, which already refuses a
+  pending entry, a scheduled one, and a private one without its live key, all
+  as a missing slug.
+- `ListEntries` below staff asks for public entries only, drops any whose
+  `publish_at` is still to come, then applies the caller's limit, so the
+  limit counts readable entries only. A listing asking for `private` or
+  `pending` comes back empty.
+
+Staff reads are unchanged. `TestBelowStaffAPrivateEntryOpensOnlyThroughItsKeyAndIsNeverListed`
+and `TestBelowStaffAScheduledEntryAnswersExactlyAsAMissingSlug` were
+mutation-checked against the CAT129 wrapper, which fails both.
+
 Writes are not fenced by the audience; they are gated by the mount's
 authorizer as before.
 
