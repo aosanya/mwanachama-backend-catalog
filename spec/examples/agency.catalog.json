@@ -90,6 +90,18 @@
       "description": "A member saying \"me too\" to an item on the public board."
     },
     {
+      "role": "slot",
+      "name": "slot",
+      "table": "slots",
+      "description": "A time a service is offered, with how many residents it takes."
+    },
+    {
+      "role": "booking",
+      "name": "booking",
+      "table": "bookings",
+      "description": "A resident's booked time at a service."
+    },
+    {
       "role": "raised_item",
       "name": "raised_item",
       "table": "raised_items",

@@ -59,6 +59,44 @@ stays the host's fact (WK198); the module never learns it.
 `opens: raise`. The host opens the raise flow (CAT55) for it instead of a
 form.
 
+## Appointment times
+
+Decision 325, CAT124. A time is **an object of its own, not a catalogue
+kind**: two optional roles, `slot` and `booking`, declared in the blueprint
+like `endorsement`. A domain that books no times fills neither, and every
+method then answers `ErrTimesNotBooked`. A kind was ruled out because a time
+has a capacity counted against live rows, which an entry's document cannot
+hold or lock.
+
+- `slot` is one time a service is offered: `subject_id` (the service entry,
+  opaque here), `starts_at`, `ends_at` (RFC 3339, normalised to UTC, ending
+  after it starts) and `capacity` (at least one; zero means one).
+- `booking` is one holder's place at one time. It copies the time's
+  `subject_id`, `starts_at` and calendar `day` when booked, so a holder's
+  list and a day's list are one indexed read each. A cancellation is kept,
+  not deleted: `cancelled_at`, `cancelled_by` and `cancel_reason`; a standing
+  booking has an empty `cancelled_at`.
+
+`Book(slot, holder)` runs in one transaction: read the time, refuse a second
+standing booking by the same holder (`ErrAlreadyBooked`), count the standing
+bookings and refuse when they reach the capacity (`ErrSlotFull`), then
+insert. The holder is always the caller; an operation will bind it
+`from: caller` and never read it from the body. Unlike the asset manager's
+hold window, times are not checked for overlap: a service may offer two
+times that overlap, each with its own capacity.
+
+`CancelBooking(id, by, reason)` is the holder's own: another holder's
+booking answers `ErrBookingNotFound`, exactly as a missing one.
+`CancelBookingAsStaff(id, by, reason)` cancels anyone's and refuses an empty
+reason (`ErrCancelReasonRequired`), so the holder always sees why. A second
+cancel answers `ErrBookingCancelled`; the update is guarded on
+`cancelled_at` being empty, so two racing cancels cannot both land. A
+cancelled place frees the time.
+
+`ListHolderBookings(holder)` lists a holder's bookings, cancelled included,
+earliest first; `ListDayBookings(service, day)` lists one `YYYY-MM-DD` day's
+bookings for staff, for one service or (empty service) every service.
+
 ## Not here yet
 
 - Which mounts hold services is not declared yet: that needs CAT49's
@@ -66,5 +104,8 @@ form.
 - No declared operations of their own: services are read and written through
   the existing entry operations on the services mount. Mounting it per agency
   is wakala-api's (WK198).
-- Appointment times and capacity are CAT124 (absorbed CAT125).
+- Appointment times have no declared operations yet: the manager methods
+  below are built and tested, and their addresses (book and cancel with the
+  booker bound from the caller, the staff cancel and the day list gated
+  apart) are what is left of CAT124.
 - The template's first services are AGX18's data.

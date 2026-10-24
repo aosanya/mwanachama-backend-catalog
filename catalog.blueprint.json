@@ -608,6 +608,138 @@
       ]
     },
     {
+      "role": "slot",
+      "description": "One time a service is offered and how many holders it takes. A domain that books no times fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "subject_id",
+          "type": "string",
+          "description": "The service offered at this time, opaque to this module.",
+          "required": true
+        },
+        {
+          "name": "starts_at",
+          "type": "string",
+          "description": "When the time starts, RFC 3339 UTC.",
+          "required": true
+        },
+        {
+          "name": "ends_at",
+          "type": "string",
+          "description": "When the time ends, RFC 3339 UTC, after it starts.",
+          "required": true
+        },
+        {
+          "name": "capacity",
+          "type": "int",
+          "description": "How many holders one time takes, at least one."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When the time was offered."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "subject",
+          "description": "Lists one service's times.",
+          "fields": [
+            "subject_id"
+          ]
+        }
+      ]
+    },
+    {
+      "role": "booking",
+      "description": "One holder's place at one offered time, kept after a cancellation with who cancelled and why. A domain that books no times fills no object for this role.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Storage key, minted by the store.",
+          "primary": true
+        },
+        {
+          "name": "slot_id",
+          "type": "string",
+          "description": "The time booked.",
+          "required": true
+        },
+        {
+          "name": "subject_id",
+          "type": "string",
+          "description": "The service of the time booked, copied when booked.",
+          "required": true
+        },
+        {
+          "name": "holder_id",
+          "type": "string",
+          "description": "Who booked, taken from the caller and never the body.",
+          "required": true
+        },
+        {
+          "name": "day",
+          "type": "string",
+          "description": "The calendar day of the time booked, YYYY-MM-DD in UTC, copied when booked."
+        },
+        {
+          "name": "starts_at",
+          "type": "string",
+          "description": "When the time booked starts, copied when booked."
+        },
+        {
+          "name": "cancelled_at",
+          "type": "string",
+          "description": "When the booking was cancelled, empty while it stands."
+        },
+        {
+          "name": "cancelled_by",
+          "type": "string",
+          "description": "Who cancelled it, the holder or a member of staff."
+        },
+        {
+          "name": "cancel_reason",
+          "type": "text",
+          "description": "Why it was cancelled; required when staff cancel."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "description": "When the holder booked."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "slot",
+          "description": "Counts one time's standing bookings.",
+          "fields": [
+            "slot_id"
+          ]
+        },
+        {
+          "name": "holder",
+          "description": "Lists one holder's bookings.",
+          "fields": [
+            "holder_id"
+          ]
+        },
+        {
+          "name": "day",
+          "description": "Lists one day's bookings for staff.",
+          "fields": [
+            "day"
+          ]
+        }
+      ]
+    },
+    {
       "role": "raised_item",
       "description": "Something a holder raised for the mounting host to answer, by themselves or filed on their behalf. A domain that takes no raised items fills no object for this role.",
       "fields": [

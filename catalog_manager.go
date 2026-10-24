@@ -33,6 +33,8 @@ type (
 	PageKind           = models.PageKind
 	Record             = models.Record
 	Endorsement        = models.Endorsement
+	Slot               = models.Slot
+	Booking            = models.Booking
 	RaisedItem         = models.RaisedItem
 	BoardItem          = models.BoardItem
 	BoardItemTally     = models.BoardItemTally
@@ -250,6 +252,14 @@ type CatalogManager interface {
 
 	CountEndorsements(ctx context.Context, subjectID string) (int, error)
 
+	OfferSlot(ctx context.Context, s Slot) (Slot, error)
+	ListSlots(ctx context.Context, subjectID string) ([]Slot, error)
+	Book(ctx context.Context, slotID, holderID string) (Booking, error)
+	CancelBooking(ctx context.Context, bookingID, by, reason string) (Booking, error)
+	CancelBookingAsStaff(ctx context.Context, bookingID, by, reason string) (Booking, error)
+	ListHolderBookings(ctx context.Context, holderID string) ([]Booking, error)
+	ListDayBookings(ctx context.Context, subjectID, day string) ([]Booking, error)
+
 	RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
 	FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error)
 
@@ -331,6 +341,12 @@ func NewCatalogManager(db *gorm.DB, s *spec.Spec) (CatalogManager, error) {
 	}
 	if _, counted := s.ByRole(roleEndorsement); counted {
 		carriers[roleEndorsement] = models.Endorsement{}
+	}
+	if _, booked := s.ByRole(roleSlot); booked {
+		carriers[roleSlot] = models.Slot{}
+	}
+	if _, booked := s.ByRole(roleBooking); booked {
+		carriers[roleBooking] = models.Booking{}
 	}
 	if _, taken := s.ByRole(roleRaisedItem); taken {
 		carriers[roleRaisedItem] = models.RaisedItem{}

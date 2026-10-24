@@ -29,6 +29,8 @@ var carriers = map[string]string{
 	"removal":            "Removal",
 	"raised_item_file":   "RaisedItemFile",
 	"scope_figure":       "ScopeFigure",
+	"slot":               "Slot",
+	"booking":            "Booking",
 }
 
 var storeOwned = map[string]bool{

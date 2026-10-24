@@ -136,3 +136,19 @@ var ErrFiguresNotKept = errors.New("no figures are kept here")
 var ErrScopeFigureNotFound = errors.New("figure not found")
 
 var ErrRoleNotDeclared = errors.New("this catalog does not declare the role")
+
+var ErrTimesNotBooked = errors.New("times are not booked here")
+
+var ErrInvalidSlot = errors.New("invalid time")
+
+var ErrSlotNotFound = errors.New("time not found")
+
+var ErrSlotFull = errors.New("time is full")
+
+var ErrAlreadyBooked = errors.New("already booked")
+
+var ErrBookingNotFound = errors.New("booking not found")
+
+var ErrBookingCancelled = errors.New("booking already cancelled")
+
+var ErrCancelReasonRequired = errors.New("a reason is required")
