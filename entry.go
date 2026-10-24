@@ -71,12 +71,14 @@ func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error
 func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error) {
 	existing, err := m.findEntry(ctx, e.Slug)
 	if errors.Is(err, ErrEntryNotFound) {
+		e.PublishAt = ""
 		return m.CreateEntry(ctx, e)
 	}
 	if err != nil {
 		return Entry{}, err
 	}
 
+	e.PublishAt = existing.PublishAt
 	e.Visibility = existing.Visibility
 	e.ApprovedAt = existing.ApprovedAt
 	if !sameDocument(existing.Doc, e.Doc) {

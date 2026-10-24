@@ -107,6 +107,11 @@ const (
 
 // ListFilter narrows [CatalogManager.ListEntries]. A zero filter lists
 // every non-deleted Entry.
+type PublishSchedule struct {
+	Slugs     []string `json:"slugs"`
+	PublishAt string   `json:"publish_at"`
+}
+
 type ListFilter struct {
 	// Visibility, when set, keeps only Entries in that state.
 	Visibility Visibility
@@ -156,6 +161,10 @@ type CatalogManager interface {
 	// stamping ApprovedAt when it leaves pending and clearing it on the way
 	// back.
 	SetVisibility(ctx context.Context, slug string, v Visibility) (Entry, error)
+
+	SchedulePublish(ctx context.Context, slug, publishAt string) (Entry, error)
+
+	SchedulePublishBatch(ctx context.Context, s PublishSchedule) ([]Entry, error)
 
 	// DeleteEntry soft-deletes an Entry.
 	DeleteEntry(ctx context.Context, slug string) error
