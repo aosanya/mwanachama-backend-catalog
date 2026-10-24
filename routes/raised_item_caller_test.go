@@ -119,3 +119,37 @@ func TestBoardMeTooAndRepliesAnswerThroughTheDeclaredTableAndNeverAnonymously(t 
 		}
 	}
 }
+
+func TestABoardItemIsAssignedAndClosedThroughTheDeclaredTableByTheCaller(t *testing.T) {
+	gated, anon, cm := callerMount(t, "clerk-1")
+	var b catalog.BoardItem
+	_ = json.Unmarshal(sendTo(gated, http.MethodPost, "/board-items", `{"title":"Streetlights out"}`).Body.Bytes(), &b)
+	if rec := sendTo(gated, http.MethodPut, "/board-items/"+b.ID+"/assignee", `{"assignee_kind":"role","assignee_id":"roads-desk"}`); rec.Code != http.StatusNoContent {
+		t.Fatalf("assign = %d %s", rec.Code, rec.Body)
+	}
+	if rec := sendTo(gated, http.MethodPut, "/board-items/"+b.ID+"/assignee", `{"assignee_kind":"agent","assignee_id":"bot"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("assign to an unknown kind = %d %s", rec.Code, rec.Body)
+	}
+	if rec := sendTo(gated, http.MethodDelete, "/board-items/"+b.ID+"/assignee", ""); rec.Code != http.StatusNoContent {
+		t.Fatalf("unassign = %d %s", rec.Code, rec.Body)
+	}
+	if rec := sendTo(gated, http.MethodPost, "/board-items/"+b.ID+"/close", `{"closed_by":"forged"}`); rec.Code != http.StatusNoContent {
+		t.Fatalf("close = %d %s", rec.Code, rec.Body)
+	}
+	if rec := sendTo(gated, http.MethodPost, "/board-items/"+b.ID+"/close", ""); rec.Code != http.StatusConflict {
+		t.Fatalf("second close = %d %s", rec.Code, rec.Body)
+	}
+	board, err := cm.ListBoardItems(context.Background())
+	if err != nil || len(board) != 1 || board[0].ClosedBy != "clerk-1" || board[0].AssigneeID != "" {
+		t.Fatalf("board = %+v (%v)", board, err)
+	}
+	for _, try := range []struct{ method, path string }{
+		{http.MethodPut, "/board-items/" + b.ID + "/assignee"},
+		{http.MethodDelete, "/board-items/" + b.ID + "/assignee"},
+		{http.MethodPost, "/board-items/" + b.ID + "/close"},
+	} {
+		if rec := sendTo(anon, try.method, try.path, `{"assignee_kind":"role","assignee_id":"x"}`); rec.Code != http.StatusNotFound && rec.Code != http.StatusMethodNotAllowed {
+			t.Fatalf("anonymous %s %s = %d", try.method, try.path, rec.Code)
+		}
+	}
+}

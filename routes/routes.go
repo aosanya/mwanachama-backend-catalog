@@ -42,6 +42,7 @@ var sentinels = map[string]error{
 	"ErrRaisedItemsNotTaken":    catalog.ErrRaisedItemsNotTaken,
 	"ErrInvalidServiceTerms":    catalog.ErrInvalidServiceTerms,
 	"ErrBoardItemNotFound":      catalog.ErrBoardItemNotFound,
+	"ErrBoardItemClosed":        catalog.ErrBoardItemClosed,
 	"ErrInvalidBoardItem":       catalog.ErrInvalidBoardItem,
 	"ErrBoardNotKept":           catalog.ErrBoardNotKept,
 	"ErrRaisedItemNotFound":     catalog.ErrRaisedItemNotFound,

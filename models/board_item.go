@@ -1,11 +1,24 @@
 package models
 
 type BoardItem struct {
-	ID        string `json:"id"`
-	Title     string `json:"title"`
-	Outcome   string `json:"outcome"`
-	Hidden    bool   `json:"hidden"`
-	CreatedAt string `json:"created_at"`
+	ID           string `json:"id"`
+	Title        string `json:"title"`
+	Outcome      string `json:"outcome"`
+	Hidden       bool   `json:"hidden"`
+	AssigneeKind string `json:"assignee_kind"`
+	AssigneeID   string `json:"assignee_id"`
+	ClosedAt     string `json:"closed_at"`
+	ClosedBy     string `json:"closed_by"`
+	CreatedAt    string `json:"created_at"`
+}
+
+const (
+	AssigneeActor = "actor"
+	AssigneeRole  = "role"
+)
+
+func IsAssigneeKind(kind string) bool {
+	return kind == AssigneeActor || kind == AssigneeRole
 }
 
 type BoardItemTally struct {

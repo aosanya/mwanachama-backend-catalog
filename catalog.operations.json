@@ -1062,6 +1062,86 @@
         }
       ]
     },
+    "assign_board_item": {
+      "method": "PUT",
+      "path": "/board-items/{boardItemID}/assignee",
+      "call": "AssignBoardItem",
+      "action": "catalog.board_item.assign",
+      "status": 204,
+      "title": "Assign a board item",
+      "description": "Hand a board item to a person or a role; whoever holds the role picks it up. Assigning again replaces the assignee. Assigning never closes an item. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item to assign."
+        },
+        {
+          "from": "body",
+          "as": "assignee_kind",
+          "required": true,
+          "field": "BoardItem.assignee_kind"
+        },
+        {
+          "from": "body",
+          "as": "assignee_id",
+          "required": true,
+          "field": "BoardItem.assignee_id"
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "unassign_board_item": {
+      "method": "DELETE",
+      "path": "/board-items/{boardItemID}/assignee",
+      "call": "UnassignBoardItem",
+      "action": "catalog.board_item.unassign",
+      "status": 204,
+      "title": "Unassign a board item",
+      "description": "Take a board item back from whoever it was assigned to, leaving it unassigned and still open. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item to unassign."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "close_board_item": {
+      "method": "POST",
+      "path": "/board-items/{boardItemID}/close",
+      "call": "CloseBoardItem",
+      "action": "catalog.board_item.close",
+      "status": 204,
+      "title": "Close a board item",
+      "description": "Close a board item. This is the only way an item closes: a reply, a removal, an outcome or grouping never does. The closer is the caller, never the body; closing a closed item answers a conflict. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item to close."
+        },
+        {
+          "from": "caller",
+          "as": "closed_by",
+          "description": "Who closed it, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "endorse": {
       "method": "POST",
       "path": "/endorsements/{subject_id}",
@@ -1345,6 +1425,7 @@
     "ErrInvalidRaisedItem": 400,
     "ErrRaisedItemsNotTaken": 404,
     "ErrBoardItemNotFound": 404,
+    "ErrBoardItemClosed": 409,
     "ErrInvalidBoardItem": 400,
     "ErrBoardNotKept": 404,
     "ErrRaisedItemNotFound": 404,

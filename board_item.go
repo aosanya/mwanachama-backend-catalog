@@ -15,6 +15,7 @@ func (m *catalogManager) PutOnBoard(ctx context.Context, b BoardItem) (BoardItem
 		return BoardItem{}, ErrInvalidBoardItem
 	}
 	b.ID = newID()
+	b.AssigneeKind, b.AssigneeID, b.ClosedAt, b.ClosedBy = "", "", "", ""
 	b.CreatedAt = m.now()
 	row, err := encode(m.st.Object(roleBoardItem), b)
 	if err != nil {

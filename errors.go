@@ -107,6 +107,8 @@ var ErrBoardNotKept = errors.New("no board is kept here")
 
 var ErrBoardItemNotFound = errors.New("board item not found")
 
+var ErrBoardItemClosed = errors.New("board item is already closed")
+
 var ErrRaisedItemNotFound = errors.New("raised item not found")
 
 var ErrRaisedItemNotPublishable = errors.New("raised item is not publishable")

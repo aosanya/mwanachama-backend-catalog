@@ -18,12 +18,16 @@ Oldest first. `at` is RFC 3339; empty means now. Passing it is what makes
 the read testable against a stepped clock, and it lets a host age the queue
 against the time its own sweep fired rather than the time the query ran.
 
-"Open" is the module's own facts only: a reply or a removal closes an item.
-A reply is always to the raiser — it is sent on the raised item and is what
-the raiser reads — so "only a reply to the raiser answers an item" (decision
-390) is exactly this rule. Grouping an item under a board item, or a board
-item's outcome, does not close it — those say what the board shows, not
-whether the person was answered. `TestOnlyAReplyToTheRaiserTakesAnItemOffTheOverdueList`
+"Still open" here means still waiting for an answer, and it is the module's
+own facts only: a reply or a removal takes an item off this list. Neither
+*closes* anything. A board item closes only by an explicit Close from staff
+(decision 451, CAT134 — see [board-item-assign-close.md](board-item-assign-close.md)),
+and an item answered or removed stays on the board, open, until then
+(decision 389). A reply is always to the raiser — it is sent on the raised
+item and is what the raiser reads — so "only a reply to the raiser answers an
+item" (decision 390) is exactly this rule. Grouping an item under a board
+item, or a board item's outcome, does not answer it — those say what the
+board shows, not whether the person was answered. `TestOnlyAReplyToTheRaiserTakesAnItemOffTheOverdueList`
 pins it: an item grouped under a board item with an outcome set is still on
 the list, and drops off only once a reply is sent.
 

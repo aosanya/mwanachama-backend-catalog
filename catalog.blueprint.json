@@ -737,6 +737,26 @@
           "description": "Whether staff have taken it off the public board; a hidden board item is left out of every public read and its share link stops opening."
         },
         {
+          "name": "assignee_kind",
+          "type": "string",
+          "description": "What assignee_id names: actor, a person named by the host's own id, or role, whose holders the host resolves and any of whom picks the item up. Empty means unassigned."
+        },
+        {
+          "name": "assignee_id",
+          "type": "string",
+          "description": "Who the item is assigned to, read as assignee_kind says, opaque to this module. Empty means unassigned."
+        },
+        {
+          "name": "closed_at",
+          "type": "timestamp",
+          "description": "When it was closed, set once by an explicit Close and by nothing else. Empty while the item is open."
+        },
+        {
+          "name": "closed_by",
+          "type": "string",
+          "description": "Who closed it, the caller of Close, opaque to this module. Empty while the item is open."
+        },
+        {
           "name": "created_at",
           "type": "timestamp",
           "description": "When it was put on the board."
