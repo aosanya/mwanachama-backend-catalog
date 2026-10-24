@@ -191,3 +191,43 @@ func TestMyRepliesAnswerOnlyTheRaiserAndTheFilingClerkAndNotFoundToAnyoneElse(t 
 		t.Fatalf("anonymous mine = %d", rec.Code)
 	}
 }
+
+func TestThePublicBoardAnswersOnePageAtATimeAndCapsThePage(t *testing.T) {
+	gated, _, _ := callerMount(t, "amina")
+	titles := []string{"First", "Second", "Third"}
+	for _, title := range titles {
+		var b catalog.BoardItem
+		var r catalog.RaisedItem
+		_ = json.Unmarshal(sendTo(gated, http.MethodPost, "/board-items", `{"title":"`+title+`"}`).Body.Bytes(), &b)
+		_ = json.Unmarshal(sendTo(gated, http.MethodPost, "/raised-items", `{"title":"`+title+`","publishable":true}`).Body.Bytes(), &r)
+		if rec := sendTo(gated, http.MethodPut, "/raised-items/"+r.ID+"/board-item", `{"board_item_id":"`+b.ID+`"}`); rec.Code != http.StatusNoContent {
+			t.Fatalf("group = %d %s", rec.Code, rec.Body)
+		}
+	}
+	page := func(query string) []string {
+		rec := sendTo(gated, http.MethodGet, "/board-items/public"+query, "")
+		var got []catalog.BoardItemTally
+		if rec.Code != http.StatusOK || json.Unmarshal(rec.Body.Bytes(), &got) != nil {
+			t.Fatalf("%s = %d %s", query, rec.Code, rec.Body)
+		}
+		out := []string{}
+		for _, g := range got {
+			out = append(out, g.Title)
+		}
+		return out
+	}
+	all := page("")
+	if len(all) != 3 || strings.Join(page("?limit=500"), ",") != strings.Join(all, ",") {
+		t.Fatalf("whole board = %v", all)
+	}
+	for query, want := range map[string][]string{
+		"?limit=2":           all[:2],
+		"?limit=2&offset=2":  all[2:],
+		"?limit=2&offset=9":  {},
+		"?offset=-1&limit=1": all[:1],
+	} {
+		if got := strings.Join(page(query), ","); got != strings.Join(want, ",") {
+			t.Errorf("%q = %q, want %q", query, got, want)
+		}
+	}
+}

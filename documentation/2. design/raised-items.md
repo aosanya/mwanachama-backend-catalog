@@ -155,6 +155,13 @@ item with no publishable item grouped under it, so a board item emptied by
 ungrouping or by a removal leaves the public board. Both are gated; whether
 the public read is anonymous on a given mount is that mount's allowlist.
 
+The public read answers one page at a time (decision 420), the way
+`ListPublicEntries` caps its cards: `limit` and `offset` arrive as query
+parameters, a page holds at most `MaxPublicBoardPage` (50) whatever the
+caller asks for, zero or a negative limit means a full page, and a negative
+offset starts at the first. The order is the staff read's, oldest first, so
+a reader walking the pages sees each board item once while nothing changes.
+
 Replies have two reads, split as the board's are (decision 411).
 `catalog.reply.list` (`ListReplies`) is the staff read: any item's replies,
 and who is staff is the mount's grant, never this module's answer.

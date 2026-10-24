@@ -284,7 +284,7 @@ type CatalogManager interface {
 	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
 
 	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
-	ListPublicBoardItems(ctx context.Context) ([]BoardItemTally, error)
+	ListPublicBoardItems(ctx context.Context, limit, offset int) ([]BoardItemTally, error)
 
 	SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error
 	SetBoardItemHidden(ctx context.Context, boardItemID string, hidden bool) error

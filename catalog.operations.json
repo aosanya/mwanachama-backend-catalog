@@ -979,8 +979,19 @@
       "call": "ListPublicBoardItems",
       "action": "catalog.board_item.list_public",
       "title": "List the public board",
-      "description": "The board as the public sees it: every board item that is not hidden and has at least one publishable item grouped under it, with how many raised it and how many said Me too. Never anonymous.",
-      "args": [],
+      "description": "The board as the public sees it: every board item that is not hidden and has at least one publishable item grouped under it, with how many raised it and how many said Me too, oldest first, one page at a time: at most 50 a page whatever the caller asks for, skipping offset items. Never anonymous.",
+      "args": [
+        {
+          "from": "query",
+          "as": "limit",
+          "description": "How many board items a page holds. Zero, a negative or anything over 50 means 50."
+        },
+        {
+          "from": "query",
+          "as": "offset",
+          "description": "How many board items to skip before the page starts. Zero starts at the first."
+        }
+      ],
       "returns": [
         {
           "body": true

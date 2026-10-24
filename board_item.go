@@ -74,7 +74,15 @@ func (m *catalogManager) ListBoardItems(ctx context.Context) ([]BoardItemTally, 
 	return out, nil
 }
 
-func (m *catalogManager) ListPublicBoardItems(ctx context.Context) ([]BoardItemTally, error) {
+const MaxPublicBoardPage = 50
+
+func (m *catalogManager) ListPublicBoardItems(ctx context.Context, limit, offset int) ([]BoardItemTally, error) {
+	if limit <= 0 || limit > MaxPublicBoardPage {
+		limit = MaxPublicBoardPage
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	all, err := m.ListBoardItems(ctx)
 	if err != nil {
 		return nil, err
@@ -84,6 +92,13 @@ func (m *catalogManager) ListPublicBoardItems(ctx context.Context) ([]BoardItemT
 		if t.RaisedBy > 0 {
 			out = append(out, t)
 		}
+	}
+	if offset >= len(out) {
+		return []BoardItemTally{}, nil
+	}
+	out = out[offset:]
+	if len(out) > limit {
+		out = out[:limit]
 	}
 	return out, nil
 }

@@ -76,7 +76,7 @@ func TestOnlyAPublishableItemIsGroupedUnderABoardItem(t *testing.T) {
 	if err != nil || len(board) != 1 || board[0].RaisedBy != 0 {
 		t.Fatalf("board = %+v (%v)", board, err)
 	}
-	if public, err := cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+	if public, err := cm.ListPublicBoardItems(ctx, 0, 0); err != nil || len(public) != 0 {
 		t.Errorf("a board item with only an unpublishable item reached the public board: %+v (%v)", public, err)
 	}
 }
@@ -107,7 +107,7 @@ func TestABoardItemTakesItsPublicOutcomeAndLetsAnItemGo(t *testing.T) {
 	if got := board[0]; got.Outcome != "Rail repaired" || got.RaisedBy != 0 {
 		t.Errorf("after outcome and ungrouping = %+v", got)
 	}
-	if public, err := cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+	if public, err := cm.ListPublicBoardItems(ctx, 0, 0); err != nil || len(public) != 0 {
 		t.Errorf("an emptied board item stayed on the public board: %+v (%v)", public, err)
 	}
 	mine, err := cm.ListRaisedItems(ctx, "amina")
@@ -143,14 +143,14 @@ func TestThePublicBoardLeavesOutABoardItemWithNothingGroupedUnderIt(t *testing.T
 	if err != nil || len(staff) != 2 {
 		t.Fatalf("staff board = %+v (%v)", staff, err)
 	}
-	public, err := cm.ListPublicBoardItems(ctx)
+	public, err := cm.ListPublicBoardItems(ctx, 0, 0)
 	if err != nil || len(public) != 1 || public[0].ID != grouped.ID {
 		t.Fatalf("public board = %+v (%v), want only %s and never %s", public, err, grouped.ID, empty.ID)
 	}
 	if err := cm.UngroupFromBoardItem(ctx, r.ID); err != nil {
 		t.Fatal(err)
 	}
-	if public, err = cm.ListPublicBoardItems(ctx); err != nil || len(public) != 0 {
+	if public, err = cm.ListPublicBoardItems(ctx, 0, 0); err != nil || len(public) != 0 {
 		t.Fatalf("public board after ungrouping = %+v (%v)", public, err)
 	}
 }
