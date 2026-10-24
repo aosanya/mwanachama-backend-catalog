@@ -143,8 +143,8 @@ Raising, filing, the board, Me too and replies are declared in
 Raising and filing are two actions so a mount grants filing on someone's
 behalf to clerks alone. Listing replies with no raised item is refused.
 
-`POST /raised-items` calls `RaiseItem`, which clears a `filed_by` and
-`channel` the body claims; `POST /raised-items/filed` calls `FileRaisedItem`.
+`POST /raised-items` calls `RaiseItem`, which clears a `filed_by`,
+`channel` and `subject_id` the body claims; `POST /raised-items/filed` calls `FileRaisedItem`.
 
 The board has two reads (decision 373). `ListBoardItems` is the staff read:
 every board item that is not hidden, including one with nothing grouped
@@ -168,7 +168,10 @@ in this same mount that the raiser is.
 
 - Empty means the raiser is not in the catalog, and the item is tied to
   nobody. Every item raised before the field existed reads this way.
-- When given, on a raise or a filing, it must name an entry of this mount that
+- Only a filing carries it (decision 421): `RaiseItem` clears a
+  `subject_id` the body claims, as it clears `filed_by` and `channel`, so a
+  resident cannot tie their raise to somebody else's register entry.
+- When given on a filing, it must name an entry of this mount that
   is not deleted. Anything else is refused with `ErrEntryNotFound` (404) before
   a row is written, the same answer an unknown slug gets.
 - `ListRaisedItemsOfSubject`, declared as `GET /raised-items/by-subject`

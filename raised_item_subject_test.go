@@ -13,7 +13,7 @@ func TestARaisedItemNamingAnEntryIsListedUnderThatSubject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	known, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Broken streetlight", RaisedBy: "amina", SubjectID: holder.ID})
+	known, err := cm.FileRaisedItem(ctx, catalog.RaisedItem{Title: "Broken streetlight", RaisedBy: "amina", FiledBy: "clerk-2", Channel: "phone", SubjectID: holder.ID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,9 +61,6 @@ func TestARaisedItemNamingNoEntryInThisCatalogIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, subject := range map[string]string{"unknown": "no-such-entry", "deleted": gone.ID} {
-		if _, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Potholes", RaisedBy: "amina", SubjectID: subject}); !errors.Is(err, catalog.ErrEntryNotFound) {
-			t.Errorf("%s raise: %v", name, err)
-		}
 		if _, err := cm.FileRaisedItem(ctx, catalog.RaisedItem{Title: "Potholes", RaisedBy: "amina", FiledBy: "clerk-1", Channel: "phone", SubjectID: subject}); !errors.Is(err, catalog.ErrEntryNotFound) {
 			t.Errorf("%s file: %v", name, err)
 		}

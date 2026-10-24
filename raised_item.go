@@ -10,6 +10,7 @@ func (m *catalogManager) takesRaisedItems() bool {
 func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
 	r.FiledBy = ""
 	r.Channel = ""
+	r.SubjectID = ""
 	return m.FileRaisedItem(ctx, r)
 }
 

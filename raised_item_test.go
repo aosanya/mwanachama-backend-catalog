@@ -46,17 +46,17 @@ func TestARaisedItemNeedsATitleARaiserAndAWholeOnBehalf(t *testing.T) {
 	}
 }
 
-func TestARaiseDropsAFilerAndChannelTheBodyClaims(t *testing.T) {
+func TestARaiseDropsAFilerChannelAndSubjectTheBodyClaims(t *testing.T) {
 	cm, ctx := newManager(t)
-	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Dark road", RaisedBy: "amina", FiledBy: "forged", Channel: "phone"})
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Dark road", RaisedBy: "amina", FiledBy: "forged", Channel: "phone", SubjectID: "someone-else"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.FiledBy != "" || r.Channel != "" {
-		t.Fatalf("raise kept filed_by %q channel %q", r.FiledBy, r.Channel)
+	if r.FiledBy != "" || r.Channel != "" || r.SubjectID != "" {
+		t.Fatalf("raise kept filed_by %q channel %q subject %q", r.FiledBy, r.Channel, r.SubjectID)
 	}
 	mine, err := cm.ListRaisedItems(ctx, "amina")
-	if err != nil || len(mine) != 1 || mine[0].FiledBy != "" || mine[0].Channel != "" {
+	if err != nil || len(mine) != 1 || mine[0].FiledBy != "" || mine[0].Channel != "" || mine[0].SubjectID != "" {
 		t.Fatalf("stored = %+v (%v)", mine, err)
 	}
 }
