@@ -33,7 +33,7 @@ services**, with its terms in the entry's document. Reasons:
 | --- | --- |
 | `fee` | free text shown as information; nothing is charged here |
 | `form` | the opaque id of the form Apply opens (forms owns it) |
-| `appointments` | whether the service takes appointments (times are CAT125) |
+| `appointments` | whether the service takes appointments (times are CAT124, which absorbed CAT125) |
 | `opens` | `form` (the default) or `raise` |
 
 `ServiceTermsOf(entry)` reads them and refuses, as `ErrInvalidServiceTerms`,
@@ -66,5 +66,5 @@ form.
 - No declared operations of their own: services are read and written through
   the existing entry operations on the services mount. Mounting it per agency
   is wakala-api's (WK198).
-- Appointment times and capacity are CAT125.
+- Appointment times and capacity are CAT124 (absorbed CAT125).
 - The template's first services are AGX18's data.
