@@ -276,6 +276,7 @@ type CatalogManager interface {
 	ListRaisedItemsOfSubject(ctx context.Context, subjectID string) ([]RaisedItem, error)
 
 	UseAreaResolver(resolve AreaResolver)
+	UseLinkedEntries(linked LinkedEntries)
 
 	NearbyRaisedItems(ctx context.Context, topic string, at geo.Position, withinMetres float64) ([]RaisedItem, error)
 
@@ -319,7 +320,8 @@ type catalogManager struct {
 	spec *spec.Spec
 	now  func() string
 
-	resolveArea AreaResolver
+	resolveArea   AreaResolver
+	linkedEntries LinkedEntries
 }
 
 // NewCatalogManager builds a CatalogManager over db, reading and writing the

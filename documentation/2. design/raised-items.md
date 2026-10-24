@@ -11,7 +11,14 @@ it and how it arrived.
 `filed_by` and `channel` the body claims: a member raising for themselves is
 never a filing. `FileRaisedItem` is the clerk's write and keeps both, still
 refusing one without the other.
-`ListRaisedItems` lists one raiser's items, oldest first. A domain filling no
+`ListRaisedItems` lists one raiser's items, newest first (decision 421), as
+the declared `catalog.raised_item.list_mine` says. A host that links a
+signed-in caller to register entries passes `UseLinkedEntries`, a function
+answering the entry ids linked to a caller; the raiser's own list then also
+carries every item whose `subject_id` is one of them, so an item a clerk
+filed for somebody shows in their list once their entry is linked. With no
+function passed, or none linked, the list is the caller's own raises only.
+The ids come from the host, never from the request. A domain filling no
 object for the role builds and answers `ErrRaisedItemsNotTaken`.
 
 Not here yet: where an item happened (whether place and ward are fields or

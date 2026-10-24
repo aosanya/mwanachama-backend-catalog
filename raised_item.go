@@ -51,5 +51,13 @@ func (m *catalogManager) ListRaisedItems(ctx context.Context, raisedBy string) (
 	if raisedBy == "" {
 		return nil, ErrInvalidRaisedItem
 	}
-	return listOf[RaisedItem](m, m.q(ctx, roleRaisedItem).Where("raised_by = ?", raisedBy).Order("created_at, id"), roleRaisedItem)
+	linked, err := m.entriesLinkedTo(ctx, raisedBy)
+	if err != nil {
+		return nil, err
+	}
+	q := m.q(ctx, roleRaisedItem).Where("raised_by = ?", raisedBy)
+	if len(linked) > 0 {
+		q = m.q(ctx, roleRaisedItem).Where("raised_by = ? OR subject_id IN ?", raisedBy, linked)
+	}
+	return listOf[RaisedItem](m, q.Order("created_at DESC, id DESC"), roleRaisedItem)
 }

@@ -231,3 +231,51 @@ func TestThePublicBoardAnswersOnePageAtATimeAndCapsThePage(t *testing.T) {
 		}
 	}
 }
+
+func TestMyItemsIncludeWhatAClerkFiledForAnEntryTheHostLinksToMeNewestFirst(t *testing.T) {
+	_, _, cm := callerMount(t, "amina")
+	ctx := context.Background()
+	entry, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "amina-entry", Name: "Amina", Doc: `{}`})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "other-entry", Name: "Other", Doc: `{}`})
+	if err != nil {
+		t.Fatal(err)
+	}
+	clerk := mountAs(cm, "clerk-1")
+	var filed catalog.RaisedItem
+	_ = json.Unmarshal(sendTo(clerk, http.MethodPost, "/raised-items/filed", `{"title":"Filed for me","raised_by":"`+entry.ID+`","channel":"counter","subject_id":"`+entry.ID+`"}`).Body.Bytes(), &filed)
+	sendTo(clerk, http.MethodPost, "/raised-items/filed", `{"title":"Filed for other","raised_by":"`+other.ID+`","channel":"counter","subject_id":"`+other.ID+`"}`)
+	amina := mountAs(cm, "amina")
+	var own catalog.RaisedItem
+	_ = json.Unmarshal(sendTo(amina, http.MethodPost, "/raised-items", `{"title":"Raised myself"}`).Body.Bytes(), &own)
+	mine := func() []catalog.RaisedItem {
+		var got []catalog.RaisedItem
+		rec := sendTo(amina, http.MethodGet, "/raised-items/mine", "")
+		if rec.Code != http.StatusOK || json.Unmarshal(rec.Body.Bytes(), &got) != nil {
+			t.Fatalf("mine = %d %s", rec.Code, rec.Body)
+		}
+		return got
+	}
+	if got := mine(); len(got) != 1 || got[0].ID != own.ID {
+		t.Fatalf("before linking = %+v", got)
+	}
+	cm.UseLinkedEntries(func(_ context.Context, caller string) ([]string, error) {
+		if caller == "amina" {
+			return []string{entry.ID}, nil
+		}
+		return nil, nil
+	})
+	got := mine()
+	ids := map[string]bool{}
+	for _, r := range got {
+		ids[r.ID] = true
+	}
+	if len(got) != 2 || !ids[own.ID] || !ids[filed.ID] {
+		t.Fatalf("after linking = %+v", got)
+	}
+	if got[0].CreatedAt < got[1].CreatedAt {
+		t.Fatalf("not newest first: %s before %s", got[0].CreatedAt, got[1].CreatedAt)
+	}
+}
