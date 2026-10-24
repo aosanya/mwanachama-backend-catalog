@@ -80,8 +80,8 @@ hold or lock.
 `Book(slot, holder)` runs in one transaction: read the time, refuse a second
 standing booking by the same holder (`ErrAlreadyBooked`), count the standing
 bookings and refuse when they reach the capacity (`ErrSlotFull`), then
-insert. The holder is always the caller; an operation will bind it
-`from: caller` and never read it from the body. Unlike the asset manager's
+insert. The holder is always the caller; the operation binds it
+`from: caller` and never reads it from the body. Unlike the asset manager's
 hold window, times are not checked for overlap: a service may offer two
 times that overlap, each with its own capacity.
 
@@ -97,6 +97,30 @@ cancelled place frees the time.
 earliest first; `ListDayBookings(service, day)` lists one `YYYY-MM-DD` day's
 bookings for staff, for one service or (empty service) every service.
 
+### Their operations
+
+Declared in `catalog.operations.json`, each under its own action so a host
+grants the staff ones apart from the member ones:
+
+| Address | Call | Action |
+| --- | --- | --- |
+| `POST /slots` | `OfferSlot` | `catalog.slot.offer` (staff) |
+| `GET /slots?subject_id=` | `ListSlots` | `catalog.slot.list` |
+| `POST /slots/{slot_id}/bookings` | `Book` | `catalog.booking.book` |
+| `POST /bookings/{booking_id}/cancel` | `CancelBooking` | `catalog.booking.cancel` |
+| `POST /bookings/{booking_id}/staff-cancel` | `CancelBookingAsStaff` | `catalog.booking.cancel_as_staff` (staff) |
+| `GET /bookings/mine` | `ListHolderBookings` | `catalog.booking.list_mine` |
+| `GET /bookings/by-day?day=&subject_id=` | `ListDayBookings` | `catalog.booking.list_day` (staff) |
+
+The holder on a booking and on "mine", and the canceller on both cancels,
+are bound `from: caller` and absent from the tool schemas; a body naming
+another holder is ignored. `ListSlots` refuses an empty `subject_id`
+(`ErrInvalidSlot`), so a tool call with it null lists nothing. The error
+map: `ErrTimesNotBooked`, `ErrSlotNotFound` and `ErrBookingNotFound` 404;
+`ErrInvalidSlot` and `ErrCancelReasonRequired` 400; `ErrSlotFull`,
+`ErrAlreadyBooked` and `ErrBookingCancelled` 409. Which callers hold the
+staff actions is the host's grant (WK198).
+
 ## Not here yet
 
 - Which mounts hold services is not declared yet: that needs CAT49's
@@ -104,8 +128,4 @@ bookings for staff, for one service or (empty service) every service.
 - No declared operations of their own: services are read and written through
   the existing entry operations on the services mount. Mounting it per agency
   is wakala-api's (WK198).
-- Appointment times have no declared operations yet: the manager methods
-  below are built and tested, and their addresses (book and cancel with the
-  booker bound from the caller, the staff cancel and the day list gated
-  apart) are what is left of CAT124.
 - The template's first services are AGX18's data.

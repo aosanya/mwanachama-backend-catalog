@@ -1397,6 +1397,180 @@
           "body": true
         }
       ]
+    },
+    "offer_slot": {
+      "method": "POST",
+      "path": "/slots",
+      "call": "OfferSlot",
+      "action": "catalog.slot.offer",
+      "status": 201,
+      "title": "Offer an appointment time",
+      "description": "Offer a time for a service, with how many people it takes. Staff only; refused where this mount keeps no appointment times.",
+      "args": [
+        {
+          "from": "body",
+          "whole": true
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_slots": {
+      "method": "GET",
+      "path": "/slots",
+      "call": "ListSlots",
+      "action": "catalog.slot.list",
+      "title": "List a service's appointment times",
+      "description": "The times offered for one service, earliest first. Never anonymous.",
+      "args": [
+        {
+          "from": "query",
+          "as": "subject_id",
+          "required": true,
+          "description": "The id of the service whose times to list."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "book_slot": {
+      "method": "POST",
+      "path": "/slots/{slot_id}/bookings",
+      "call": "Book",
+      "action": "catalog.booking.book",
+      "status": 201,
+      "title": "Book an appointment time",
+      "description": "Book a place on a time as the caller. Refused when the time is full or the caller already holds a place on it. The holder is the caller, never the body.",
+      "args": [
+        {
+          "from": "path",
+          "as": "slot_id",
+          "description": "The time to book."
+        },
+        {
+          "from": "caller",
+          "as": "holder_id",
+          "description": "Who books, supplied by the mount. Never read from the request."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "cancel_booking": {
+      "method": "POST",
+      "path": "/bookings/{booking_id}/cancel",
+      "call": "CancelBooking",
+      "action": "catalog.booking.cancel",
+      "title": "Cancel my booking",
+      "description": "Cancel one of the caller's own bookings, with an optional reason. Another holder's booking answers exactly as a missing one.",
+      "args": [
+        {
+          "from": "path",
+          "as": "booking_id",
+          "description": "The booking to cancel."
+        },
+        {
+          "from": "caller",
+          "as": "cancelled_by",
+          "description": "Who cancels, supplied by the mount. Never read from the request."
+        },
+        {
+          "from": "body",
+          "as": "reason",
+          "description": "Why the booking is cancelled. Optional."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "cancel_booking_as_staff": {
+      "method": "POST",
+      "path": "/bookings/{booking_id}/staff-cancel",
+      "call": "CancelBookingAsStaff",
+      "action": "catalog.booking.cancel_as_staff",
+      "title": "Cancel a booking as staff",
+      "description": "Cancel anybody's booking, with a reason the holder sees. Staff only.",
+      "args": [
+        {
+          "from": "path",
+          "as": "booking_id",
+          "description": "The booking to cancel."
+        },
+        {
+          "from": "caller",
+          "as": "cancelled_by",
+          "description": "Who cancels, supplied by the mount. Never read from the request."
+        },
+        {
+          "from": "body",
+          "as": "reason",
+          "required": true,
+          "description": "Why the booking is cancelled."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_my_bookings": {
+      "method": "GET",
+      "path": "/bookings/mine",
+      "call": "ListHolderBookings",
+      "action": "catalog.booking.list_mine",
+      "title": "List my bookings",
+      "description": "The caller's bookings, standing and cancelled, earliest first. Never anonymous.",
+      "args": [
+        {
+          "from": "caller",
+          "as": "holder_id",
+          "description": "Whose bookings to list, supplied by the mount."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_day_bookings": {
+      "method": "GET",
+      "path": "/bookings/by-day",
+      "call": "ListDayBookings",
+      "action": "catalog.booking.list_day",
+      "title": "List a day's bookings",
+      "description": "Every booking on one day, optionally for one service, earliest first. Staff only.",
+      "args": [
+        {
+          "from": "query",
+          "as": "subject_id",
+          "description": "The service whose bookings to list. Empty lists every service."
+        },
+        {
+          "from": "query",
+          "as": "day",
+          "required": true,
+          "description": "The day, as YYYY-MM-DD."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
     }
   },
   "errors": {
@@ -1439,6 +1613,14 @@
     "ErrScopeFigureNotFound": 404,
     "ErrInvalidEndorsement": 400,
     "ErrEndorsementsNotCounted": 404,
-    "ErrRoleNotDeclared": 404
+    "ErrRoleNotDeclared": 404,
+    "ErrTimesNotBooked": 404,
+    "ErrInvalidSlot": 400,
+    "ErrSlotNotFound": 404,
+    "ErrSlotFull": 409,
+    "ErrAlreadyBooked": 409,
+    "ErrBookingNotFound": 404,
+    "ErrBookingCancelled": 409,
+    "ErrCancelReasonRequired": 400
   }
 }

@@ -58,6 +58,14 @@ var sentinels = map[string]error{
 	"ErrRemovalsNotMade":          catalog.ErrRemovalsNotMade,
 	"ErrRaisedItemAlreadyRemoved": catalog.ErrRaisedItemAlreadyRemoved,
 	"ErrRoleNotDeclared":          catalog.ErrRoleNotDeclared,
+	"ErrTimesNotBooked":           catalog.ErrTimesNotBooked,
+	"ErrInvalidSlot":              catalog.ErrInvalidSlot,
+	"ErrSlotNotFound":             catalog.ErrSlotNotFound,
+	"ErrSlotFull":                 catalog.ErrSlotFull,
+	"ErrAlreadyBooked":            catalog.ErrAlreadyBooked,
+	"ErrBookingNotFound":          catalog.ErrBookingNotFound,
+	"ErrBookingCancelled":         catalog.ErrBookingCancelled,
+	"ErrCancelReasonRequired":     catalog.ErrCancelReasonRequired,
 }
 
 // AnonymousActions is every operation a storefront reader may reach without

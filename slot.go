@@ -49,6 +49,9 @@ func (m *catalogManager) ListSlots(ctx context.Context, subjectID string) ([]Slo
 	if !m.booksTimes() {
 		return nil, ErrTimesNotBooked
 	}
+	if subjectID == "" {
+		return nil, ErrInvalidSlot
+	}
 	return listOf[Slot](m, m.q(ctx, roleSlot).Where("subject_id = ?", subjectID).Order("starts_at, id"), roleSlot)
 }
 
