@@ -8,7 +8,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-//go:embed spec/examples/agency.catalog.json
+//go:embed agency.catalogue.json
 var domainJSON []byte
 
 func SpecFor(instance, mount string) (*spec.Spec, error) {

@@ -956,6 +956,12 @@
       "type": "json",
       "description": "The entries a mount starts with, each a slug, a name, an optional summary and an optional document object. Applying them creates every seed whose slug no entry holds, as pending like any new entry, and leaves an existing or deleted entry alone.",
       "default": []
+    },
+    {
+      "name": "catalogues",
+      "type": "json",
+      "description": "Every catalogue the agency has, each a mount, a name, an audience (public, members or staff) and whether it holds services. Publishing makes each one exist; a mount not listed answers not found. The forms catalogue and the ideas board are built in and never listed.",
+      "default": []
     }
   ]
 }
