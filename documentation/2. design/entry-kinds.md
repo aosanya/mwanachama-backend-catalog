@@ -76,6 +76,41 @@ created, and the next run picks up where it left off.
 The module does not decide when seeds apply. The host calls `SeedEntries`
 when it means a mount to start with them.
 
+## The first real case (CAT49)
+
+The municipality's register mount is the first mount to declare kinds
+(member app decisions 228 and 291). Its value is a definition setting, held
+in the template's module config
+(`developer/documentation/4. qa/agencies/municipality/modules/register_catalog.json`,
+under `settings.kinds`) and written to the definition layer with
+`spec.PutDefinitionSettings`. Nothing in this module names it.
+
+It declares four kinds, `person`, `household`, `business_trader` and
+`property`. Every kind carries `reference`, `ward`, `source` and `consent`
+(required) and `language`, `reach` and `accessibility`; a household adds its
+required `members` array and an optional `property`; a business or trader
+adds an optional `property`; a property adds its required `address` and an
+optional `use`. `property` holds the referenced property's `reference`.
+
+A record is queried by field with the existing document filter
+(`ListFilter.Docs`, `{path, value}`). Because the check reads the document's
+top-level keys, the register's spec indexes the same top-level paths
+(`reference` unique, `ward`, `consent`, `reach`, `source`, `kind`,
+`property`); they had pointed at `_person.*` and `_record.*`, which no
+checked document carries.
+
+Checked on 2026-10-24 by loading that spec, writing the setting and saving
+one record of each kind, three refused ones, and four filtered listings, on
+SQLite. Two things are not done here:
+
+- **The host does not yet write a template's `settings` to the definition
+  layer.** No importer reads module configs (the template's own `status`
+  says so); until one does, a running mount holds no kinds and checks
+  nothing.
+- **The register spec fills only `entry`, `entry_private` and
+  `share_link`**, so `NewCatalogManager` refuses it as it stands; the check
+  above filled the other six roles in a scratch copy.
+
 ## Left open
 
 - **When seeds apply** — on provisioning only, on every boot, or on a
