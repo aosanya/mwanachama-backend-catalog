@@ -309,6 +309,8 @@ type CatalogManager interface {
 	ListScopeFigures(ctx context.Context, scopeID string) ([]ScopeFigure, error)
 	AttachFiles(ctx context.Context, raisedItemID, raiser string, fileIDs []string) ([]RaisedItemFile, error)
 	ApproveFileForPublishing(ctx context.Context, raisedItemID, fileID, approvedBy string) (RaisedItemFile, error)
+	WithdrawFileApproval(ctx context.Context, raisedItemID, fileID string) (RaisedItemFile, error)
+	DetachFile(ctx context.Context, raisedItemID, raiser, fileID string) error
 	ListRaisedItemFiles(ctx context.Context, raisedItemID string) ([]RaisedItemFile, error)
 	RemoveRaisedItem(ctx context.Context, r Removal) (Removal, error)
 	ListRemovalsOfMine(ctx context.Context, raisedBy string) ([]Removal, error)

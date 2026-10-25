@@ -114,3 +114,46 @@ func (m *catalogManager) publishedFilesOf(ctx context.Context, grouped []RaisedI
 	}
 	return files, nil
 }
+
+func (m *catalogManager) WithdrawFileApproval(ctx context.Context, raisedItemID, fileID string) (RaisedItemFile, error) {
+	if !m.takesAttachments() {
+		return RaisedItemFile{}, ErrAttachmentsNotTaken
+	}
+	f, err := m.attachmentOf(ctx, raisedItemID, fileID)
+	if err != nil {
+		return RaisedItemFile{}, err
+	}
+	if err := m.q(ctx, roleRaisedItemFile).Where("id = ?", f.ID).Updates(map[string]any{"approved_by": "", "approved_at": ""}).Error; err != nil {
+		return RaisedItemFile{}, err
+	}
+	f.ApprovedBy, f.ApprovedAt = "", ""
+	return f, nil
+}
+
+func (m *catalogManager) DetachFile(ctx context.Context, raisedItemID, raiser, fileID string) error {
+	if !m.takesAttachments() {
+		return ErrAttachmentsNotTaken
+	}
+	if raiser == "" {
+		return ErrRaisedItemNotFound
+	}
+	var raised RaisedItem
+	if err := m.take(m.q(ctx, roleRaisedItem).Where("id = ? AND raised_by = ?", raisedItemID, raiser), roleRaisedItem, &raised, ErrRaisedItemNotFound); err != nil {
+		return err
+	}
+	f, err := m.attachmentOf(ctx, raised.ID, fileID)
+	if err != nil {
+		return err
+	}
+	if f.ApprovedForPublishing() {
+		return ErrAttachmentApproved
+	}
+	res := m.q(ctx, roleRaisedItemFile).Where("id = ? AND approved_at = ?", f.ID, "").Delete(map[string]any{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrAttachmentApproved
+	}
+	return nil
+}

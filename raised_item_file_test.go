@@ -106,3 +106,90 @@ func TestThePublicBoardShowsOnlyApprovedFilesWhileTheRaiserAndStaffSeeAll(t *tes
 		t.Fatalf("raiser and staff see %+v (%v)", all, err)
 	}
 }
+
+func TestWithdrawingAnApprovalTakesTheFileOffThePublicBoard(t *testing.T) {
+	cm, ctx := newManager(t)
+	b, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Potholes on the main road"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Pothole", Topic: "roads", Publishable: true, RaisedBy: "amina"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.GroupUnderBoardItem(ctx, r.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cm.AttachFiles(ctx, r.ID, "amina", []string{"file-1", "file-2"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"file-1", "file-2"} {
+		if _, err := cm.ApproveFileForPublishing(ctx, r.ID, id, "clerk-1"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	withdrawn, err := cm.WithdrawFileApproval(ctx, r.ID, "file-1")
+	if err != nil || withdrawn.ApprovedForPublishing() || withdrawn.ApprovedBy != "" {
+		t.Fatalf("withdrawn = %+v (%v)", withdrawn, err)
+	}
+	shared, err := cm.OpenSharedBoardItem(ctx, b.ID)
+	if err != nil || !reflect.DeepEqual(shared.Files, []string{"file-2"}) {
+		t.Fatalf("after withdrawal the public saw %+v (%v)", shared.Files, err)
+	}
+	all, err := cm.ListRaisedItemFiles(ctx, r.ID)
+	if err != nil || len(all) != 2 {
+		t.Fatalf("withdrawal detached the file: %+v (%v)", all, err)
+	}
+	if _, err := cm.WithdrawFileApproval(ctx, r.ID, "file-1"); err != nil {
+		t.Errorf("withdrawing again = %v", err)
+	}
+	if _, err := cm.WithdrawFileApproval(ctx, r.ID, "file-missing"); !errors.Is(err, catalog.ErrAttachmentNotFound) {
+		t.Errorf("withdrawing a file never attached = %v", err)
+	}
+	again, err := cm.ApproveFileForPublishing(ctx, r.ID, "file-1", "clerk-2")
+	if err != nil || again.ApprovedBy != "clerk-2" {
+		t.Errorf("approving after a withdrawal = %+v (%v)", again, err)
+	}
+}
+
+func TestTheRaiserDetachesAFileOnlyUntilItIsApproved(t *testing.T) {
+	cm, ctx := newManager(t)
+	r, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Pothole", Publishable: true, RaisedBy: "amina"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cm.AttachFiles(ctx, r.ID, "amina", []string{"file-1", "file-2"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "baraka", "file-1"); !errors.Is(err, catalog.ErrRaisedItemNotFound) {
+		t.Errorf("someone else detaching = %v", err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "", "file-1"); !errors.Is(err, catalog.ErrRaisedItemNotFound) {
+		t.Errorf("nobody detaching = %v", err)
+	}
+	if err := cm.DetachFile(ctx, "nobody", "amina", "file-1"); !errors.Is(err, catalog.ErrRaisedItemNotFound) {
+		t.Errorf("unknown raised item = %v", err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "amina", "file-missing"); !errors.Is(err, catalog.ErrAttachmentNotFound) {
+		t.Errorf("detaching a file never attached = %v", err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "amina", "file-1"); err != nil {
+		t.Fatalf("detaching = %v", err)
+	}
+	if _, err := cm.ApproveFileForPublishing(ctx, r.ID, "file-2", "clerk-1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "amina", "file-2"); !errors.Is(err, catalog.ErrAttachmentApproved) {
+		t.Errorf("detaching an approved file = %v", err)
+	}
+	all, err := cm.ListRaisedItemFiles(ctx, r.ID)
+	if err != nil || len(all) != 1 || all[0].FileID != "file-2" {
+		t.Fatalf("left attached = %+v (%v)", all, err)
+	}
+	if _, err := cm.WithdrawFileApproval(ctx, r.ID, "file-2"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.DetachFile(ctx, r.ID, "amina", "file-2"); err != nil {
+		t.Errorf("detaching after the approval was withdrawn = %v", err)
+	}
+}

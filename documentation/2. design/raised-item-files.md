@@ -16,7 +16,7 @@ bytes. A `(raised_item_id, file_id)` unique index keeps a file attached at
 most once per item. A domain that takes no attachments fills no object for
 the role, and every method then answers `ErrAttachmentsNotTaken`.
 
-## The three operations
+## The five operations
 
 - `AttachFiles(raisedItemID, raiser, fileIDs)` — the raiser only: an item
   whose `raised_by` is not the caller answers `ErrRaisedItemNotFound`,
@@ -27,7 +27,22 @@ the role, and every method then answers `ErrAttachmentsNotTaken`.
   `ErrRaisedItemNotPublishable` on an item that is not publishable, and
   `ErrAttachmentNotFound` for a file never attached. Approval is write-once:
   the update's `WHERE approved_at = ''` guard means a second approval, or two
-  racing, leave the first approver and time in place.
+  racing, leave the first approver and time in place. Write-once holds while
+  the approval stands; a withdrawn approval may be given again.
+- `WithdrawFileApproval(raisedItemID, fileID)` — staff (decision 490): clears
+  `approved_by` and `approved_at` back to empty, so the file leaves the public
+  board's `files` and stays attached. No separate withdrawn field: the row
+  then reads exactly as a file never approved, and approval's
+  `WHERE approved_at = ''` guard lets it be approved again. Withdrawing a file
+  that is not approved changes nothing; a file never attached is
+  `ErrAttachmentNotFound`.
+- `DetachFile(raisedItemID, raiser, fileID)` — the raiser only (decision 490):
+  deletes the attachment row. Anybody else, and an unknown item, answers
+  `ErrRaisedItemNotFound`, as `AttachFiles` does; a file not attached is
+  `ErrAttachmentNotFound`. Once approved it is refused with
+  `ErrAttachmentApproved`, and the delete carries the same
+  `approved_at = ''` guard, so an approval racing the detach wins. After a
+  withdrawal the raiser may detach again.
 - `ListRaisedItemFiles(raisedItemID)` — every file, approved or not. It is
   the raiser's and staff's read; who is staff is the host's to decide, the
   same as every other staff read here.
@@ -43,5 +58,5 @@ An unapproved file never appears there.
 
 No declared addresses: none of the raised-item operations are in
 `catalog.operations.json` yet, so these are manager methods only, waiting on
-the same decision as the rest. Withdrawing an approval and detaching a file
-are not asked for by decision 317 and are not built.
+the same decision as the rest (CAT55). Withdrawal and detach (decision 490)
+are manager methods only, for the same reason.

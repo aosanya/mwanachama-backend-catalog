@@ -123,6 +123,8 @@ var ErrInvalidAttachment = errors.New("invalid attachment")
 
 var ErrAttachmentNotFound = errors.New("attachment not found")
 
+var ErrAttachmentApproved = errors.New("attachment approved for publishing")
+
 var ErrInvalidRemoval = errors.New("invalid removal")
 
 var ErrRemovalsNotMade = errors.New("nothing is removed here")
