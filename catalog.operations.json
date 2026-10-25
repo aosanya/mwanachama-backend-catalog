@@ -1080,7 +1080,7 @@
       "action": "catalog.board_item.assign",
       "status": 204,
       "title": "Assign a board item",
-      "description": "Hand a board item to a person or a role; whoever holds the role picks it up. Assigning again replaces the assignee. Assigning never closes an item. Never anonymous.",
+      "description": "Hand a board item to a person or a role; whoever holds the role picks it up. Assigning again replaces the assignee. Assigning never closes an item, and a closed item is final: assigning it is refused. Never anonymous.",
       "args": [
         {
           "from": "path",

@@ -125,3 +125,23 @@ func TestOnlyCloseClosesABoardItemAndOnlyOnce(t *testing.T) {
 		t.Fatalf("no closer: %v", err)
 	}
 }
+
+func TestAClosedBoardItemCannotBeAssigned(t *testing.T) {
+	cm, ctx := newManager(t)
+	b, err := cm.PutOnBoard(ctx, catalog.BoardItem{Title: "Streetlights out"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.AssignBoardItem(ctx, b.ID, models.AssigneeActor, "clerk-1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.CloseBoardItem(ctx, b.ID, "clerk-1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cm.AssignBoardItem(ctx, b.ID, models.AssigneeRole, "roads-desk"); !errors.Is(err, catalog.ErrBoardItemClosed) {
+		t.Fatalf("assign closed: %v", err)
+	}
+	if got := boardItem(t, cm, b.ID); got.AssigneeKind != "actor" || got.AssigneeID != "clerk-1" || got.ClosedBy != "clerk-1" {
+		t.Fatalf("assigning a closed item moved it: %+v", got)
+	}
+}

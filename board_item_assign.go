@@ -13,7 +13,7 @@ func (m *catalogManager) AssignBoardItem(ctx context.Context, boardItemID, assig
 	if boardItemID == "" || !models.IsAssigneeKind(assigneeKind) || assigneeID == "" {
 		return ErrInvalidBoardItem
 	}
-	return m.updateBoardItem(ctx, boardItemID, map[string]any{"assignee_kind": assigneeKind, "assignee_id": assigneeID})
+	return m.updateOpenBoardItem(ctx, boardItemID, map[string]any{"assignee_kind": assigneeKind, "assignee_id": assigneeID})
 }
 
 func (m *catalogManager) UnassignBoardItem(ctx context.Context, boardItemID string) error {
@@ -33,8 +33,11 @@ func (m *catalogManager) CloseBoardItem(ctx context.Context, boardItemID, closed
 	if boardItemID == "" || closedBy == "" {
 		return ErrInvalidBoardItem
 	}
-	res := m.q(ctx, roleBoardItem).Where("id = ? AND closed_at = ?", boardItemID, "").
-		Updates(map[string]any{"closed_at": m.now(), "closed_by": closedBy})
+	return m.updateOpenBoardItem(ctx, boardItemID, map[string]any{"closed_at": m.now(), "closed_by": closedBy})
+}
+
+func (m *catalogManager) updateOpenBoardItem(ctx context.Context, boardItemID string, cols map[string]any) error {
+	res := m.q(ctx, roleBoardItem).Where("id = ? AND closed_at = ?", boardItemID, "").Updates(cols)
 	if res.Error != nil {
 		return res.Error
 	}

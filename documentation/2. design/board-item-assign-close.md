@@ -1,4 +1,4 @@
-# Assigning and closing a board item (CAT134)
+# Assigning and closing a board item (CAT134, CAT135)
 
 Member app decision 451 (owner, 2026-10-24), building on decisions 235, 272
 and 389: a board item is assigned to a person or a role, whoever holds the
@@ -38,8 +38,24 @@ Neither touches `closed_at`.
 Close binds the closer from the mount's caller, never the body. It is
 write-once: the update carries `closed_at = ''` in its own `WHERE`, so two
 staff closing at once cannot both record themselves, and a second Close
-answers `ErrBoardItemClosed` (409) without moving who or when. There is no
-reopen; the decision names none.
+answers `ErrBoardItemClosed` (409) without moving who or when.
+
+## A closed item is final (CAT135)
+
+Member app decision 467 (owner, 2026-10-25) extends 451: a closed board item
+cannot be reopened, and assigning it is refused. The same problem raised
+again starts a new item.
+
+- There is no reopen operation, and none is to be added.
+- `AssignBoardItem` writes through the same guarded update as Close, with
+  `closed_at = ''` in its own `WHERE`, so an assign racing a Close cannot
+  land on the closed item. A closed item answers `ErrBoardItemClosed` (409)
+  and keeps its assignee, closer and close time; an unknown id still answers
+  `ErrBoardItemNotFound`.
+- Unassigning is not covered by the decision and is unchanged.
+
+`TestAClosedBoardItemCannotBeAssigned` and, over the declared route table,
+`TestAssigningAClosedBoardItemAnswersConflictThroughTheDeclaredTable` pin it.
 
 ## What never closes an item
 
