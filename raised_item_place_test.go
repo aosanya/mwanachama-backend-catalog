@@ -176,3 +176,56 @@ func TestNearbyListsOnlyItemsOnThePublicBoard(t *testing.T) {
 		t.Fatalf("nearby = %+v (%v), want only the item grouped under a shown board item", got, err)
 	}
 }
+
+func TestTheStreetComesFromTheMatchedAddressElseThePinElseTheGiven(t *testing.T) {
+	cm, ctx := newManager(t)
+	cm.UseStreetResolver(func(_ context.Context, at *geo.Position, address string) (string, error) {
+		switch {
+		case at != nil && at.Lat() > 0:
+			return "Pin Street", nil
+		case address == "12 Riverside Road":
+			return "Riverside Road", nil
+		}
+		return "", nil
+	})
+	cases := map[string]struct {
+		in   catalog.RaisedItem
+		want string
+	}{
+		"matched address wins over pin":      {catalog.RaisedItem{Pin: pin(36.8, 1.2), Address: "12 Riverside Road", Street: "given"}, "Riverside Road"},
+		"unmatched address falls to the pin": {catalog.RaisedItem{Pin: pin(36.8, 1.2), Address: "Nowhere Lane", Street: "given"}, "Pin Street"},
+		"nothing matched keeps the given":    {catalog.RaisedItem{Pin: pin(36.8, -1.2), Address: "Nowhere Lane", Street: "given"}, "given"},
+		"nothing at all is no street":        {catalog.RaisedItem{}, ""},
+	}
+	for name, c := range cases {
+		c.in.Title, c.in.RaisedBy = name, "amina"
+		got, err := cm.RaiseItem(ctx, c.in)
+		if err != nil || got.Street != c.want {
+			t.Fatalf("%s: street = %q (%v), want %q", name, got.Street, err, c.want)
+		}
+	}
+}
+
+func TestAStreetResolverErrorRefusesTheItem(t *testing.T) {
+	cm, ctx := newManager(t)
+	cm.UseStreetResolver(func(context.Context, *geo.Position, string) (string, error) { return "", errors.New("down") })
+	if _, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Pothole", RaisedBy: "amina", Address: "12 Riverside Road"}); err == nil {
+		t.Fatal("a failing street resolver stored the item")
+	}
+}
+
+func TestOthersReadTheStreetWithTheAreaButNotTheAddress(t *testing.T) {
+	cm, ctx := newManager(t)
+	cm.UseStreetResolver(func(context.Context, *geo.Position, string) (string, error) { return "Riverside Road", nil })
+	if _, err := cm.RaiseItem(ctx, catalog.RaisedItem{Title: "Pothole", RaisedBy: "amina", Pin: pin(36.821947, -1.292066), Address: "12 Riverside Road", Area: "riverside"}); err != nil {
+		t.Fatal(err)
+	}
+	mine, err := cm.ListRaisedItems(ctx, "amina")
+	if err != nil || len(mine) != 1 || mine[0].Street != "Riverside Road" || mine[0].Address != "12 Riverside Road" {
+		t.Fatalf("raiser's read = %+v (%v)", mine, err)
+	}
+	seen := mine[0].AsSeenByOthers()
+	if seen.Street != "Riverside Road" || seen.Area != "riverside" || seen.Address != "" || seen.Pin.Point != (geo.Position{36.822, -1.292}) {
+		t.Fatalf("others' read = %+v", seen)
+	}
+}

@@ -798,6 +798,11 @@
           "description": "The host's area the item falls in, resolved by the host from the pin, else the address, else the one the raiser picked; empty when none. Opaque to this module."
         },
         {
+          "name": "street",
+          "type": "string",
+          "description": "The street the item is on, resolved by the host from the typed address's matched street, else from the pin's address, else the one the raiser gave; empty when none. Shown with the area to every reader."
+        },
+        {
           "name": "board_item_id",
           "type": "string",
           "description": "The board item this publishable item is grouped under, empty while ungrouped."

@@ -32,6 +32,11 @@ func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (Rais
 		return RaisedItem{}, err
 	}
 	r.Area = area
+	street, err := m.streetOf(ctx, r)
+	if err != nil {
+		return RaisedItem{}, err
+	}
+	r.Street = street
 	r.ID = newID()
 	r.CreatedAt = m.now()
 	row, err := encode(m.st.Object(roleRaisedItem), r)

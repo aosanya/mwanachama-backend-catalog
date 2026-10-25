@@ -87,6 +87,16 @@ item has no area. Without a resolver the picked area stands. A resolver error
 refuses the item rather than storing it with a guessed area. The order lives
 here so every host applies it the same way; what an area *is* stays opaque.
 
+**The street is the host's to resolve too** (decision 499). The item
+carries a `street`, filled at `RaiseItem` by a `StreetResolver` the host
+passes through `UseStreetResolver`: asked first with the typed address (the
+street that address matches), then with the pin (the street at the pin's
+address); if neither names one, the street the caller gave stands, and
+without a resolver the given street stands. A resolver error refuses the
+item, as for the area. The street is not redacted: `AsSeenByOthers` keeps
+the area and the street and drops only the typed address and the exact pin,
+so another reader learns which street but not which house.
+
 **Who reads the exact pin.** `ListRaisedItems` is the raiser's own read and
 answers the item whole. Every other read goes through
 `RaisedItem.AsSeenByOthers`, which drops the typed address and rounds the
@@ -121,10 +131,6 @@ for a clerk), both declared below.
 
 **Still the owner's, and kept as built:**
 
-- *Street versus typed address.* The row says other readers get "the area
-  and the street only", but the address is one typed line, so there is no
-  street to keep apart from a house number; until that is decided the whole
-  typed address is withheld from others.
 - *A result cap.* The read keeps the manager's 200 nearest; whether the
   route should take a smaller limit or page is not decided.
 

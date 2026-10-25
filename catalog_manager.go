@@ -276,6 +276,7 @@ type CatalogManager interface {
 	ListRaisedItemsOfSubject(ctx context.Context, subjectID string) ([]RaisedItem, error)
 
 	UseAreaResolver(resolve AreaResolver)
+	UseStreetResolver(resolve StreetResolver)
 	UseLinkedEntries(linked LinkedEntries)
 
 	NearbyRaisedItems(ctx context.Context, topic string, at geo.Position, withinMetres float64) ([]RaisedItem, error)
@@ -321,6 +322,7 @@ type catalogManager struct {
 	now  func() string
 
 	resolveArea   AreaResolver
+	resolveStreet StreetResolver
 	linkedEntries LinkedEntries
 }
 

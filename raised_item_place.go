@@ -9,10 +9,36 @@ import (
 
 type AreaResolver func(ctx context.Context, pin *geo.Position, address string) (string, error)
 
+type StreetResolver func(ctx context.Context, pin *geo.Position, address string) (string, error)
+
 const nearbyRaisedItemsCap = 200
 
 func (m *catalogManager) UseAreaResolver(resolve AreaResolver) {
 	m.resolveArea = resolve
+}
+
+func (m *catalogManager) UseStreetResolver(resolve StreetResolver) {
+	m.resolveStreet = resolve
+}
+
+func (m *catalogManager) streetOf(ctx context.Context, r RaisedItem) (string, error) {
+	if m.resolveStreet == nil {
+		return r.Street, nil
+	}
+	if r.Address != "" {
+		street, err := m.resolveStreet(ctx, nil, r.Address)
+		if err != nil || street != "" {
+			return street, err
+		}
+	}
+	if r.Pin != nil {
+		at := r.Pin.Point
+		street, err := m.resolveStreet(ctx, &at, "")
+		if err != nil || street != "" {
+			return street, err
+		}
+	}
+	return r.Street, nil
 }
 
 func (m *catalogManager) placeOf(ctx context.Context, r RaisedItem) (string, error) {
