@@ -3,10 +3,8 @@ package mwanachamacatalog
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 const kindsSetting = "kinds"
@@ -48,9 +46,5 @@ func (m *catalogManager) entryKinds(ctx context.Context) ([]models.EntryKind, er
 	if _, declared := m.spec.Setting(kindsSetting); !declared {
 		return nil, nil
 	}
-	effective, err := spec.ResolveStored(m.db.WithContext(ctx), m.spec, kindsSetting)
-	if err != nil {
-		return nil, fmt.Errorf("catalog: %s: %w", kindsSetting, err)
-	}
-	return models.ParseEntryKinds(effective.Value)
+	return resolveFitting(ctx, m, kindsSetting, models.ParseEntryKinds)
 }

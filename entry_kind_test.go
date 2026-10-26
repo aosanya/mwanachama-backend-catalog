@@ -130,3 +130,13 @@ func slugOf(s string) string {
 	}
 	return string(out)
 }
+
+func TestEntryKind_AnOverrideThatNoLongerFitsGivesWayToTheDefinition(t *testing.T) {
+	cm, ctx := newKindedManager(t, placeKinds, []any{map[string]any{"name": "place", "fields": []any{map[string]any{"name": "x", "type": "date"}}}})
+	if _, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "s", Name: "S", Doc: `{"kind":"place","address":"1 Lane"}`}); err != nil {
+		t.Fatalf("create under a stale override: %v", err)
+	}
+	if _, err := cm.CreateEntry(ctx, catalog.Entry{Slug: "t", Name: "T", Doc: `{"kind":"place"}`}); !errors.Is(err, catalog.ErrEntryKind) {
+		t.Fatalf("create under a stale override: err = %v, want the definition's ErrEntryKind", err)
+	}
+}

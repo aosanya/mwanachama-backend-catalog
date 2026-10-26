@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 const seedsSetting = "seeds"
@@ -34,9 +33,5 @@ func (m *catalogManager) entrySeeds(ctx context.Context) ([]models.EntrySeed, er
 	if _, declared := m.spec.Setting(seedsSetting); !declared {
 		return nil, nil
 	}
-	effective, err := spec.ResolveStored(m.db.WithContext(ctx), m.spec, seedsSetting)
-	if err != nil {
-		return nil, fmt.Errorf("catalog: %s: %w", seedsSetting, err)
-	}
-	return models.ParseEntrySeeds(effective.Value)
+	return resolveFitting(ctx, m, seedsSetting, models.ParseEntrySeeds)
 }

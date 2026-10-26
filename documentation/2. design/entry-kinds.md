@@ -22,8 +22,20 @@ be called `kind`. A value breaking any of those is `models.ErrKindsMalformed`,
 answered as a server error on save rather than silently skipping the check.
 
 The value resolves through the stored layers on every save
-(`spec.ResolveStored`): the module default, then the definition's value
-(`spec.PutDefinitionSettings`), then an override (`spec.StoreOverride`).
+(`spec.LoadSettingLayers` and `spec.Resolve`): the module default, then the
+definition's value (`spec.PutDefinitionSettings`), then an override
+(`spec.StoreOverride`).
+
+An override that no longer fits gives way to the definition's value
+(decision 407). S64's `Resolve` already skips an override failing the
+setting's declared shape, but `kinds` and `seeds` are `json` settings, so an
+override can pass that shape and still fail `ParseEntryKinds` or
+`ParseEntrySeeds`. `resolveFitting` (`setting_fit.go`) then resolves again
+without the overrides, so a save or a seeding never fails on a stale
+override. A malformed definition is still refused, since nothing sits under
+it but the module default and a definition the host wrote wrong is the
+host's error to see. Pinned by
+`TestEntryKind_AnOverrideThatNoLongerFitsGivesWayToTheDefinition`.
 
 ## Where an entry names its kind
 
@@ -153,6 +165,7 @@ whose host has not called it checks nothing, because the module default for
   publish of the definition — is the host's call and not decided here; nor
   whether a seed should arrive public rather than pending, or whether a
   deleted seed should return. Each is an owner question.
-- **A stale override after a republish** — an override written against an
-  older definition of `kinds` that no longer matches it — is an open owner
-  question and is not decided: the override simply wins, as S64 resolves it.
+- **Flagging a stale override** — decision 407 has the Settings page show
+  "Your override no longer applies" with Reset. The fallback is built here;
+  the flag needs S64 to report which overrides gave way, which it does not
+  yet, so catalog reports nothing.
