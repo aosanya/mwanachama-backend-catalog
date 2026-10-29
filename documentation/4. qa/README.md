@@ -625,7 +625,7 @@ sweep's CAT29/CAT30 on top of the original seven):
   (CAT30, P1), filed 2026-10-01 (fifty-third run). Once a mount opens
   `catalog.suggestion.file` to the public, an anonymous filer keeps the
   `priority` (jumping the moderator queue at −2³¹), `source: owner` and
-  `run_id` it sent, and the dedup answers `409` for a pending or private
+  `run_ref` it sent, and the dedup answers `409` for a pending or private
   entry's slug where a free one gets `201` — the enumeration `open_entry`
   deliberately hides. Both were first shown through `mwanachama-wakala-api`'s
   booted `/reports` mount and go green when an anonymous filing keeps

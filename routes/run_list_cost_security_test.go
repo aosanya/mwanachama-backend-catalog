@@ -11,7 +11,7 @@ func TestCAT32_OpenHole_OneCallerGrowsTheRunListAnswerWithoutBound(t *testing.T)
 	h, _, _ := newServer(t)
 	const recorded = 40
 	const requestCap = 1 << 20
-	body, err := json.Marshal(map[string]any{"run_id": "flood", "templates_filed": 1, "summary": strings.Repeat("s", 64<<10)})
+	body, err := json.Marshal(map[string]any{"run_ref": "flood", "templates_filed": 1, "summary": strings.Repeat("s", 64<<10)})
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}

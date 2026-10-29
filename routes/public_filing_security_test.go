@@ -17,9 +17,9 @@ func TestCAT29_OpenHole_AnonymousFilerSetsItsOwnQueuePriorityAndSource(t *testin
 		t.Fatalf("precondition: an anonymous resident filing a plain report answered %d %s", honest.Code, honest.Body.String())
 	}
 	forged := do(t, anon, "POST", "/suggestions",
-		`{"slug":"me-first","title":"Me first","priority":-2147483648,"source":"owner","run_id":"run-forged"}`)
+		`{"slug":"me-first","title":"Me first","priority":-2147483648,"source":"owner","run_ref":"run-forged"}`)
 	if forged.Code != http.StatusCreated {
-		t.Fatalf("precondition: an anonymous report carrying priority/source/run_id answered %d %s", forged.Code, forged.Body.String())
+		t.Fatalf("precondition: an anonymous report carrying priority/source/run_ref answered %d %s", forged.Code, forged.Body.String())
 	}
 
 	queue := do(t, operator, "GET", "/suggestions", "")
@@ -33,10 +33,10 @@ func TestCAT29_OpenHole_AnonymousFilerSetsItsOwnQueuePriorityAndSource(t *testin
 			got = r
 		}
 	}
-	if got.Priority != models.DefaultSuggestionPriority || got.Source == catalog.SuggestionSourceOwner || got.RunID != "" || rows[0].Slug == "me-first" {
-		t.Errorf("CAT29 (P1): an anonymous POST /suggestions stored priority=%d source=%q run_id=%q and sits at queue position %q; "+
-			"want priority=%d, source not %q, run_id empty, and no queue-jump — on a mount that opens catalog.suggestion.file to the public these are the moderator's fields, not the filer's",
-			got.Priority, got.Source, got.RunID, rows[0].Slug, models.DefaultSuggestionPriority, catalog.SuggestionSourceOwner)
+	if got.Priority != models.DefaultSuggestionPriority || got.Source == catalog.SuggestionSourceOwner || got.RunRef != "" || rows[0].Slug == "me-first" {
+		t.Errorf("CAT29 (P1): an anonymous POST /suggestions stored priority=%d source=%q run_ref=%q and sits at queue position %q; "+
+			"want priority=%d, source not %q, run_ref empty, and no queue-jump — on a mount that opens catalog.suggestion.file to the public these are the moderator's fields, not the filer's",
+			got.Priority, got.Source, got.RunRef, rows[0].Slug, models.DefaultSuggestionPriority, catalog.SuggestionSourceOwner)
 	}
 }
 

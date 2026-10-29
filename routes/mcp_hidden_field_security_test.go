@@ -19,7 +19,7 @@ func TestAToolRefusesAServerOwnedFieldInAnyCasingAndStoresNothing(t *testing.T) 
 		{"catalog_entry_upsert", `{"slug":"alpha","name":"A","doc":"{}","Approved_At":"1999-01-01T00:00:00Z"}`, "Approved_At"},
 		{"catalog_entry_upsert", `{"slug":"alpha","name":"A","doc":"{}","SubmittedBy":"mallory"}`, "SubmittedBy"},
 		{"catalog_entry_upsert", `{"slug":"alpha","Slug":"beta","name":"A","doc":"{}"}`, "Slug"},
-		{"catalog_run_record", `{"run_id":"r1","summary":"s","templates_filed":1,"Submitted_By":"mallory"}`, "Submitted_By"},
+		{"catalog_run_record", `{"run_ref":"r1","summary":"s","templates_filed":1,"Submitted_By":"mallory"}`, "Submitted_By"},
 	}
 	for _, f := range forged {
 		_, err := tools[f.tool].Invoke(ctx, json.RawMessage(f.args))

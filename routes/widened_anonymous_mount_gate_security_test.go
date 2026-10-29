@@ -31,7 +31,7 @@ func TestAMountThatWidensTheAnonymousListStillGatesEveryOtherRouteByItsOwnAction
 		anonymous[a] = true
 	}
 	fill := strings.NewReplacer("{slug}", "seeded", "{key}", "k", "{suggestionID}", f.suggestionID, "{linkID}", f.linkID)
-	body := `{"visibility":"public","status":"approved","name":"n","doc":` + jsonString(doc) + `,"slug":"wanted2","title":"t","run_id":"r","comment":"c","body":"b","value":"v"}`
+	body := `{"visibility":"public","status":"approved","name":"n","doc":` + jsonString(doc) + `,"slug":"wanted2","title":"t","run_ref":"r","comment":"c","body":"b","value":"v"}`
 	for _, rt := range gated {
 		door := rt.Method + " " + fill.Replace(rt.Path)
 		if anonymous[rt.Action] {

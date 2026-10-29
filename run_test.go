@@ -93,7 +93,7 @@ func TestRecordRun_AndListNewestFirst(t *testing.T) {
 
 	for _, s := range []string{"first report", "second report"} {
 		if _, err := cm.RecordRun(ctx, catalog.MiningRun{
-			RunID: s, SubmittedBy: "routine", TemplatesFiled: 3, Summary: s,
+			RunRef: s, SubmittedBy: "routine", TemplatesFiled: 3, Summary: s,
 		}); err != nil {
 			t.Fatalf("record %q: %v", s, err)
 		}

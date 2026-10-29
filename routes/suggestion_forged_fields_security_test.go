@@ -33,7 +33,7 @@ func TestFileSuggestion_ForgedStatusAttemptsIDAndClockAreTheServers(t *testing.T
 		t.Errorf("GET /suggestions/chosen answered %d %s, want 404", got.Code, got.Body.String())
 	}
 
-	if got := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/fulfil", `{"slug":"forged-one","run_id":"r1"}`); got.Code != http.StatusConflict {
+	if got := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/fulfil", `{"slug":"forged-one","run_ref":"r1"}`); got.Code != http.StatusConflict {
 		t.Errorf("fulfilling a proposed suggestion answered %d %s, want 409", got.Code, got.Body.String())
 	}
 	if got := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/decide", `{"status":"stalled"}`); got.Code != http.StatusConflict {

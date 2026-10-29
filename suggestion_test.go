@@ -171,7 +171,7 @@ func TestRecordSuggestionAttempt_KeepsTheReason(t *testing.T) {
 		t.Fatalf("len = %d, want 1", len(comments))
 	}
 	c := comments[0]
-	if c.Author != catalog.CommentAuthorRun || c.Attempt != 1 || c.RunID != "run-7" {
+	if c.Author != catalog.CommentAuthorRun || c.Attempt != 1 || c.RunRef != "run-7" {
 		t.Errorf("comment = %+v, want a run comment for attempt 1", c)
 	}
 	if c.Body != "the objectives are missing" {
@@ -219,7 +219,7 @@ func TestFulfilSuggestion_MarksItBuiltAndLinksTheEntry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("matches again: %v", err)
 	}
-	if len(matches) != 1 || matches[0].RunID != "run-4" {
+	if len(matches) != 1 || matches[0].RunRef != "run-4" {
 		t.Errorf("matches = %+v, want one match updated to run-4", matches)
 	}
 }

@@ -2,7 +2,7 @@ package models
 
 type MiningRun struct {
 	ID             string `json:"id"`
-	RunID          string `json:"run_id,omitempty"`
+	RunRef         string `json:"run_ref,omitempty"`
 	SubmittedBy    string `json:"submitted_by,omitempty"`
 	TemplatesFiled int    `json:"templates_filed"`
 	Summary        string `json:"summary"`

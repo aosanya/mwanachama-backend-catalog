@@ -215,7 +215,7 @@ type CatalogManager interface {
 	// RecordSuggestionAttempt counts a build that did not finish and keeps
 	// the reason as a comment. At MaxSuggestionAttempts the proposal
 	// stalls.
-	RecordSuggestionAttempt(ctx context.Context, id, runID, comment string) (Suggestion, error)
+	RecordSuggestionAttempt(ctx context.Context, id, runRef, comment string) (Suggestion, error)
 
 	// CommentOnSuggestion adds a note that is not about a build attempt.
 	CommentOnSuggestion(ctx context.Context, id string, author CommentAuthor, body string) (SuggestionComment, error)
@@ -224,7 +224,7 @@ type CatalogManager interface {
 	// first.
 	ListSuggestionComments(ctx context.Context, id string) ([]SuggestionComment, error)
 
-	FulfilSuggestion(ctx context.Context, id, slug, runID, note string) (Suggestion, error)
+	FulfilSuggestion(ctx context.Context, id, slug, runRef, note string) (Suggestion, error)
 
 	AttachSuggestion(ctx context.Context, id, slug, note string) (SuggestionMatch, error)
 

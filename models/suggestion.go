@@ -14,7 +14,7 @@ type Suggestion struct {
 	Priority  int              `json:"priority"`
 	Attempts  int              `json:"attempts"`
 	Proposal  string           `json:"proposal,omitempty"`
-	RunID     string           `json:"run_id,omitempty"`
+	RunRef    string           `json:"run_ref,omitempty"`
 	CreatedAt string           `json:"created_at"`
 	DecidedAt string           `json:"decided_at,omitempty"`
 }
@@ -23,7 +23,7 @@ type SuggestionComment struct {
 	ID           string        `json:"id"`
 	SuggestionID string        `json:"suggestion_id"`
 	Author       CommentAuthor `json:"author"`
-	RunID        string        `json:"run_id,omitempty"`
+	RunRef       string        `json:"run_ref,omitempty"`
 	Attempt      int           `json:"attempt,omitempty"`
 	Body         string        `json:"body"`
 	CreatedAt    string        `json:"created_at"`
@@ -32,7 +32,7 @@ type SuggestionComment struct {
 type SuggestionMatch struct {
 	SuggestionID string `json:"suggestion_id"`
 	Slug         string `json:"slug"`
-	RunID        string `json:"run_id,omitempty"`
+	RunRef       string `json:"run_ref,omitempty"`
 	Note         string `json:"note,omitempty"`
 	MetAt        string `json:"met_at"`
 }

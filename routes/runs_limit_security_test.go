@@ -12,7 +12,7 @@ import (
 func TestListRuns_MalformedLimitIsRefusedWithoutReachingTheStore(t *testing.T) {
 	h, cm, ctx := newServer(t)
 	for _, id := range []string{"run-a", "run-b", "run-c"} {
-		if _, err := cm.RecordRun(ctx, catalog.MiningRun{RunID: id}); err != nil {
+		if _, err := cm.RecordRun(ctx, catalog.MiningRun{RunRef: id}); err != nil {
 			t.Fatalf("RecordRun %s: %v", id, err)
 		}
 	}

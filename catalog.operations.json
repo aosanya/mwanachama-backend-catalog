@@ -397,7 +397,7 @@
         },
         {
           "from": "body",
-          "as": "run_id",
+          "as": "run_ref",
           "description": "The run that tried."
         },
         {
@@ -434,7 +434,7 @@
         },
         {
           "from": "body",
-          "as": "run_id",
+          "as": "run_ref",
           "description": "The run that built it."
         },
         {

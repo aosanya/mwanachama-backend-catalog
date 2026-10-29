@@ -207,7 +207,7 @@ func TestSuggestionRoutes_FileDecideAndFulfil(t *testing.T) {
 	if rec := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/decide", `{"status":"approved"}`); rec.Code != http.StatusOK {
 		t.Fatalf("approve: status = %d, body %s", rec.Code, rec.Body.String())
 	}
-	done := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/fulfil", `{"slug":"the-answer","run_id":"r1"}`)
+	done := do(t, h, http.MethodPost, "/suggestions/"+s.ID+"/fulfil", `{"slug":"the-answer","run_ref":"r1"}`)
 	if done.Code != http.StatusOK {
 		t.Fatalf("fulfil: status = %d, body %s", done.Code, done.Body.String())
 	}

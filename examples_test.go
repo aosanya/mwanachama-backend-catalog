@@ -2,6 +2,7 @@ package mwanachamacatalog
 
 import (
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -111,8 +112,9 @@ func TestShippedExampleMigratesIdempotently(t *testing.T) {
 			t.Fatalf("migrate %d: %v", i, err)
 		}
 	}
-	if n := len(tableNames(t, db)); n != 19+len(s.SettingsTables()) {
-		t.Errorf("tables = %d, want %d", n, 19+len(s.SettingsTables()))
+	want := 2*len(s.Objects) + len(s.SettingsTables())
+	if n := len(tableNames(t, db)); n != want {
+		t.Errorf("tables = %d, want %d: every object's table and its _test copy, and the settings tables", n, want)
 	}
 }
 
@@ -213,7 +215,7 @@ func TestShippedExpressionIndexesAreDoubleParenthesised(t *testing.T) {
 					continue
 				}
 				isExpr := strings.Contains(stmt, "#>>") || strings.Contains(stmt, "json_extract")
-				if isExpr && !strings.Contains(stmt, "((") {
+				if isExpr && !expressionIsParenthesised(stmt) {
 					t.Errorf("%s/%s: expression index is not double-parenthesised:\n  %s", path, dialect, stmt)
 				}
 			}
@@ -221,11 +223,17 @@ func TestShippedExpressionIndexesAreDoubleParenthesised(t *testing.T) {
 	}
 }
 
+var parenthesisedExpression = regexp.MustCompile(`[(,] ?\((doc #>>|json_extract)`)
+
+func expressionIsParenthesised(stmt string) bool {
+	return parenthesisedExpression.MatchString(stmt)
+}
+
 func declaredTables(specs ...*spec.Spec) []string {
 	var out []string
 	for _, s := range specs {
 		for _, o := range s.Objects {
-			out = append(out, s.TableFor(o))
+			out = append(out, s.TableFor(o), s.TestTableFor(o))
 		}
 		out = append(out, s.SettingsTables()...)
 	}

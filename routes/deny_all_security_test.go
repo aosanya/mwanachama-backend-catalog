@@ -106,7 +106,7 @@ func TestEveryGatedToolAsksForItsOwnActionAndWritesNothingWhenRefused(t *testing
 	}
 	args := `{"slug":"seeded","key":"k","value":"v","id":"` + f.suggestionID + `","link_id":"` + f.linkID +
 		`","suggestion_id":"` + f.suggestionID + `","visibility":"public","status":"approved","name":"n","doc":` +
-		jsonString(doc) + `,"title":"t","run_id":"r","comment":"c","body":"b","author":"operator"}`
+		jsonString(doc) + `,"title":"t","run_ref":"r","comment":"c","body":"b","author":"operator"}`
 	for _, tool := range tools {
 		gate.asked = nil
 		out, err := tool.Invoke(context.Background(), json.RawMessage(args))
@@ -128,7 +128,7 @@ func TestEveryGatedRouteAsksForItsOwnActionAndWritesNothingWhenRefused(t *testin
 		t.Fatal("precondition: the mount built no gated routes")
 	}
 	fill := strings.NewReplacer("{slug}", "seeded", "{key}", "k", "{suggestionID}", f.suggestionID, "{linkID}", f.linkID)
-	body := `{"visibility":"public","status":"approved","name":"n","doc":` + jsonString(doc) + `,"slug":"wanted2","title":"t","run_id":"r","comment":"c","body":"b","value":"v"}`
+	body := `{"visibility":"public","status":"approved","name":"n","doc":` + jsonString(doc) + `,"slug":"wanted2","title":"t","run_ref":"r","comment":"c","body":"b","value":"v"}`
 	for _, rt := range gated {
 		mux := http.NewServeMux()
 		mux.Handle(rt.Method+" "+rt.Path, rt.Handler)

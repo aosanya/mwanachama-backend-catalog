@@ -85,7 +85,7 @@ func TestCAT21_OpenHole_FulfilUndoesAReviewersReject(t *testing.T) {
 		t.Fatalf("register callback: %v", err)
 	}
 
-	fulfil := do(t, h, "POST", "/suggestions/"+sg.ID+"/fulfil", `{"slug":"answer","run_id":"run-1"}`)
+	fulfil := do(t, h, "POST", "/suggestions/"+sg.ID+"/fulfil", `{"slug":"answer","run_ref":"run-1"}`)
 	if !fired {
 		t.Fatalf("precondition: POST /fulfil never reached its status write (answered %d %s)", fulfil.Code, fulfil.Body.String())
 	}

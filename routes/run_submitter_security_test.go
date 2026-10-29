@@ -59,17 +59,17 @@ func TestCAT13_RunSubmitterIsNeverTakenFromTheRequestBody(t *testing.T) {
 	h, _, tools := newMountedServer(t)
 
 	const claimed = "someone-else-entirely"
-	recorded := do(t, h, "POST", "/runs", `{"run_id":"r1","submitted_by":"`+claimed+`","templates_filed":1,"summary":"s"}`)
+	recorded := do(t, h, "POST", "/runs", `{"run_ref":"r1","submitted_by":"`+claimed+`","templates_filed":1,"summary":"s"}`)
 	if recorded.Code != http.StatusCreated {
 		t.Fatalf("precondition: recording a run answered %d %s", recorded.Code, recorded.Body.String())
 	}
 
 	record := toolNamed(t, tools, "catalog_run_record")
-	_, err := record(context.Background(), json.RawMessage(`{"run_id":"r2","submitted_by":"`+claimed+`","templates_filed":1,"summary":"s"}`))
+	_, err := record(context.Background(), json.RawMessage(`{"run_ref":"r2","submitted_by":"`+claimed+`","templates_filed":1,"summary":"s"}`))
 	if err == nil || !strings.Contains(err.Error(), `"submitted_by"`) {
 		t.Errorf("catalog_run_record accepted a caller-supplied submitter; want a refusal naming \"submitted_by\", got err=%v", err)
 	}
-	if _, err := record(context.Background(), json.RawMessage(`{"run_id":"r2","templates_filed":1,"summary":"s"}`)); err != nil {
+	if _, err := record(context.Background(), json.RawMessage(`{"run_ref":"r2","templates_filed":1,"summary":"s"}`)); err != nil {
 		t.Fatalf("precondition: recording a run over MCP without a submitter failed: %v", err)
 	}
 
@@ -80,7 +80,7 @@ func TestCAT13_RunSubmitterIsNeverTakenFromTheRequestBody(t *testing.T) {
 	}
 	for _, run := range runs {
 		if run.SubmittedBy != mountedCaller {
-			t.Errorf("run %q recorded submitted_by %q; want the mount's caller %q", run.RunID, run.SubmittedBy, mountedCaller)
+			t.Errorf("run %q recorded submitted_by %q; want the mount's caller %q", run.RunRef, run.SubmittedBy, mountedCaller)
 		}
 	}
 }

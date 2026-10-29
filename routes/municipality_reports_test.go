@@ -369,7 +369,7 @@ func TestMUNI9_AQuarterlySilenceSweepAndTheBoardClockRecord(t *testing.T) {
 		t.Errorf("MUNI9: the board clock would not store: %d %s", clock.Code, strings.TrimSpace(clock.Body.String()))
 	}
 	sweep := do(t, op, "POST", "/runs",
-		`{"run_id":"silence-2026-Q4","templates_filed":3,"summary":"Kibera North 3 arrivals; Kibera South 0; Laini Saba 0"}`)
+		`{"run_ref":"silence-2026-Q4","templates_filed":3,"summary":"Kibera North 3 arrivals; Kibera South 0; Laini Saba 0"}`)
 	if sweep.Code != http.StatusCreated {
 		t.Errorf("MUNI9: the quarterly silence sweep would not record: %d %s", sweep.Code, strings.TrimSpace(sweep.Body.String()))
 	}

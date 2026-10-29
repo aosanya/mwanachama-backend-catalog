@@ -143,3 +143,15 @@ through `"field": "Entry.visibility"`.
 `TestEveryDescribedFieldIsOneItsTypeCarries` holds the role→Go type map to the
 types themselves, because that map is the one hand-written thing left in this
 path and a rename would otherwise cost only the prose, silently.
+
+## The run reference field is `run_ref`, not `run_id`
+
+The spec engine gives every object a `_test` twin whose key includes a
+`run_id` column, and refuses a blueprint that declares a field of that name.
+The `run`, `suggestion`, `suggestion_comment` and `suggestion_match` objects
+each carried a `run_id` field (the mining run that filed, wrote, built or
+reported the row). It is `run_ref` in the blueprint, the models, the
+operations (`record_run` body, `fail_suggestion` and `fulfil_suggestion` args)
+and every response. The meaning is unchanged; a caller that sent `run_id`
+sends `run_ref`. `blueprint_test.go` loads the shipped blueprint, and
+`examples_test.go` counts each object's table and its `_test` twin.
