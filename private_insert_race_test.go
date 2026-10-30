@@ -13,7 +13,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT34_OpenBug_ConcurrentPutPrivateOnANewSlugFailsInstead(t *testing.T) {
+func TestCAT34_ConcurrentPutPrivateOnANewSlugSucceedsForBoth(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat34?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

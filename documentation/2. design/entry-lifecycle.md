@@ -56,3 +56,19 @@ entry. A missing slug, a pending entry and a private entry opened with a wrong
 key therefore each run the same two statements, so the clock does not tell a
 stranger which private slugs exist. A caller sending no key runs one statement
 in every case.
+
+## Private notes and settings are written by column (CAT20, CAT23, CAT33, CAT34)
+
+`PutPrivate` updates only the columns the caller named, plus `updated_at`, so
+two callers setting different fields at once both land. A first write inserts;
+if that collides with a concurrent first write it retries as an update, so
+neither caller sees a raw constraint error. `PutSetting` does the same: insert
+first, update on a duplicate key.
+
+Rank zero means unranked, which is also what an omitted rank decodes to.
+`EntryPrivate.ClearRank` is how a caller says "set it to zero": a non-zero
+`Rank` sets that rank, `ClearRank` sets zero, and neither leaves it alone. The
+field has no column (`spec:"-"`) and rides the request body as `clear_rank`.
+
+`EntryPrivate.Doc` is written on a first insert but not merged on an update;
+that gap is outside these rows and was left as it was.

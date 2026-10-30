@@ -56,21 +56,21 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 	}
 	s := models.Setting{Key: key, Value: value, UpdatedAt: m.now()}
 
-	var n int64
-	if err := m.settings(ctx).Where("key = ?", key).Count(&n).Error; err != nil {
-		return Setting{}, err
-	}
-	if n > 0 {
-		if err := m.settings(ctx).Where("key = ?", key).
-			Updates(map[string]any{"value": value, "updated_at": s.UpdatedAt}).Error; err != nil {
+	for {
+		if err := m.insert(ctx, roleSetting, s); err == nil {
+			return s, nil
+		} else if !isUniqueViolation(err) {
 			return Setting{}, err
 		}
-		return s, nil
+		result := m.settings(ctx).Where("key = ?", key).
+			Updates(map[string]any{"value": value, "updated_at": s.UpdatedAt})
+		if result.Error != nil {
+			return Setting{}, result.Error
+		}
+		if result.RowsAffected > 0 {
+			return s, nil
+		}
 	}
-	if err := m.insert(ctx, roleSetting, s); err != nil {
-		return Setting{}, err
-	}
-	return s, nil
 }
 
 func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, error) {

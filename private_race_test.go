@@ -13,7 +13,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT33_OpenBug_ConcurrentPutPrivateOnDifferentFieldsLosesOne(t *testing.T) {
+func TestCAT33_ConcurrentPutPrivateOnDifferentFieldsKeepsBoth(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat33?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

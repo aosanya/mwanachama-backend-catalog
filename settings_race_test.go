@@ -13,7 +13,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT23_OpenBug_ConcurrentPutSettingOnANewKeyFailsInstead(t *testing.T) {
+func TestCAT23_ConcurrentPutSettingOnANewKeySucceedsForBoth(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat23?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
