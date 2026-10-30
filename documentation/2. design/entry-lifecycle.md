@@ -41,3 +41,10 @@ Three things used to lean on the sterilised slug and are now explicit:
 - A database provisioned before this change still has the column constraint on
   `slug`; `spec.Migrate` does not drop it. Such a database frees the slug only
   once that constraint is dropped by hand.
+
+## An anonymous view carries no writer (CAT40)
+
+`OpenEntry` and `ListPublicEntries` return the entry with `submitted_by`
+emptied. `GetEntry` and `ListEntries`, the operator's reads, keep it. On a
+mount the field is the caller's internal subject, which a public reader has no
+use for and which would let anyone correlate one operator's entries.

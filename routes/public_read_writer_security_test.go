@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCAT40_OpenHole_AnonymousReadCarriesTheWritersIdentity(t *testing.T) {
+func TestCAT40_AnonymousReadCarriesNoWriterIdentity(t *testing.T) {
 	h, _, _ := newMountedServer(t)
 
 	written := do(t, h, "PUT", "/entries/a-public-entry", `{"name":"Agency","doc":`+strconv.Quote(doc)+`}`)

@@ -173,7 +173,7 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 
 	switch e.Visibility {
 	case models.VisibilityPublic:
-		return e, nil
+		return withoutWriter(e), nil
 	case models.VisibilityPrivate:
 		if key == "" {
 			return Entry{}, ErrEntryNotFound
@@ -185,10 +185,15 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 		if !ok {
 			return Entry{}, ErrEntryNotFound
 		}
-		return e, nil
+		return withoutWriter(e), nil
 	default:
 		return Entry{}, ErrEntryNotFound
 	}
+}
+
+func withoutWriter(e Entry) Entry {
+	e.SubmittedBy = ""
+	return e
 }
 
 func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error) {
@@ -255,7 +260,11 @@ func (m *catalogManager) ListPublicEntries(ctx context.Context, f ListFilter) ([
 	if f.Limit <= 0 || f.Limit > models.MaxPublicEntryLimit {
 		f.Limit = models.MaxPublicEntryLimit
 	}
-	return m.listEntries(ctx, f, m.now())
+	out, err := m.listEntries(ctx, f, m.now())
+	for i := range out {
+		out[i] = withoutWriter(out[i])
+	}
+	return out, err
 }
 
 func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
