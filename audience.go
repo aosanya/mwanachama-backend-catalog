@@ -95,25 +95,7 @@ func (f audienceFenced) ListEntries(ctx context.Context, filter ListFilter) ([]E
 	if filter.Visibility != "" && filter.Visibility != VisibilityPublic {
 		return []Entry{}, nil
 	}
-	filter.Visibility = VisibilityPublic
-	limit := filter.Limit
-	filter.Limit = 0
-	all, err := f.CatalogManager.ListEntries(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	now := nowRFC3339()
-	readable := make([]Entry, 0, len(all))
-	for _, e := range all {
-		if !e.PublishedBy(now) {
-			continue
-		}
-		readable = append(readable, e)
-		if limit > 0 && len(readable) == limit {
-			break
-		}
-	}
-	return readable, nil
+	return f.CatalogManager.ListPublicEntries(ctx, filter)
 }
 
 func (f audienceFenced) GetPrivate(ctx context.Context, slug string) (EntryPrivate, error) {

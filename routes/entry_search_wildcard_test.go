@@ -9,7 +9,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT22_OpenBug_SearchTreatsUnderscoreAndPercentAsWildcards(t *testing.T) {
+func TestCAT22_SearchTreatsUnderscoreAndPercentAsLiterals(t *testing.T) {
 	h, cm, ctx := newServer(t)
 
 	for i, name := range []string{"Alpha", "Beta", "Gamma"} {

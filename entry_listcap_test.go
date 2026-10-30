@@ -7,7 +7,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT10_OpenBug_ListEntriesHasNoDefaultCap(t *testing.T) {
+func TestCAT10_ListEntriesAppliesADefaultCap(t *testing.T) {
 	cm, ctx := newManager(t)
 
 	const seeded = 150

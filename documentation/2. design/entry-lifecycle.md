@@ -72,3 +72,23 @@ field has no column (`spec:"-"`) and rides the request body as `clear_rank`.
 
 `EntryPrivate.Doc` is written on a first insert but not merged on an update;
 that gap is outside these rows and was left as it was.
+
+## Listings are paged (CAT7, CAT10, CAT22, CAT41, CAT44, CAT45, CAT46)
+
+- `ListEntries` returns `DefaultEntryLimit` (100) rows when the caller names no
+  limit; an explicit limit is honoured. `ListPublicEntries` clamps to
+  `MaxPublicEntryLimit`. Both take `ListFilter.Offset` and order by name then
+  id, so a caller pages forward without a row moving between pages.
+- A listing refuses more than `MaxDocFilters` (10) document filters with
+  `ErrInvalidDocPath`, before any query is built. `ErrInvalidDocPath` is
+  declared in the operations file's error table as 400, so a malformed or
+  excessive filter reads as the caller's mistake and not as an internal error.
+- The search term is a literal substring: `%`, `_` and the escape character are
+  escaped and the query says `ESCAPE '\'`.
+- `listcap.go` names the roles whose `listOf` reads are capped at
+  `specstore.DefaultListCap`: suggestions, their comments and matches, page
+  views and share links. Other `listOf` callers feed aggregations that need
+  every row, so they are not capped there.
+- A caller outside the audience's staff reads through `ListPublicEntries`, so
+  the same cap, offset and publish-time rule apply and `submitted_by` is
+  left out.

@@ -10,7 +10,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
-func TestCAT46_OpenBug_PublicListingHasNoOffsetSoRowsPastTheCapAreUnreachable(t *testing.T) {
+func TestCAT46_PublicListingOffsetReachesRowsPastTheCap(t *testing.T) {
 	_, anon, cm := municipalityWard(t)
 	ctx := t.Context()
 	doc := `{"_item":{"ward":"Kibera North"}}`

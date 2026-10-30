@@ -85,21 +85,7 @@ func (m *catalogManager) ListShareLinks(ctx context.Context, slug string) ([]Sha
 	if _, err := m.findEntry(ctx, slug); err != nil {
 		return nil, err
 	}
-	var rows []map[string]any
-	if err := m.links(ctx).Where("slug = ?", slug).
-		Order("created_at DESC, id DESC").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	o := m.st.Object(roleShareLink)
-	out := make([]ShareLink, 0, len(rows))
-	for _, r := range rows {
-		var link ShareLink
-		if err := decode(o, r, &link); err != nil {
-			return nil, err
-		}
-		out = append(out, link)
-	}
-	return out, nil
+	return listOf[ShareLink](m, m.links(ctx).Where("slug = ?", slug).Order("created_at DESC, id DESC"), roleShareLink)
 }
 
 // keyOpens reports whether raw is a live key for slug. It matches on the

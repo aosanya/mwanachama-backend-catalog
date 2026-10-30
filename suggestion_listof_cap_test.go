@@ -7,7 +7,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT45_OpenBug_ListSuggestionsHasNoCapAndNoWayToAskForOne(t *testing.T) {
+func TestCAT45_ListSuggestionsAppliesADefaultCap(t *testing.T) {
 	cm, ctx := newManager(t)
 
 	const filed = 300

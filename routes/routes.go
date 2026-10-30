@@ -28,6 +28,7 @@ var sentinels = map[string]error{
 	"ErrSuggestionDuplicate":    catalog.ErrSuggestionDuplicate,
 	"ErrSuggestionStatus":       catalog.ErrSuggestionStatus,
 	"ErrInvalidEntry":           catalog.ErrInvalidEntry,
+	"ErrInvalidDocPath":         catalog.ErrInvalidDocPath,
 	"ErrEntryKind":              catalog.ErrEntryKind,
 	"ErrInvalidPrivate":         catalog.ErrInvalidPrivate,
 	"ErrInvalidSuggestion":      catalog.ErrInvalidSuggestion,

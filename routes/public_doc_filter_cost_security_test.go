@@ -10,7 +10,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT41_OpenHole_AnonymousListingTakesUnboundedDocFilters(t *testing.T) {
+func TestCAT41_AnonymousListingRefusesStackedDocFilters(t *testing.T) {
 	_, anon, cm := municipalityWard(t)
 	ctx := t.Context()
 	if _, err := cm.UpsertEntry(ctx, catalog.Entry{Slug: "item-1", Name: "Pothole", Summary: "s", Doc: `{"_item":{"ward":"Kibera North"}}`}); err != nil {

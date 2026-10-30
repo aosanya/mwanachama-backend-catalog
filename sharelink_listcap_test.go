@@ -7,7 +7,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT44_OpenBug_ListShareLinksHasNoDefaultCap(t *testing.T) {
+func TestCAT44_ListShareLinksAppliesADefaultCap(t *testing.T) {
 	cm, ctx := newManager(t)
 	seed(t, cm, ctx, "probe-entry", catalog.VisibilityPrivate)
 

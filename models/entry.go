@@ -18,7 +18,11 @@ type Entry struct {
 	Deleted     bool       `json:"deleted"`
 }
 
-const MaxPublicEntryLimit = 100
+const (
+	MaxPublicEntryLimit = 100
+	DefaultEntryLimit   = 100
+	MaxDocFilters       = 10
+)
 
 func NormalizePublishAt(at string) (string, bool) {
 	if at == "" {

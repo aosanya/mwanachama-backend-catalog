@@ -127,8 +127,11 @@ type ListFilter struct {
 	// case-insensitively.
 	Search string
 
-	// Limit caps the rows returned. Zero means no cap.
+	// Limit caps the rows returned. Zero means the default page.
 	Limit int
+
+	// Offset skips that many rows, so a caller can page past the first.
+	Offset int
 }
 
 // CatalogManager is the single interface for the catalog: the documents,
@@ -410,7 +413,7 @@ func (m *catalogManager) take(q *gorm.DB, role string, out any, notFound error) 
 // loop written out once per listing.
 func listOf[T any](m *catalogManager, q *gorm.DB, role string) ([]T, error) {
 	var rows []map[string]any
-	if err := q.Find(&rows).Error; err != nil {
+	if err := capList(q, role).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	o := m.st.Object(role)

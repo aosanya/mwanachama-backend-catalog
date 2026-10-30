@@ -1620,6 +1620,7 @@
     "ErrSuggestionDuplicate": 409,
     "ErrSuggestionStatus": 409,
     "ErrInvalidEntry": 400,
+    "ErrInvalidDocPath": 400,
     "ErrEntryKind": 400,
     "ErrInvalidServiceTerms": 400,
     "ErrInvalidPrivate": 400,

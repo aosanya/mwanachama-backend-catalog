@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aosanya/mwanachama-backend-catalog/models"
-	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
 func nowRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
@@ -253,81 +252,6 @@ func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
 		return err
 	}
 	return m.retireLinksFor(ctx, slug, now)
-}
-
-func (m *catalogManager) ListPublicEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
-	f.Visibility = models.VisibilityPublic
-	if f.Limit <= 0 || f.Limit > models.MaxPublicEntryLimit {
-		f.Limit = models.MaxPublicEntryLimit
-	}
-	out, err := m.listEntries(ctx, f, m.now())
-	for i := range out {
-		out[i] = withoutWriter(out[i])
-	}
-	return out, err
-}
-
-func (m *catalogManager) ListEntries(ctx context.Context, f ListFilter) ([]Entry, error) {
-	return m.listEntries(ctx, f, "")
-}
-
-func (m *catalogManager) listEntries(ctx context.Context, f ListFilter, publishedBy string) ([]Entry, error) {
-	q := m.entries(ctx).Where("deleted = ?", false)
-	if publishedBy != "" {
-		q = q.Where("(publish_at IS NULL OR publish_at = '' OR publish_at <= ?)", publishedBy)
-	}
-	if f.Visibility != "" {
-		q = q.Where("visibility = ?", string(f.Visibility))
-	}
-	for _, d := range f.Docs {
-		if !d.Valid() {
-			return nil, ErrInvalidDocPath
-		}
-		q = q.Where(docPathExpr(m.db, d)+" = ?", d.Value)
-	}
-	if s := strings.TrimSpace(f.Search); s != "" {
-		like := "%" + strings.ToLower(s) + "%"
-		q = q.Where("LOWER(name) LIKE ? OR LOWER(summary) LIKE ?", like, like)
-	}
-	if f.Limit > 0 {
-		q = q.Limit(f.Limit)
-	}
-
-	var rows []map[string]any
-	if err := q.Order("name").Find(&rows).Error; err != nil {
-		return nil, err
-	}
-
-	o := m.st.Object(roleEntry)
-	out := make([]Entry, 0, len(rows))
-	for _, r := range rows {
-		var e Entry
-		if err := decode(o, r, &e); err != nil {
-			return nil, err
-		}
-		// A listing is the card. Carrying Doc would put 34 KB per row into
-		// every storefront index page.
-		e.Doc = ""
-		out = append(out, e)
-	}
-	return out, nil
-}
-
-// docPathExpr builds the SQL that reads one path out of the document, in
-// the dialect in use.
-//
-// It defers to [spec.DocPathExpr], which is the same function the migrator
-// builds a document index with. That is the whole point of going through it:
-// an expression index only applies to a query whose expression matches it
-// exactly, so a second copy of this that drifted by a space would leave
-// every document filter doing a full scan with nothing reporting it.
-//
-// Neither dialect takes the path as a bound parameter, which is why
-// [models.DocFilter.Valid] restricts it to an alphabet with no quote, brace
-// or bracket in it — callers must check Valid before reaching here, and
-// ListEntries does.
-func docPathExpr(db *gorm.DB, d models.DocFilter) string {
-	return spec.DocPathExpr("doc", d.Path, db.Dialector.Name())
 }
 
 // isUniqueViolation reports whether err is a duplicate-key error. The two
