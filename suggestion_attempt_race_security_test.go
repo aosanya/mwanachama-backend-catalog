@@ -14,7 +14,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT19_OpenHole_FailedAttemptReportRevivesARejectedSuggestion(t *testing.T) {
+func TestCAT19_FailedAttemptReportDoesNotReviveARejectedSuggestion(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat19?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -42,7 +42,7 @@ func TestCAT19_OpenHole_FailedAttemptReportRevivesARejectedSuggestion(t *testing
 	ctx := context.Background()
 
 	sg := file(t, cm, ctx, "clinic")
-	if _, err := cm.DecideSuggestion(ctx, sg.ID, models.SuggestionStatusApproved, 0); err != nil {
+	if _, err := cm.DecideSuggestion(ctx, sg.ID, models.SuggestionStatusApproved, nil); err != nil {
 		t.Fatalf("precondition: approve: %v", err)
 	}
 	suggestions, ok := s.ByRole("suggestion")
@@ -65,7 +65,7 @@ func TestCAT19_OpenHole_FailedAttemptReportRevivesARejectedSuggestion(t *testing
 			return
 		}
 		fired = true
-		if _, err := cm.DecideSuggestion(context.Background(), sg.ID, models.SuggestionStatusRejected, 0); err == nil {
+		if _, err := cm.DecideSuggestion(context.Background(), sg.ID, models.SuggestionStatusRejected, nil); err == nil {
 			rejected = true
 		}
 	})
@@ -86,6 +86,6 @@ func TestCAT19_OpenHole_FailedAttemptReportRevivesARejectedSuggestion(t *testing
 		t.Fatalf("GetSuggestion: %v", err)
 	}
 	if got.Status != models.SuggestionStatusRejected {
-		t.Errorf("CAT19 (P2) open hole: a reviewer rejected suggestion clinic while a failed-attempt report was in flight, the reject succeeded and the report answered %v, and the suggestion now reads %q with %d attempts; want it to stay rejected, because an attempt may only count against a suggestion that is still approved at the moment it is written", attemptErr, got.Status, got.Attempts)
+		t.Errorf("CAT19 (P2): a reviewer rejected suggestion clinic while a failed-attempt report was in flight, the reject succeeded and the report answered %v, and the suggestion now reads %q with %d attempts; want it to stay rejected, because an attempt may only count against a suggestion that is still approved at the moment it is written", attemptErr, got.Status, got.Attempts)
 	}
 }

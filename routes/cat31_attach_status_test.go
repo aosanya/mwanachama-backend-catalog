@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestCAT31_OpenBug_RejectedArrivalStillCountsAsAttached(t *testing.T) {
+func TestCAT31_RejectedArrivalDoesNotCountAsAttached(t *testing.T) {
 	op, _, _ := municipalityWard(t)
 
 	liveID := fileArrival(t, op, "junction-report-0", "counter")
@@ -35,7 +35,7 @@ func TestCAT31_OpenBug_RejectedArrivalStillCountsAsAttached(t *testing.T) {
 		}
 		for _, r := range rows {
 			if r.SuggestionID == rejectedID {
-				t.Fatalf("CAT31 open bug: a suggestion rejected before it was ever attached (%s) was accepted "+
+				t.Fatalf("CAT31: a suggestion rejected before it was ever attached (%s) was accepted "+
 					"by POST /suggestions/{id}/matches (201) and now counts toward ngong-road-junction's "+
 					"attached arrivals: %s — a council prioritising this item is counting a report the "+
 					"moderator already threw out", rejectedID, listed.Body.String())
@@ -59,7 +59,7 @@ func TestCAT31_OpenBug_RejectedArrivalStillCountsAsAttached(t *testing.T) {
 	}
 	for _, r := range afterRows {
 		if r.SuggestionID == liveID {
-			t.Fatalf("CAT31 open bug: %s was attached while proposed, then rejected by a reviewer, and still "+
+			t.Fatalf("CAT31: %s was attached while proposed, then rejected by a reviewer, and still "+
 				"lists as attached to ngong-road-junction: %s — rejecting an arrival must drop it from the "+
 				"count a council acts on, not leave a stale attachment behind", liveID, listedAfter.Body.String())
 		}

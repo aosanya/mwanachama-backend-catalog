@@ -25,7 +25,7 @@ func file(t *testing.T, cm catalog.CatalogManager, ctx context.Context, slug str
 // build attempt may be recorded against.
 func approve(t *testing.T, cm catalog.CatalogManager, ctx context.Context, id string) catalog.Suggestion {
 	t.Helper()
-	s, err := cm.DecideSuggestion(ctx, id, catalog.SuggestionStatusApproved, 0)
+	s, err := cm.DecideSuggestion(ctx, id, catalog.SuggestionStatusApproved, nil)
 	if err != nil {
 		t.Fatalf("approve: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestDecideSuggestion_CannotSetBuilt(t *testing.T) {
 	cm, ctx := newManager(t)
 	s := file(t, cm, ctx, "new-one")
 
-	if _, err := cm.DecideSuggestion(ctx, s.ID, catalog.SuggestionStatusBuilt, 0); !errors.Is(err, catalog.ErrSuggestionStatus) {
+	if _, err := cm.DecideSuggestion(ctx, s.ID, catalog.SuggestionStatusBuilt, nil); !errors.Is(err, catalog.ErrSuggestionStatus) {
 		t.Fatalf("err = %v, want ErrSuggestionStatus", err)
 	}
 }
@@ -258,10 +258,10 @@ func TestListSuggestions_ByStatusAndPriority(t *testing.T) {
 	b := file(t, cm, ctx, "second-one")
 	file(t, cm, ctx, "third-one")
 
-	if _, err := cm.DecideSuggestion(ctx, b.ID, catalog.SuggestionStatusApproved, 1); err != nil {
+	if _, err := cm.DecideSuggestion(ctx, b.ID, catalog.SuggestionStatusApproved, intPtr(1)); err != nil {
 		t.Fatalf("approve b: %v", err)
 	}
-	if _, err := cm.DecideSuggestion(ctx, a.ID, catalog.SuggestionStatusApproved, 50); err != nil {
+	if _, err := cm.DecideSuggestion(ctx, a.ID, catalog.SuggestionStatusApproved, intPtr(50)); err != nil {
 		t.Fatalf("approve a: %v", err)
 	}
 

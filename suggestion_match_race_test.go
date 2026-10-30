@@ -13,7 +13,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT43_OpenBug_ConcurrentAttachSuggestionOnANewPairFailsInstead(t *testing.T) {
+func TestCAT43_ConcurrentAttachSuggestionOnANewPairSucceeds(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat43?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -84,7 +84,7 @@ func TestCAT43_OpenBug_ConcurrentAttachSuggestionOnANewPairFailsInstead(t *testi
 		t.Fatalf("precondition: the concurrent AttachSuggestion that won the race failed: %v", raceErr)
 	}
 	if outerErr != nil {
-		t.Errorf("CAT43 open bug: AttachSuggestion(%q, \"cat43-entry\", \"outer-note\") failed with %v while a concurrent first-time AttachSuggestion for the same new (suggestion, slug) pair was committing; want it to succeed as a no-op or a clean domain error, not surface a raw SQL constraint failure to one of two legitimate callers attaching the same match at once", sg.ID, outerErr)
+		t.Errorf("CAT43: AttachSuggestion(%q, \"cat43-entry\", \"outer-note\") failed with %v while a concurrent first-time AttachSuggestion for the same new (suggestion, slug) pair was committing; want it to succeed as a no-op or a clean domain error, not surface a raw SQL constraint failure to one of two legitimate callers attaching the same match at once", sg.ID, outerErr)
 	}
 
 	matches, err := cm.ListSuggestionMatches(ctx, sg.ID)
@@ -92,6 +92,6 @@ func TestCAT43_OpenBug_ConcurrentAttachSuggestionOnANewPairFailsInstead(t *testi
 		t.Fatalf("list suggestion matches: %v", err)
 	}
 	if len(matches) != 1 {
-		t.Errorf("CAT43 open bug: after the race, ListSuggestionMatches(%q) returned %d rows, want exactly 1 for the (suggestion, slug) pair both callers raced to attach", sg.ID, len(matches))
+		t.Errorf("CAT43: after the race, ListSuggestionMatches(%q) returned %d rows, want exactly 1 for the (suggestion, slug) pair both callers raced to attach", sg.ID, len(matches))
 	}
 }

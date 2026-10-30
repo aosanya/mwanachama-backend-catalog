@@ -15,7 +15,7 @@ func TestARequiredBodyArgumentLeftOutIsRefusedAndChangesNothing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FileSuggestion: %v", err)
 	}
-	if _, err := cm.DecideSuggestion(ctx, filed.ID, catalog.SuggestionStatusApproved, 0); err != nil {
+	if _, err := cm.DecideSuggestion(ctx, filed.ID, catalog.SuggestionStatusApproved, nil); err != nil {
 		t.Fatalf("DecideSuggestion: %v", err)
 	}
 	suggestion := "/suggestions/" + filed.ID

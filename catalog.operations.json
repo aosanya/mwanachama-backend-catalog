@@ -357,7 +357,7 @@
       "call": "DecideSuggestion",
       "action": "catalog.suggestion.decide",
       "title": "Decide suggestion",
-      "description": "Move a proposal between proposed, approved and rejected, optionally reordering it. Approving a stalled proposal clears its failed attempts. This cannot set 'built' — fulfilling it does that.",
+      "description": "Move a proposal between proposed, approved and rejected, optionally reordering it. Approving a stalled proposal clears its failed attempts. This cannot set 'built', and a built proposal cannot be decided again — fulfilling it does the first.",
       "args": [
         {
           "from": "path",
@@ -373,7 +373,7 @@
         {
           "from": "body",
           "as": "priority",
-          "description": "A new priority. Zero leaves the stored one."
+          "description": "A new priority, lowest first; any integer including zero or a negative number. Leave it out to keep the stored one."
         }
       ],
       "returns": [

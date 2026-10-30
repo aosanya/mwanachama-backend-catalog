@@ -93,7 +93,7 @@ func TestAManagerOverTheRegistersRolesServesEntriesAndSuggestions(t *testing.T) 
 	if err != nil {
 		t.Fatalf("file suggestion: %v", err)
 	}
-	if _, err := cm.DecideSuggestion(ctx, sg.ID, catalog.SuggestionStatus("approved"), 1); err != nil {
+	if _, err := cm.DecideSuggestion(ctx, sg.ID, catalog.SuggestionStatus("approved"), intPtr(1)); err != nil {
 		t.Fatalf("approve suggestion: %v", err)
 	}
 	if _, err := cm.RecordSuggestionAttempt(ctx, sg.ID, "run-1", "did not build"); err != nil {

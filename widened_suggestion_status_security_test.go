@@ -57,10 +57,10 @@ func TestWidenedSuggestionStatusOpensNoDecisionGate(t *testing.T) {
 		t.Fatalf("precondition: filing lands a suggestion in proposed, got %q, err %v", s.Status, err)
 	}
 
-	if _, err := cm.DecideSuggestion(ctx, s.ID, fasttracked, 0); !errors.Is(err, ErrSuggestionStatus) {
+	if _, err := cm.DecideSuggestion(ctx, s.ID, fasttracked, nil); !errors.Is(err, ErrSuggestionStatus) {
 		t.Errorf("a decision into domain-declared status %q was accepted: err = %v, want ErrSuggestionStatus", fasttracked, err)
 	}
-	if _, err := cm.DecideSuggestion(ctx, s.ID, models.SuggestionStatusBuilt, 0); !errors.Is(err, ErrSuggestionStatus) {
+	if _, err := cm.DecideSuggestion(ctx, s.ID, models.SuggestionStatusBuilt, nil); !errors.Is(err, ErrSuggestionStatus) {
 		t.Errorf("a decision straight to built was accepted: err = %v, want ErrSuggestionStatus", err)
 	}
 

@@ -207,10 +207,7 @@ type CatalogManager interface {
 	// priority first. No statuses means all of them.
 	ListSuggestions(ctx context.Context, statuses ...SuggestionStatus) ([]Suggestion, error)
 
-	// DecideSuggestion moves a proposal between proposed, approved and
-	// rejected, optionally reordering it. A non-zero priority replaces the
-	// stored one. It cannot set "built".
-	DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority int) (Suggestion, error)
+	DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority *int) (Suggestion, error)
 
 	// RecordSuggestionAttempt counts a build that did not finish and keeps
 	// the reason as a comment. At MaxSuggestionAttempts the proposal

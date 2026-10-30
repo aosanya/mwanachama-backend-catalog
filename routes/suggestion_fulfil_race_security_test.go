@@ -15,7 +15,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT21_OpenHole_FulfilUndoesAReviewersReject(t *testing.T) {
+func TestCAT21_FulfilDoesNotUndoAReviewersReject(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat21?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -104,6 +104,6 @@ func TestCAT21_OpenHole_FulfilUndoesAReviewersReject(t *testing.T) {
 		t.Fatalf("GET /suggestions/%s answered %d %s", sg.ID, after.Code, after.Body.String())
 	}
 	if got.Status != "rejected" {
-		t.Errorf("CAT21 (P2) open hole: a reviewer's POST /decide {\"status\":\"rejected\"} answered 200 with status rejected while a POST /fulfil was in flight, the fulfil answered %d, and the suggestion now reads %q; want it to stay rejected, because a suggestion may only be marked built while it is still approved at the moment that write lands", fulfil.Code, got.Status)
+		t.Errorf("CAT21 (P2): a reviewer's POST /decide {\"status\":\"rejected\"} answered 200 with status rejected while a POST /fulfil was in flight, the fulfil answered %d, and the suggestion now reads %q; want it to stay rejected, because a suggestion may only be marked built while it is still approved at the moment that write lands", fulfil.Code, got.Status)
 	}
 }

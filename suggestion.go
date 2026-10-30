@@ -45,8 +45,6 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 		return Suggestion{}, ErrInvalidSuggestion
 	}
 
-	// Dedup is not the caller's to skip: a slug that is already an Entry or
-	// already proposed is refused here rather than filed twice.
 	if _, err := m.findEntry(ctx, s.Slug); err == nil {
 		return Suggestion{}, ErrSuggestionDuplicate
 	} else if !errors.Is(err, ErrEntryNotFound) {
@@ -93,13 +91,10 @@ func (m *catalogManager) ListSuggestions(ctx context.Context, statuses ...Sugges
 	return listOf[Suggestion](m, q.Order("priority, created_at"), roleSuggestion)
 }
 
-func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority int) (Suggestion, error) {
+func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status SuggestionStatus, priority *int) (Suggestion, error) {
 	if err := m.needs(roleSuggestion); err != nil {
 		return Suggestion{}, err
 	}
-	// Built is reached by fulfilling a suggestion, never by deciding one —
-	// otherwise the catalog would claim an archetype exists that nothing
-	// built.
 	switch status {
 	case models.SuggestionStatusProposed, models.SuggestionStatusApproved, models.SuggestionStatusRejected:
 	default:
@@ -109,21 +104,28 @@ func (m *catalogManager) DecideSuggestion(ctx context.Context, id string, status
 	if err != nil {
 		return Suggestion{}, err
 	}
+	if existing.Status == models.SuggestionStatusBuilt {
+		return Suggestion{}, ErrSuggestionStatus
+	}
 
 	updates := map[string]any{"status": string(status), "decided_at": m.now()}
 	if status == models.SuggestionStatusProposed {
 		updates["decided_at"] = ""
 	}
-	// Approving clears the attempts, which is what lets an admin send a
-	// stalled suggestion back for another ten tries.
 	if status == models.SuggestionStatusApproved {
 		updates["attempts"] = 0
 	}
-	if priority > 0 {
-		updates["priority"] = priority
+	if priority != nil {
+		updates["priority"] = *priority
 	}
-	if err := m.suggestions(ctx).Where("id = ?", existing.ID).Updates(updates).Error; err != nil {
-		return Suggestion{}, err
+	res := m.suggestions(ctx).
+		Where("id = ? AND status <> ?", existing.ID, string(models.SuggestionStatusBuilt)).
+		Updates(updates)
+	if res.Error != nil {
+		return Suggestion{}, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return Suggestion{}, ErrSuggestionStatus
 	}
 	return m.GetSuggestion(ctx, id)
 }
@@ -132,41 +134,24 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runRef
 	if err := m.needs(roleSuggestion); err != nil {
 		return Suggestion{}, err
 	}
-	// An attempt without a reason tells the next run nothing, so the count
-	// would rise toward the stall with no record of why.
 	if strings.TrimSpace(comment) == "" {
 		return Suggestion{}, ErrAttemptNeedsComment
 	}
-	existing, err := m.findSuggestion(ctx, id)
+	attempts, err := m.countAttempt(ctx, id)
 	if err != nil {
 		return Suggestion{}, err
 	}
-	if existing.Status != models.SuggestionStatusApproved {
-		return Suggestion{}, ErrSuggestionStatus
+	if !m.declares(roleSuggestionComment) {
+		return m.GetSuggestion(ctx, id)
 	}
-
-	attempts := existing.Attempts + 1
-	status := existing.Status
-	if attempts >= models.MaxSuggestionAttempts {
-		status = models.SuggestionStatusStalled
-	}
-	if err := m.suggestions(ctx).Where("id = ?", existing.ID).Updates(map[string]any{
-		"attempts": attempts, "status": string(status),
-	}).Error; err != nil {
-		return Suggestion{}, err
-	}
-
 	note := models.SuggestionComment{
 		ID:           newID(),
-		SuggestionID: existing.ID,
+		SuggestionID: id,
 		Author:       models.CommentAuthorRun,
 		RunRef:       runRef,
 		Attempt:      attempts,
 		Body:         strings.TrimSpace(comment),
 		CreatedAt:    m.now(),
-	}
-	if !m.declares(roleSuggestionComment) {
-		return m.GetSuggestion(ctx, id)
 	}
 	if err := m.insert(ctx, roleSuggestionComment, note); err != nil {
 		return Suggestion{}, err
@@ -174,16 +159,37 @@ func (m *catalogManager) RecordSuggestionAttempt(ctx context.Context, id, runRef
 	return m.GetSuggestion(ctx, id)
 }
 
+func (m *catalogManager) countAttempt(ctx context.Context, id string) (int, error) {
+	for ctx.Err() == nil {
+		existing, err := m.findSuggestion(ctx, id)
+		if err != nil {
+			return 0, err
+		}
+		if existing.Status != models.SuggestionStatusApproved {
+			return 0, ErrSuggestionStatus
+		}
+		attempts := existing.Attempts + 1
+		status := existing.Status
+		if attempts >= models.MaxSuggestionAttempts {
+			status = models.SuggestionStatusStalled
+		}
+		res := m.suggestions(ctx).
+			Where("id = ? AND status = ? AND attempts = ?", existing.ID, string(models.SuggestionStatusApproved), existing.Attempts).
+			Updates(map[string]any{"attempts": attempts, "status": string(status)})
+		if res.Error != nil {
+			return 0, res.Error
+		}
+		if res.RowsAffected > 0 {
+			return attempts, nil
+		}
+	}
+	return 0, ctx.Err()
+}
+
 func (m *catalogManager) CommentOnSuggestion(ctx context.Context, id string, author CommentAuthor, body string) (SuggestionComment, error) {
 	if err := m.needs(roleSuggestion, roleSuggestionComment); err != nil {
 		return SuggestionComment{}, err
 	}
-	// The suggestion is read before the comment is checked, where the order
-	// used to be the other way round: suggestion_id is one of the declared
-	// required fields, so the comment cannot be checked as a whole until it
-	// has one. A comment on a suggestion that is not there is now
-	// ErrSuggestionNotFound rather than ErrInvalidComment, which is the more
-	// accurate of the two answers anyway.
 	existing, err := m.findSuggestion(ctx, id)
 	if err != nil {
 		return SuggestionComment{}, err
@@ -223,20 +229,25 @@ func (m *catalogManager) upsertMatch(ctx context.Context, suggestionID, slug, ru
 	match := models.SuggestionMatch{
 		SuggestionID: suggestionID, Slug: slug, RunRef: runRef, Note: note, MetAt: m.now(),
 	}
-	var n int64
-	if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", suggestionID, slug).
-		Count(&n).Error; err != nil {
+	refresh := func() (int64, error) {
+		res := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", suggestionID, slug).
+			Updates(map[string]any{"run_ref": runRef, "note": note, "met_at": match.MetAt})
+		return res.RowsAffected, res.Error
+	}
+	refreshed, err := refresh()
+	if err != nil {
 		return SuggestionMatch{}, err
 	}
-	if n > 0 {
-		if err := m.matches(ctx).Where("suggestion_id = ? AND slug = ?", suggestionID, slug).
-			Updates(map[string]any{"run_ref": runRef, "note": note, "met_at": match.MetAt}).Error; err != nil {
-			return SuggestionMatch{}, err
-		}
+	if refreshed > 0 {
 		return match, nil
 	}
 	if err := m.insert(ctx, roleSuggestionMatch, match); err != nil {
-		return SuggestionMatch{}, err
+		if !isUniqueViolation(err) {
+			return SuggestionMatch{}, err
+		}
+		if _, err := refresh(); err != nil {
+			return SuggestionMatch{}, err
+		}
 	}
 	return match, nil
 }
@@ -249,7 +260,26 @@ func (m *catalogManager) AttachSuggestion(ctx context.Context, id, slug, note st
 	if err != nil {
 		return SuggestionMatch{}, err
 	}
+	if !countsAsRaised(existing.Status) {
+		return SuggestionMatch{}, ErrSuggestionStatus
+	}
 	return m.upsertMatch(ctx, existing.ID, slug, existing.RunRef, note)
+}
+
+func countsAsRaised(status SuggestionStatus) bool {
+	switch status {
+	case models.SuggestionStatusProposed, models.SuggestionStatusApproved, models.SuggestionStatusBuilt:
+		return true
+	}
+	return false
+}
+
+func (m *catalogManager) raisedSuggestionIDs(ctx context.Context) *gorm.DB {
+	return m.suggestions(ctx).Select("id").Where("status IN ?", []string{
+		string(models.SuggestionStatusProposed),
+		string(models.SuggestionStatusApproved),
+		string(models.SuggestionStatusBuilt),
+	})
 }
 
 func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runRef, note string) (Suggestion, error) {
@@ -265,11 +295,21 @@ func (m *catalogManager) FulfilSuggestion(ctx context.Context, id, slug, runRef,
 	default:
 		return Suggestion{}, ErrSuggestionStatus
 	}
-	if _, err := m.upsertMatch(ctx, existing.ID, slug, runRef, note); err != nil {
+	if _, err := m.findEntry(ctx, slug); err != nil {
 		return Suggestion{}, err
 	}
-	if err := m.suggestions(ctx).Where("id = ?", existing.ID).
-		Update("status", string(models.SuggestionStatusBuilt)).Error; err != nil {
+	res := m.suggestions(ctx).
+		Where("id = ? AND status IN ?", existing.ID, []string{
+			string(models.SuggestionStatusApproved), string(models.SuggestionStatusBuilt),
+		}).
+		Update("status", string(models.SuggestionStatusBuilt))
+	if res.Error != nil {
+		return Suggestion{}, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return Suggestion{}, ErrSuggestionStatus
+	}
+	if _, err := m.upsertMatch(ctx, existing.ID, slug, runRef, note); err != nil {
 		return Suggestion{}, err
 	}
 	return m.GetSuggestion(ctx, id)
@@ -283,18 +323,18 @@ func (m *catalogManager) ListSuggestionMatches(ctx context.Context, id string) (
 		return nil, err
 	}
 	return listOf[SuggestionMatch](m,
-		m.matches(ctx).Where("suggestion_id = ?", id).Order("slug"),
+		m.matches(ctx).Where("suggestion_id = ? AND suggestion_id IN (?)", id, m.raisedSuggestionIDs(ctx)).Order("slug"),
 		roleSuggestionMatch)
 }
 
 func (m *catalogManager) ListEntryMatches(ctx context.Context, slug string) ([]SuggestionMatch, error) {
-	if err := m.needs(roleSuggestionMatch); err != nil {
+	if err := m.needs(roleSuggestion, roleSuggestionMatch); err != nil {
 		return nil, err
 	}
 	if _, err := m.findEntry(ctx, slug); err != nil {
 		return nil, err
 	}
 	return listOf[SuggestionMatch](m,
-		m.matches(ctx).Where("slug = ?", slug).Order("met_at, suggestion_id"),
+		m.matches(ctx).Where("slug = ? AND suggestion_id IN (?)", slug, m.raisedSuggestionIDs(ctx)).Order("met_at, suggestion_id"),
 		roleSuggestionMatch)
 }
