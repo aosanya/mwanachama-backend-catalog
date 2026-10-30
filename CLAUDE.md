@@ -205,8 +205,12 @@ Each has a test, and the first two were mutation-checked rather than trusted:
 - A share key is stored only as its SHA-256; the raw key is returned once.
 - Leaving `private` retires every live key.
 - A listing never carries `Doc`.
-- Re-sending an **unchanged** document leaves its review alone; a changed one
-  returns to pending. **"Unchanged" is semantic, not byte-wise** — `jsonb`
+- Re-sending an **unchanged** document, name and summary leaves its review
+  alone, and the write leaves `visibility` and `approved_at` out of the row so
+  a reviewer's concurrent decision survives (CAT18, CAT35); a changed one
+  returns to pending and retires every live key (CAT39, CAT42). `UpdateEntry`
+  follows the same rule and ignores any visibility the caller sends (CAT36).
+  **"Unchanged" is semantic, not byte-wise** — `jsonb`
   sorts keys and strips whitespace, so the document read back is rarely the
   one sent, and the byte compare this started as silently un-published every
   re-imported agency on Postgres while passing on SQLite. `sameDocument`

@@ -57,7 +57,7 @@
         {
           "name": "approved_at",
           "type": "timestamp",
-          "description": "When it last left pending. Cleared whenever the document changes, because the reviewed thing no longer exists."
+          "description": "When it last left pending. Cleared whenever the name, summary or document changes, because the reviewed thing no longer exists."
         },
         {
           "name": "publish_at",

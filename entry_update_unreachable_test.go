@@ -8,7 +8,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
-func TestCAT36_OpenBug_UpdateEntryHasNoOperationAndClobbersAModeratorsApproval(t *testing.T) {
+func TestCAT36_UpdateEntryKeepsAModeratorsApprovalWhenReviewedContentIsUnchanged(t *testing.T) {
 	var ops struct {
 		Operations map[string]struct {
 			Call string `json:"call"`
@@ -37,8 +37,9 @@ func TestCAT36_OpenBug_UpdateEntryHasNoOperationAndClobbersAModeratorsApproval(t
 	_, err = cm.UpdateEntry(ctx, catalog.Entry{
 		Slug:       "gamma",
 		Name:       before.Name,
-		Summary:    "a revised summary",
+		Summary:    before.Summary,
 		Doc:        before.Doc,
+		DisposeAt:  "2099-01-01T00:00:00Z",
 		Visibility: before.Visibility,
 		ApprovedAt: before.ApprovedAt,
 	})
@@ -52,6 +53,6 @@ func TestCAT36_OpenBug_UpdateEntryHasNoOperationAndClobbersAModeratorsApproval(t
 	}
 	_, openErr := cm.OpenEntry(ctx, "gamma", "")
 	if stored.Visibility != models.VisibilityPublic || stored.ApprovedAt == "" || openErr != nil {
-		t.Errorf("CAT36 open bug: UpdateEntry is reachable from no declared operation in catalog.operations.json — a caller that imports this module directly and calls it anyway, to revise an Entry's summary, must already hold a full valid Entry (UpdateEntry requires a non-empty enum Visibility or refuses with ErrInvalidEntry) and so naturally resupplies whatever Visibility/ApprovedAt it read earlier; here that earlier read predates a moderator's SetVisibility(public), and the later UpdateEntry call writes the stale pre-approval visibility=%q, approved_at=%q straight back over the approval with no merge and no re-check — got stored visibility=%q approved_at=%q, OpenEntry(anon) err=%v; want visibility=%q, a non-empty ApprovedAt and OpenEntry to succeed, because revising a Summary must not silently undo a moderator's already-committed approval", before.Visibility, before.ApprovedAt, stored.Visibility, stored.ApprovedAt, openErr, models.VisibilityPublic)
+		t.Errorf("CAT36: UpdateEntry is reachable from no declared operation in catalog.operations.json — a caller that imports this module directly and calls it anyway, to revise an Entry's retention time, must already hold a full valid Entry (UpdateEntry requires a non-empty enum Visibility or refuses with ErrInvalidEntry) and so naturally resupplies whatever Visibility/ApprovedAt it read earlier; here that earlier read predates a moderator's SetVisibility(public), and the later UpdateEntry call writes the stale pre-approval visibility=%q, approved_at=%q straight back over the approval with no merge and no re-check — got stored visibility=%q approved_at=%q, OpenEntry(anon) err=%v; want visibility=%q, a non-empty ApprovedAt and OpenEntry to succeed, because revising a field outside the reviewed card must not silently undo a moderator's already-committed approval", before.Visibility, before.ApprovedAt, stored.Visibility, stored.ApprovedAt, openErr, models.VisibilityPublic)
 	}
 }

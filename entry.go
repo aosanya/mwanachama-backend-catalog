@@ -77,11 +77,20 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	if err != nil {
 		return Entry{}, err
 	}
-
 	e.PublishAt = existing.PublishAt
-	e.Visibility = existing.Visibility
-	e.ApprovedAt = existing.ApprovedAt
-	if !sameDocument(existing.Doc, e.Doc) {
+	return m.rewriteEntry(ctx, existing, e)
+}
+
+func reviewedContentChanged(existing, sent Entry) bool {
+	return !sameDocument(existing.Doc, sent.Doc) ||
+		existing.Name != sent.Name ||
+		existing.Summary != sent.Summary
+}
+
+func (m *catalogManager) rewriteEntry(ctx context.Context, existing, e Entry) (Entry, error) {
+	reviewReset := reviewedContentChanged(existing, e)
+	e.Visibility, e.ApprovedAt = existing.Visibility, existing.ApprovedAt
+	if reviewReset {
 		e.Visibility = models.VisibilityPending
 		e.ApprovedAt = ""
 	}
@@ -97,7 +106,15 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	e.UpdatedAt = m.now()
 	e.Deleted = false
 
-	return e, m.replaceEntry(ctx, e)
+	if err := m.replaceEntry(ctx, e, reviewReset); err != nil {
+		return Entry{}, err
+	}
+	if reviewReset {
+		if err := m.retireLinksFor(ctx, e.Slug, e.UpdatedAt); err != nil {
+			return Entry{}, err
+		}
+	}
+	return e, nil
 }
 
 func sameDocument(stored, sent string) bool {
@@ -129,13 +146,14 @@ func canonicalDocument(doc string) (string, bool) {
 	return string(out), true
 }
 
-// replaceEntry writes every declared column of e over the stored row. It is
-// a whole-row write rather than a patch, which is what lets a field be
-// cleared — an Entry losing its ApprovedAt because its document changed.
-func (m *catalogManager) replaceEntry(ctx context.Context, e Entry) error {
+func (m *catalogManager) replaceEntry(ctx context.Context, e Entry, reviewReset bool) error {
 	row, err := encode(m.st.Object(roleEntry), e)
 	if err != nil {
 		return err
+	}
+	if !reviewReset {
+		delete(row, "visibility")
+		delete(row, "approved_at")
 	}
 	return m.entries(ctx).Where("id = ?", e.ID).Updates(row).Error
 }
@@ -181,24 +199,10 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 	if e.ID != "" && e.ID != existing.ID {
 		return Entry{}, ErrSlugImmutable
 	}
-	if err := m.checkEntry(&e); err != nil {
-		return Entry{}, err
-	}
-	if err := m.checkKind(ctx, e.Doc); err != nil {
-		return Entry{}, err
-	}
-
-	e.ID = existing.ID
-	e.CreatedAt = existing.CreatedAt
-	e.UpdatedAt = m.now()
-	e.Deleted = false
-
-	return e, m.replaceEntry(ctx, e)
+	return m.rewriteEntry(ctx, existing, e)
 }
 
 func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visibility) (Entry, error) {
-	// The declared states are the spec's, so a fourth one cannot be
-	// introduced here without being declared there first.
 	if err := m.checksField(roleEntry, "visibility", string(v)); err != nil {
 		return Entry{}, ErrInvalidEntry
 	}
@@ -222,9 +226,6 @@ func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visib
 		return Entry{}, err
 	}
 
-	// Retiring the keys is what makes "no longer private" mean something.
-	// A link left active would keep opening the Entry if it were ever made
-	// private again, by someone who was handed it under the old review.
 	if v != models.VisibilityPrivate {
 		if err := m.retireLinksFor(ctx, slug, now); err != nil {
 			return Entry{}, err

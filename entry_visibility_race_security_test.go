@@ -15,7 +15,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT18_OpenHole_UnchangedResendUndoesAReviewersTakedown(t *testing.T) {
+func TestCAT18_UnchangedResendKeepsAReviewersTakedown(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat18?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

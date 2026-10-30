@@ -15,7 +15,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT35_OpenBug_UnchangedResendUndoesAReviewersApproval(t *testing.T) {
+func TestCAT35_UnchangedResendKeepsAReviewersApproval(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat35?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

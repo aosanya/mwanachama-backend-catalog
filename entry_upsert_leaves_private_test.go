@@ -6,7 +6,7 @@ import (
 	catalog "github.com/aosanya/mwanachama-backend-catalog"
 )
 
-func TestCAT39_OpenBug_UpsertLeavingPrivateNeverRetiresItsKeys(t *testing.T) {
+func TestCAT39_UpsertLeavingPrivateRetiresItsKeys(t *testing.T) {
 	cm, ctx := newManager(t)
 	e := seed(t, cm, ctx, "zz-slug", catalog.VisibilityPrivate)
 

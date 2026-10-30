@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestCAT42_OpenHole_ResendWithANewNameOrSummaryKeepsTheApproval(t *testing.T) {
+func TestCAT42_ResendWithANewNameOrSummaryReturnsToPending(t *testing.T) {
 	operator, anon, _ := municipalityWard(t)
 	doc := `{\"_item\":{\"ward\":\"Kibera North\",\"theme\":\"waste\"}}`
 	reviewed := `{"name":"Blocked drain at Ngong Road","summary":"Reported by residents","doc":"` + doc + `"}`
