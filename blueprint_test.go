@@ -35,10 +35,6 @@ func TestVocabularyMatchesTheBlueprint(t *testing.T) {
 			string(models.SuggestionStatusBuilt),
 			string(models.SuggestionStatusStalled),
 		},
-		roleSuggestionComment + ".author": {
-			string(models.CommentAuthorRun),
-			string(models.CommentAuthorAdmin),
-		},
 		rolePageView + ".page": {
 			string(models.PageKindIndex),
 			string(models.PageKindEntry),

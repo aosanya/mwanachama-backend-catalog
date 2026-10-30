@@ -341,13 +341,10 @@
         },
         {
           "name": "author",
-          "type": "enum",
-          "description": "Which side wrote it.",
+          "type": "string",
+          "description": "Who wrote it: a slug naming a run, a person or a role. 'run' and 'admin' are the module's own.",
           "default": "run",
-          "values": [
-            "run",
-            "admin"
-          ]
+          "matches": "slug"
         },
         {
           "name": "run_ref",

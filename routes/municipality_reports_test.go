@@ -302,7 +302,7 @@ func TestMUNI6_ANoteSaysWhoAnsweredIt(t *testing.T) {
 	answered := do(t, op, "POST", "/suggestions/"+id+"/comments",
 		`{"author":"councillor-kibera-north","body":"The service company has been asked to clear it this week."}`)
 	if answered.Code != http.StatusCreated {
-		t.Errorf("MUNI6 open bug: a note cannot name who wrote it — author \"councillor-kibera-north\" answered "+
+		t.Errorf("MUNI6: a note cannot name who wrote it — author \"councillor-kibera-north\" answered "+
 			"%d %s. suggestion_comment.author is a blueprint enum of run/admin, and a domain may not restate a "+
 			"value set, so the template's report_note — declared to carry \"the councillor's answer, the moderator's "+
 			"reason for a removal, the service company's update\" — cannot distinguish the three. A resident is told "+

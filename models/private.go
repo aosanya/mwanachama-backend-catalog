@@ -8,5 +8,6 @@ type EntryPrivate struct {
 	Appeal        string `json:"appeal,omitempty"`
 	Rank          int    `json:"rank,omitempty"`
 	Doc           string `json:"doc,omitempty"`
+	ClearRank     bool   `json:"clear_rank,omitempty" spec:"-"`
 	UpdatedAt     string `json:"updated_at"`
 }

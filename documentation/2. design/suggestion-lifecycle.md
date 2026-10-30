@@ -41,6 +41,17 @@ arrival drops it from the count and re-approving brings it back (CAT31).
 `upsertMatch` updates first, inserts when nothing was updated, and updates
 again when the insert loses a race on the composite key (CAT43).
 
+## Comment author
+
+`suggestion_comment.author` is a slug-shaped string, not an enum (CAT27, MUNI6).
+`run` and `admin` stay the module's own values and `run` stays the default; a
+domain's note can name who wrote it, such as a councillor or the service
+company. Stored values are unchanged, so existing rows still read. The module
+does not check that the author is who the caller is; that is the mount's gate,
+as it was when the value set was closed.
+
+`suggestion.source` stays an enum of `run`, `owner` and `stray` (CAT28).
+
 ## The anonymous door
 
 Routes served through `PublicRoutesFor` run with `catalog.AsAnonymous` on the
