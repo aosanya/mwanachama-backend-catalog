@@ -25,7 +25,7 @@ func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun,
 	if err := m.needs(roleRun); err != nil {
 		return MiningRun{}, err
 	}
-	if r.TemplatesFiled < 0 {
+	if r.TemplatesFiled < 0 || len(r.Summary) > models.MaxRunSummaryBytes {
 		return MiningRun{}, ErrInvalidRun
 	}
 	r.ID = newID()
@@ -40,10 +40,11 @@ func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, 
 	if err := m.needs(roleRun); err != nil {
 		return nil, err
 	}
-	q := m.runs(ctx).Order("created_at DESC, id DESC")
-	if limit > 0 {
-		q = q.Limit(limit)
+	if limit <= 0 {
+		limit = models.DefaultRunLimit
 	}
+	limit = min(limit, models.MaxRunLimit)
+	q := m.runs(ctx).Order("created_at DESC, id DESC").Limit(limit)
 	return listOf[MiningRun](m, q, roleRun)
 }
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCAT32_OpenHole_OneCallerGrowsTheRunListAnswerWithoutBound(t *testing.T) {
+func TestCAT32_RunReportsAndTheirListAreBounded(t *testing.T) {
 	h, _, _ := newServer(t)
 	const recorded = 40
 	const requestCap = 1 << 20

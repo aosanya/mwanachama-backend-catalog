@@ -92,3 +92,13 @@ that gap is outside these rows and was left as it was.
 - A caller outside the audience's staff reads through `ListPublicEntries`, so
   the same cap, offset and publish-time rule apply and `submitted_by` is
   left out.
+
+## Run reports and share labels are bounded (CAT32)
+
+The engine has no maximum-length declaration for a field, so the bounds are
+checked in Go: `RecordRun` refuses a summary over `MaxRunSummaryBytes` (8 KiB)
+with `ErrInvalidRun`, and `IssueShareLink` refuses a label over
+`MaxShareLabelBytes` (256) with `ErrInvalidShareLink`, both 400. `ListRuns`
+answers `DefaultRunLimit` (100) when no limit is named and never more than
+`MaxRunLimit` (500). Move the two byte bounds into the blueprint once the
+engine can declare them.

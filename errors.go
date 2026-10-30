@@ -36,6 +36,10 @@ var ErrInvalidPrivate = errors.New("invalid entry private parts")
 // outside that alphabet is refused rather than escaped.
 var ErrInvalidDocPath = errors.New("invalid document path")
 
+// ErrInvalidShareLink is returned by [CatalogManager.IssueShareLink] for a
+// label longer than models.MaxShareLabelBytes.
+var ErrInvalidShareLink = errors.New("invalid share link")
+
 // ErrShareLinkNotFound is returned when no ShareLink exists for the given
 // id.
 var ErrShareLinkNotFound = errors.New("share link not found")

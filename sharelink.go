@@ -16,6 +16,9 @@ func (m *catalogManager) links(ctx context.Context) *gorm.DB {
 }
 
 func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by string) (ShareLink, string, error) {
+	if len(label) > models.MaxShareLabelBytes {
+		return ShareLink{}, "", ErrInvalidShareLink
+	}
 	entry, err := m.findEntry(ctx, slug)
 	if err != nil {
 		return ShareLink{}, "", err

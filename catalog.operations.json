@@ -533,7 +533,7 @@
         {
           "from": "query",
           "as": "limit",
-          "description": "How many reports to return. Zero means all of them."
+          "description": "How many reports to return. Zero means the default page of 100, and no more than 500 are returned."
         }
       ],
       "returns": [
@@ -1617,6 +1617,7 @@
     "ErrEntryExists": 409,
     "ErrSlugImmutable": 409,
     "ErrNotPrivate": 409,
+    "ErrInvalidShareLink": 400,
     "ErrSuggestionDuplicate": 409,
     "ErrSuggestionStatus": 409,
     "ErrInvalidEntry": 400,
