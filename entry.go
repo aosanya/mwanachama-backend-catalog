@@ -163,6 +163,13 @@ func (m *catalogManager) GetEntry(ctx context.Context, slug string) (Entry, erro
 }
 
 func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry, error) {
+	keyed := false
+	if key != "" {
+		var err error
+		if keyed, err = m.keyOpens(ctx, slug, key); err != nil {
+			return Entry{}, err
+		}
+	}
 	e, err := m.findEntry(ctx, slug)
 	if err != nil {
 		return Entry{}, err
@@ -175,14 +182,7 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 	case models.VisibilityPublic:
 		return withoutWriter(e), nil
 	case models.VisibilityPrivate:
-		if key == "" {
-			return Entry{}, ErrEntryNotFound
-		}
-		ok, err := m.keyOpens(ctx, slug, key)
-		if err != nil {
-			return Entry{}, err
-		}
-		if !ok {
+		if !keyed {
 			return Entry{}, ErrEntryNotFound
 		}
 		return withoutWriter(e), nil

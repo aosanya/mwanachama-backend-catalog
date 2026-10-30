@@ -48,3 +48,11 @@ Three things used to lean on the sterilised slug and are now explicit:
 emptied. `GetEntry` and `ListEntries`, the operator's reads, keep it. On a
 mount the field is the caller's internal subject, which a public reader has no
 use for and which would let anyone correlate one operator's entries.
+
+## Every refusal costs the store the same (CAT16)
+
+`OpenEntry` looks the key up first whenever the caller sent one, then reads the
+entry. A missing slug, a pending entry and a private entry opened with a wrong
+key therefore each run the same two statements, so the clock does not tell a
+stranger which private slugs exist. A caller sending no key runs one statement
+in every case.

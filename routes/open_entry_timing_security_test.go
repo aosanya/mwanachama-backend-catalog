@@ -15,7 +15,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT16_OpenHole_PrivateSlugCostsTheStoreMoreThanAMissingOne(t *testing.T) {
+func TestCAT16_PrivateSlugCostsTheStoreTheSameAsAMissingOne(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		t.Fatalf("open: %v", err)
