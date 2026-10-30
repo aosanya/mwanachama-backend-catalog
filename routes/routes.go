@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/aosanya/mwanachama-backend-shared/dispatch"
@@ -136,7 +137,16 @@ func SplitFor(cm catalog.CatalogManager, m Mount) dispatch.Split {
 		panic(fmt.Sprintf("catalog routes: mount opens unknown action(s) to anonymous callers: %v", missing))
 	}
 	gated := dispatch.Anonymous(RoutesFor(cm, m), actions...)
+	for i := range public.Anonymous {
+		public.Anonymous[i].Handler = asAnonymous(public.Anonymous[i].Handler)
+	}
 	return dispatch.Split{Anonymous: public.Anonymous, Gated: gated.Gated}
+}
+
+func asAnonymous(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		next(w, r.WithContext(catalog.AsAnonymous(r.Context())))
+	}
 }
 
 func PublicRoutes(cm catalog.CatalogManager) []Route {

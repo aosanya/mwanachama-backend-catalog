@@ -32,9 +32,16 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 	if err := m.needs(roleSuggestion); err != nil {
 		return Suggestion{}, err
 	}
+	anonymous := isAnonymous(ctx)
+	asked := s.Slug
 	s.Status = models.SuggestionStatusProposed
 	s.Attempts = 0
 	s.DecidedAt = ""
+	if anonymous {
+		s.Priority = 0
+		s.Source = ""
+		s.RunRef = ""
+	}
 	if s.Priority == 0 {
 		s.Priority = models.DefaultSuggestionPriority
 	}
@@ -45,6 +52,25 @@ func (m *catalogManager) FileSuggestion(ctx context.Context, s Suggestion) (Sugg
 		return Suggestion{}, ErrInvalidSuggestion
 	}
 
+	filed, err := m.fileOnce(ctx, s)
+	if !anonymous {
+		return filed, err
+	}
+	if errors.Is(err, ErrSuggestionDuplicate) {
+		s.Slug = parkedSlug(asked)
+		filed, err = m.fileOnce(ctx, s)
+	}
+	if err == nil {
+		filed.Slug = asked
+	}
+	return filed, err
+}
+
+func parkedSlug(slug string) string {
+	return slug + "-" + strings.ReplaceAll(newID(), "-", "")[:8]
+}
+
+func (m *catalogManager) fileOnce(ctx context.Context, s Suggestion) (Suggestion, error) {
 	if _, err := m.findEntry(ctx, s.Slug); err == nil {
 		return Suggestion{}, ErrSuggestionDuplicate
 	} else if !errors.Is(err, ErrEntryNotFound) {

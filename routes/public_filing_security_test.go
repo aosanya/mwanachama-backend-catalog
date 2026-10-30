@@ -9,7 +9,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
-func TestCAT29_OpenHole_AnonymousFilerSetsItsOwnQueuePriorityAndSource(t *testing.T) {
+func TestCAT29_AnonymousFilerCannotSetItsOwnQueuePriorityAndSource(t *testing.T) {
 	operator, anon, _ := municipalityWard(t)
 
 	honest := do(t, anon, "POST", "/suggestions", wardReportBody("honest-drain", "Kibera North", "waste", "counter"))
@@ -40,7 +40,7 @@ func TestCAT29_OpenHole_AnonymousFilerSetsItsOwnQueuePriorityAndSource(t *testin
 	}
 }
 
-func TestCAT30_OpenHole_AnonymousFilingTellsAHiddenBoardItemFromAMissingSlug(t *testing.T) {
+func TestCAT30_AnonymousFilingDoesNotTellAHiddenBoardItemFromAMissingSlug(t *testing.T) {
 	_, anon, cm := municipalityWard(t)
 	ctx := t.Context()
 
