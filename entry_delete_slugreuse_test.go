@@ -15,7 +15,7 @@ import (
 // slug forever and the one operation a mounting host exposes for creating
 // an Entry — UpsertEntry, wired to `PUT /entries/{slug}` — fails on a slug
 // every read already reports as free.
-func TestCAT37_OpenBug_DeletedEntrySlugCanNeverBeReused(t *testing.T) {
+func TestCAT37_DeletedEntrySlugCanBeReused(t *testing.T) {
 	cm, ctx := newManager(t)
 	seed(t, cm, ctx, "ghost-slug", catalog.VisibilityPublic)
 

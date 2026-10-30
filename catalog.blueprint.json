@@ -16,7 +16,6 @@
           "type": "string",
           "description": "Stable URL key for this entry. Fixed at creation — the private notes and the share links hang off it.",
           "required": true,
-          "unique": true,
           "immutable": true,
           "matches": "slug"
         },
@@ -86,6 +85,13 @@
         }
       ],
       "indexes": [
+        {
+          "name": "slug_live",
+          "description": "One live entry per slug. A deleted entry no longer holds its slug.",
+          "fields": ["slug"],
+          "unique": true,
+          "not_deleted": true
+        },
         {
           "name": "visibility",
           "description": "Filters the review queue and the public listing.",

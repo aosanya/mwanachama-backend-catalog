@@ -244,6 +244,9 @@ func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
 		Updates(map[string]any{"deleted": true, "updated_at": now}).Error; err != nil {
 		return err
 	}
+	if err := m.privates(ctx).Where("slug = ?", slug).Delete(&map[string]any{}).Error; err != nil {
+		return err
+	}
 	return m.retireLinksFor(ctx, slug, now)
 }
 

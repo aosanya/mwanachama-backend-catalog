@@ -17,7 +17,14 @@ func (m *catalogManager) SeedEntries(ctx context.Context) ([]string, error) {
 	}
 	created := []string{}
 	for _, s := range seeds {
-		_, err := m.CreateEntry(ctx, s.Entry())
+		taken, err := m.slugEverUsed(ctx, s.Slug)
+		if err != nil {
+			return created, err
+		}
+		if taken {
+			continue
+		}
+		_, err = m.CreateEntry(ctx, s.Entry())
 		if errors.Is(err, ErrEntryExists) {
 			continue
 		}
@@ -34,4 +41,10 @@ func (m *catalogManager) entrySeeds(ctx context.Context) ([]models.EntrySeed, er
 		return nil, nil
 	}
 	return resolveFitting(ctx, m, seedsSetting, models.ParseEntrySeeds)
+}
+
+func (m *catalogManager) slugEverUsed(ctx context.Context, slug string) (bool, error) {
+	var n int64
+	err := m.entries(ctx).Where("slug = ?", slug).Count(&n).Error
+	return n > 0, err
 }
