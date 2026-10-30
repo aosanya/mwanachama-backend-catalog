@@ -15,7 +15,7 @@ import (
 	"github.com/aosanya/mwanachama-backend-shared/spec"
 )
 
-func TestCAT17_OpenHole_KeyIssuedWhileLeavingPrivateSurvivesTheRetirement(t *testing.T) {
+func TestCAT17_KeyIssuedWhileLeavingPrivateIsRetiredWithTheRest(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open("file:cat17?mode=memory&cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

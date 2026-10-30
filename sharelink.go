@@ -41,7 +41,24 @@ func (m *catalogManager) IssueShareLink(ctx context.Context, slug, label, by str
 	if err := m.insert(ctx, roleShareLink, link); err != nil {
 		return ShareLink{}, "", err
 	}
+	if err := m.retireIfNoLongerPrivate(ctx, link); err != nil {
+		return ShareLink{}, "", err
+	}
 	return link, raw, nil
+}
+
+func (m *catalogManager) retireIfNoLongerPrivate(ctx context.Context, link models.ShareLink) error {
+	current, err := m.findEntry(ctx, link.Slug)
+	if err == nil && current.Visibility == models.VisibilityPrivate {
+		return nil
+	}
+	if retireErr := m.retireLinksFor(ctx, link.Slug, m.now()); retireErr != nil {
+		return retireErr
+	}
+	if err != nil {
+		return err
+	}
+	return ErrNotPrivate
 }
 
 func (m *catalogManager) RetireShareLink(ctx context.Context, id string) (ShareLink, error) {
