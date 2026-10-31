@@ -24,7 +24,7 @@ an item is always born open and unassigned.
 ## The operations
 
 All three are gated; none is on `AnonymousActions`. A host puts them under
-its Manage the board power (agency AG89).
+its Manage the board permission (agency AG89).
 
 | Operation | Address | Action |
 | --- | --- | --- |
