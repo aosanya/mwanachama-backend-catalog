@@ -3,9 +3,11 @@
 A catalog of documents with a review state: things are proposed, built,
 reviewed, published or shared under a key, and counted.
 
-A Go library backed by Postgres through GORM. There is no service to run —
-`Migrate(db, tables)` creates the tables and `NewCatalogManager(db, tables)`
-returns the manager the rest of your code calls.
+A Go library backed by Postgres through GORM, its objects declared in
+`catalog.blueprint.json` rather than written as row structs. There is no
+service to run — `spec.Migrate(db, s)` creates the tables of the spec
+`SpecFor(instance, mount)` returns and `NewCatalogManager(db, s)` returns the
+manager the rest of your code calls.
 
 ## It names no domain, and that is the point
 
@@ -91,12 +93,12 @@ reinvented.
 ## The document column
 
 `Entry.Doc` is `jsonb` on Postgres and `text` everywhere else, chosen per
-dialect by `gormstore.JSONDoc`. Filtering inside the document happens in the
+dialect by `spec.Migrate`. Filtering inside the document happens in the
 database — `doc #>> '{a,b}'` on Postgres, `json_extract(doc, '$.a.b')` on
 SQLite, which has JSON1.
 
 Neither dialect takes the path as a bound parameter, so
-`models.DocPathPattern` restricts a path to dotted segments of letters,
+`spec.DocPathPattern` restricts a path to dotted segments of letters,
 digits, underscore and hyphen. Anything else is refused with
 `ErrInvalidDocPath` rather than escaped.
 
@@ -134,18 +136,13 @@ wrapped around it by whatever mounts it. The grant table belongs in
 
 ## Status
 
-Implemented and tested against SQLite: Entry CRUD with visibility and the
-public read, the private parts, share links, the backlog (suggestions,
-comments, matches, attempts and the stall), run reports, settings and page
-views — nine tables.
-
-`routes/` is **provisional and should not be copied.** It hand-writes twelve
-handlers, which is the shape the spec-driven dispatcher replaces; its tests
-are kept as the acceptance criteria that dispatcher must satisfy unchanged.
-
-Not yet built: the dispatcher, the Postgres integration test covering the
-`jsonb` reads, and running `cmd/import` against a real database. Tracked as
-W13 and W14 on `mwanachama-website`'s board.
+Implemented and tested against SQLite, and against Postgres behind
+`make test-pg`: nineteen declared objects (entries and their private parts,
+share links, the backlog, run reports, settings, page views, raised items,
+services and slots among them) and sixty-seven declared operations.
+`catalog.operations.json` declares the route table, and `routes/` builds the
+REST routes and MCP tools from it through `mwanachama-backend-shared/dispatch`.
+`cmd/ddl`, `cmd/import` and `cmd/seed` are the command-line tools.
 
 ## Test
 
