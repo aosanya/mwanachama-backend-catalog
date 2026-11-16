@@ -3,7 +3,6 @@ package mwanachamacatalog
 import (
 	"context"
 	"errors"
-
 	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
@@ -24,7 +23,6 @@ func (m *catalogManager) IssueFollowKey(ctx context.Context, raisedItemID string
 	}
 	return FollowKey{RaisedItemID: raised.ID, Key: raw}, nil
 }
-
 func (m *catalogManager) OpenFollowedRaisedItem(ctx context.Context, key string) (FollowedRaisedItem, error) {
 	if !m.takesRaisedItems() || key == "" {
 		return FollowedRaisedItem{}, ErrRaisedItemNotFound
@@ -36,7 +34,11 @@ func (m *catalogManager) OpenFollowedRaisedItem(ctx context.Context, key string)
 		}
 		return FollowedRaisedItem{}, err
 	}
-	followed := FollowedRaisedItem{Item: raised, Replies: []Reply{}}
+	status, err := m.statusOf(ctx, raised)
+	if err != nil {
+		return FollowedRaisedItem{}, err
+	}
+	followed := FollowedRaisedItem{Item: raised, Status: status, Replies: []Reply{}}
 	if m.sendsReplies() {
 		replies, err := m.ListReplies(ctx, raised.ID)
 		if err != nil {

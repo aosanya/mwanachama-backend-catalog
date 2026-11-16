@@ -4,18 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
-
+	"github.com/aosanya/mwanachama-backend-catalog/models"
 	"github.com/aosanya/mwanachama-backend-shared/spec"
+	"strings"
 )
 
 const cataloguesSetting = "catalogues"
 
-var catalogueAudiences = map[Audience]bool{
-	AudiencePublic:  true,
-	AudienceMembers: true,
-	AudienceStaff:   true,
-}
+var catalogueAudiences = map[Audience]bool{AudiencePublic: true, AudienceMembers: true, AudienceStaff: true}
 
 type Catalogue struct {
 	Mount    string   `json:"mount"`
@@ -40,6 +36,11 @@ func CheckSettings(settings json.RawMessage) []string {
 	if problems := spec.CheckSettings(blueprint.Settings, values); len(problems) > 0 {
 		return problems
 	}
+	if raw, present := values[routingSetting]; present {
+		if _, err := models.ParseRouting(raw); err != nil {
+			return []string{routingSetting + ": a default department and rules, each a topic and a department, no topic twice"}
+		}
+	}
 	raw, present := values[cataloguesSetting]
 	if !present {
 		return nil
@@ -47,7 +48,6 @@ func CheckSettings(settings json.RawMessage) []string {
 	_, problems := ParseCatalogues(raw)
 	return problems
 }
-
 func ParseCatalogues(value any) ([]Catalogue, []string) {
 	raw, err := json.Marshal(value)
 	if err != nil || string(raw) == "null" {
