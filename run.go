@@ -3,30 +3,31 @@ package mwanachamacatalog
 import (
 	"context"
 	"fmt"
-
-	"gorm.io/gorm"
-
 	"github.com/aosanya/mwanachama-backend-catalog/models"
+	"gorm.io/gorm"
 )
 
 func (m *catalogManager) runs(ctx context.Context) *gorm.DB {
 	return m.q(ctx, roleRun)
 }
-
 func (m *catalogManager) settings(ctx context.Context) *gorm.DB {
 	return m.q(ctx, roleSetting)
 }
-
 func (m *catalogManager) views(ctx context.Context) *gorm.DB {
 	return m.q(ctx, rolePageView)
 }
-
 func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun, error) {
 	if err := m.needs(roleRun); err != nil {
 		return MiningRun{}, err
 	}
 	if r.TemplatesFiled < 0 || len(r.Summary) > models.MaxRunSummaryBytes {
 		return MiningRun{}, ErrInvalidRun
+	}
+	if err := plainText(ErrInvalidRun, "summary", r.Summary); err != nil {
+		return MiningRun{}, err
+	}
+	if err := plainText(ErrInvalidRun, "run_ref", r.RunRef); err != nil {
+		return MiningRun{}, err
 	}
 	r.ID = newID()
 	r.CreatedAt = m.now()
@@ -35,7 +36,6 @@ func (m *catalogManager) RecordRun(ctx context.Context, r MiningRun) (MiningRun,
 	}
 	return r, nil
 }
-
 func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, error) {
 	if err := m.needs(roleRun); err != nil {
 		return nil, err
@@ -47,7 +47,6 @@ func (m *catalogManager) ListRuns(ctx context.Context, limit int) ([]MiningRun, 
 	q := m.runs(ctx).Order("created_at DESC, id DESC").Limit(limit)
 	return listOf[MiningRun](m, q, roleRun)
 }
-
 func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Setting, error) {
 	if err := m.needs(roleSetting); err != nil {
 		return Setting{}, err
@@ -55,16 +54,20 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 	if key == "" {
 		return Setting{}, ErrInvalidSetting
 	}
+	if err := plainText(ErrInvalidSetting, "key", key); err != nil {
+		return Setting{}, err
+	}
+	if err := plainText(ErrInvalidSetting, "value", value); err != nil {
+		return Setting{}, err
+	}
 	s := models.Setting{Key: key, Value: value, UpdatedAt: m.now()}
-
 	for {
 		if err := m.insert(ctx, roleSetting, s); err == nil {
 			return s, nil
 		} else if !isUniqueViolation(err) {
 			return Setting{}, err
 		}
-		result := m.settings(ctx).Where("key = ?", key).
-			Updates(map[string]any{"value": value, "updated_at": s.UpdatedAt})
+		result := m.settings(ctx).Where("key = ?", key).Updates(map[string]any{"value": value, "updated_at": s.UpdatedAt})
 		if result.Error != nil {
 			return Setting{}, result.Error
 		}
@@ -73,7 +76,6 @@ func (m *catalogManager) PutSetting(ctx context.Context, key, value string) (Set
 		}
 	}
 }
-
 func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, error) {
 	if err := m.needs(roleSetting); err != nil {
 		return Setting{}, fmt.Errorf("%w: %w", err, ErrSettingNotFound)
@@ -85,7 +87,6 @@ func (m *catalogManager) GetSetting(ctx context.Context, key string) (Setting, e
 	}
 	return s, nil
 }
-
 func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug string) error {
 	if err := m.needs(rolePageView); err != nil {
 		return err
@@ -102,9 +103,7 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 			return err
 		}
 	}
-
-	res := m.views(ctx).Where("page = ? AND slug = ?", string(page), slug).
-		UpdateColumn("views", gorm.Expr("views + 1"))
+	res := m.views(ctx).Where("page = ? AND slug = ?", string(page), slug).UpdateColumn("views", gorm.Expr("views + 1"))
 	if res.Error != nil {
 		return res.Error
 	}
@@ -112,17 +111,13 @@ func (m *catalogManager) RecordPageView(ctx context.Context, page PageKind, slug
 		return nil
 	}
 	if err := m.insert(ctx, rolePageView, models.PageView{Page: page, Slug: slug, Views: 1}); err != nil {
-		// Another caller created the row between the update and here; the
-		// increment is theirs to have made, so retry it rather than fail.
 		if isUniqueViolation(err) {
-			return m.views(ctx).Where("page = ? AND slug = ?", string(page), slug).
-				UpdateColumn("views", gorm.Expr("views + 1")).Error
+			return m.views(ctx).Where("page = ? AND slug = ?", string(page), slug).UpdateColumn("views", gorm.Expr("views + 1")).Error
 		}
 		return err
 	}
 	return nil
 }
-
 func (m *catalogManager) ListPageViews(ctx context.Context) ([]PageView, error) {
 	if err := m.needs(rolePageView); err != nil {
 		return nil, err

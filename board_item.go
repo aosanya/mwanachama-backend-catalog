@@ -6,7 +6,6 @@ func (m *catalogManager) keepsBoard() bool {
 	_, boarded := m.st.Spec().ByRole(roleBoardItem)
 	return boarded && m.takesRaisedItems()
 }
-
 func (m *catalogManager) PutOnBoard(ctx context.Context, b BoardItem) (BoardItem, error) {
 	if !m.keepsBoard() {
 		return BoardItem{}, ErrBoardNotKept
@@ -26,7 +25,6 @@ func (m *catalogManager) PutOnBoard(ctx context.Context, b BoardItem) (BoardItem
 	}
 	return b, nil
 }
-
 func (m *catalogManager) GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error {
 	if !m.keepsBoard() {
 		return ErrBoardNotKept
@@ -47,7 +45,6 @@ func (m *catalogManager) GroupUnderBoardItem(ctx context.Context, raisedItemID, 
 	}
 	return m.q(ctx, roleRaisedItem).Where("id = ?", raisedItemID).Update("board_item_id", boardItemID).Error
 }
-
 func (m *catalogManager) ListBoardItems(ctx context.Context) ([]BoardItemTally, error) {
 	if !m.keepsBoard() {
 		return nil, ErrBoardNotKept
@@ -102,13 +99,15 @@ func (m *catalogManager) ListPublicBoardItems(ctx context.Context, limit, offset
 	}
 	return out, nil
 }
-
 func (m *catalogManager) SetBoardItemOutcome(ctx context.Context, boardItemID, outcome string) error {
 	if !m.keepsBoard() {
 		return ErrBoardNotKept
 	}
 	if boardItemID == "" {
 		return ErrInvalidBoardItem
+	}
+	if err := plainText(ErrInvalidBoardItem, "outcome", outcome); err != nil {
+		return err
 	}
 	res := m.q(ctx, roleBoardItem).Where("id = ?", boardItemID).Update("outcome", outcome)
 	if res.Error != nil {
@@ -119,7 +118,6 @@ func (m *catalogManager) SetBoardItemOutcome(ctx context.Context, boardItemID, o
 	}
 	return nil
 }
-
 func (m *catalogManager) UngroupFromBoardItem(ctx context.Context, raisedItemID string) error {
 	if !m.keepsBoard() {
 		return ErrBoardNotKept
@@ -136,7 +134,6 @@ func (m *catalogManager) UngroupFromBoardItem(ctx context.Context, raisedItemID 
 	}
 	return nil
 }
-
 func (m *catalogManager) SetBoardItemHidden(ctx context.Context, boardItemID string, hidden bool) error {
 	if !m.keepsBoard() {
 		return ErrBoardNotKept

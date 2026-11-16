@@ -3,10 +3,9 @@ package mwanachamacatalog
 import (
 	"context"
 	"errors"
+	"gorm.io/gorm"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 const standingCancelledAt = ""
@@ -16,7 +15,6 @@ func (m *catalogManager) booksTimes() bool {
 	_, bookings := m.st.Spec().ByRole(roleBooking)
 	return slots && bookings
 }
-
 func (m *catalogManager) OfferSlot(ctx context.Context, s Slot) (Slot, error) {
 	if !m.booksTimes() {
 		return Slot{}, ErrTimesNotBooked
@@ -44,7 +42,6 @@ func (m *catalogManager) OfferSlot(ctx context.Context, s Slot) (Slot, error) {
 	}
 	return s, nil
 }
-
 func (m *catalogManager) ListSlots(ctx context.Context, subjectID string) ([]Slot, error) {
 	if !m.booksTimes() {
 		return nil, ErrTimesNotBooked
@@ -54,7 +51,6 @@ func (m *catalogManager) ListSlots(ctx context.Context, subjectID string) ([]Slo
 	}
 	return listOf[Slot](m, m.q(ctx, roleSlot).Where("subject_id = ?", subjectID).Order("starts_at, id"), roleSlot)
 }
-
 func (m *catalogManager) Book(ctx context.Context, slotID, holderID string) (Booking, error) {
 	if !m.booksTimes() {
 		return Booking{}, ErrTimesNotBooked
@@ -83,15 +79,7 @@ func (m *catalogManager) Book(ctx context.Context, slotID, holderID string) (Boo
 		if int(taken) >= slot.Capacity {
 			return ErrSlotFull
 		}
-		out = Booking{
-			ID:        newID(),
-			SlotID:    slot.ID,
-			SubjectID: slot.SubjectID,
-			HolderID:  holderID,
-			Day:       dayOf(slot.StartsAt),
-			StartsAt:  slot.StartsAt,
-			CreatedAt: m.now(),
-		}
+		out = Booking{ID: newID(), SlotID: slot.ID, SubjectID: slot.SubjectID, HolderID: holderID, Day: dayOf(slot.StartsAt), StartsAt: slot.StartsAt, CreatedAt: m.now()}
 		row, err := encode(m.st.Object(roleBooking), out)
 		if err != nil {
 			return err
@@ -103,31 +91,30 @@ func (m *catalogManager) Book(ctx context.Context, slotID, holderID string) (Boo
 	}
 	return out, nil
 }
-
 func dayOf(instant string) string {
 	if i := strings.IndexByte(instant, 'T'); i > 0 {
 		return instant[:i]
 	}
 	return instant
 }
-
 func (m *catalogManager) CancelBooking(ctx context.Context, bookingID, by, reason string) (Booking, error) {
 	return m.cancelBooking(ctx, bookingID, by, reason, false)
 }
-
 func (m *catalogManager) CancelBookingAsStaff(ctx context.Context, bookingID, by, reason string) (Booking, error) {
 	if strings.TrimSpace(reason) == "" {
 		return Booking{}, ErrCancelReasonRequired
 	}
 	return m.cancelBooking(ctx, bookingID, by, reason, true)
 }
-
 func (m *catalogManager) cancelBooking(ctx context.Context, bookingID, by, reason string, staff bool) (Booking, error) {
 	if !m.booksTimes() {
 		return Booking{}, ErrTimesNotBooked
 	}
 	if bookingID == "" || by == "" {
 		return Booking{}, ErrBookingNotFound
+	}
+	if err := plainText(ErrInvalidSlot, "reason", reason); err != nil {
+		return Booking{}, err
 	}
 	var b Booking
 	if err := m.take(m.q(ctx, roleBooking).Where("id = ?", bookingID), roleBooking, &b, ErrBookingNotFound); err != nil {
@@ -140,8 +127,7 @@ func (m *catalogManager) cancelBooking(ctx context.Context, bookingID, by, reaso
 		return Booking{}, ErrBookingCancelled
 	}
 	at := m.now()
-	res := m.q(ctx, roleBooking).Where("id = ? AND cancelled_at = ?", bookingID, standingCancelledAt).
-		Updates(map[string]any{"cancelled_at": at, "cancelled_by": by, "cancel_reason": strings.TrimSpace(reason)})
+	res := m.q(ctx, roleBooking).Where("id = ? AND cancelled_at = ?", bookingID, standingCancelledAt).Updates(map[string]any{"cancelled_at": at, "cancelled_by": by, "cancel_reason": strings.TrimSpace(reason)})
 	if res.Error != nil {
 		return Booking{}, res.Error
 	}
@@ -151,7 +137,6 @@ func (m *catalogManager) cancelBooking(ctx context.Context, bookingID, by, reaso
 	b.CancelledAt, b.CancelledBy, b.CancelReason = at, by, strings.TrimSpace(reason)
 	return b, nil
 }
-
 func (m *catalogManager) ListHolderBookings(ctx context.Context, holderID string) ([]Booking, error) {
 	if !m.booksTimes() {
 		return nil, ErrTimesNotBooked
@@ -161,7 +146,6 @@ func (m *catalogManager) ListHolderBookings(ctx context.Context, holderID string
 	}
 	return listOf[Booking](m, m.q(ctx, roleBooking).Where("holder_id = ?", holderID).Order("starts_at, id"), roleBooking)
 }
-
 func (m *catalogManager) ListDayBookings(ctx context.Context, subjectID, day string) ([]Booking, error) {
 	if !m.booksTimes() {
 		return nil, ErrTimesNotBooked
