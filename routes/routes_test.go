@@ -23,6 +23,12 @@ const doc = `{"agency":{"name":"Test"},"_template":{"sector":"health"},"modules"
 
 func newServer(t *testing.T) (http.Handler, catalog.CatalogManager, context.Context) {
 	t.Helper()
+	h, cm, ctx, _ := newServerWithDB(t)
+	return h, cm, ctx
+}
+
+func newServerWithDB(t *testing.T) (http.Handler, catalog.CatalogManager, context.Context, *gorm.DB) {
+	t.Helper()
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -45,7 +51,7 @@ func newServer(t *testing.T) (http.Handler, catalog.CatalogManager, context.Cont
 	for _, r := range routes.Routes(cm) {
 		mux.Handle(r.Method+" "+r.Path, r.Handler)
 	}
-	return mux, cm, context.Background()
+	return mux, cm, context.Background(), db
 }
 
 func do(t *testing.T, h http.Handler, method, path, body string) *httptest.ResponseRecorder {

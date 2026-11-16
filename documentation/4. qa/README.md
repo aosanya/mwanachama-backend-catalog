@@ -283,16 +283,20 @@ what the section below lists.
   only `repeated` argument any of the four libraries declares, and each value
   becomes one bound parameter, so the store's query passes SQLite's variable
   limit (`SQL logic error: too many SQL variables (1)` from the manager
-  directly). That failure is the test's precondition; what it pins is that
-  neither door then says anything about the database. Both answer the
-  dispatcher's opaque `internal error` (a `500`, ~48 ms) — the status is not
-  pinned. Since the Go toolchain capped a query at 10,000 parameters the
-  HTTP half no longer reaches the store: it is refused with a `400` by
-  `routes/query_guard.go` (hub issue CAT135, see `routes/oversized_query_refused_test.go`),
-  and only the tool half still shows the store's own error. Mutation-checked
+  directly). That failure is the tool half's precondition. The HTTP half
+  cannot use it: a query of more than 10,000 parameters is refused with a `400`
+  by `routes/query_guard.go` (hub issues CAT135 and CAT136, see
+  `routes/oversized_query_refused_test.go`) before the store is reached, and
+  9,999 statuses are answered `200` on SQLite (its variable limit is 32,766).
+  The HTTP half therefore sends 9,999 statuses, under the cap, to a server whose
+  database is closed, so the store fails with `sql: database is closed`
+  (hub issue CAT137). What both halves pin is that neither door then says
+  anything about the database. Both answer the dispatcher's opaque
+  `internal error` (an HTTP `500`) — the status is not pinned. Mutation-checked
   by writing the call's own error in place of the opaque one in
-  `mwanachama-backend-shared/dispatch`'s `handlerFor` and `invokerFor` — each
-  half then fails naming `SQL`. Postgres's limit is 65,535 parameters, so the
+  `mwanachama-backend-shared/dispatch`: in `handlerFor` the HTTP half fails
+  naming `sql`, in `invokerFor` the tool half fails naming `SQL`, each on its own.
+  Postgres's limit is 65,535 parameters, so the
   same flood succeeds there and costs one 40,000-term `IN` list per request;
   unmeasured (no Postgres plane in the run).
 - **An MCP call cannot smuggle a server-owned field in another casing.**
