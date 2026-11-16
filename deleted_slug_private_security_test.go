@@ -23,7 +23,7 @@ func TestADeletedEntrysPrivateNotesNeverReachALaterEntryAtItsSlug(t *testing.T) 
 	if p, err := cm.GetPrivate(ctx, "reused"); err != nil || p.Readme != "first entry's notes" {
 		t.Fatalf("precondition: first entry's notes not readable (%+v, %v)", p, err)
 	}
-	if err := cm.DeleteEntry(ctx, "reused"); err != nil {
+	if err := cm.DeleteEntry(ctx, "reused", ""); err != nil {
 		t.Fatalf("delete first entry: %v", err)
 	}
 

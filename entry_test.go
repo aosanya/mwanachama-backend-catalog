@@ -259,7 +259,7 @@ func TestDeleteEntry_HidesItFromEveryRead(t *testing.T) {
 	cm, ctx := newManager(t)
 	seed(t, cm, ctx, "public-one", catalog.VisibilityPublic)
 
-	if err := cm.DeleteEntry(ctx, "public-one"); err != nil {
+	if err := cm.DeleteEntry(ctx, "public-one", ""); err != nil {
 		t.Fatalf("delete: %v", err)
 	}
 	if _, err := cm.OpenEntry(ctx, "public-one", ""); !errors.Is(err, catalog.ErrEntryNotFound) {

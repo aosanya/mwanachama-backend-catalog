@@ -32,7 +32,7 @@ func TestAnonymousSearchNeverReachesAnUnpublishedOrDeletedEntry(t *testing.T) {
 	if _, err := cm.SetVisibility(ctx, "removed-report", catalog.VisibilityPublic); err != nil {
 		t.Fatalf("precondition: SetVisibility(removed-report): %v", err)
 	}
-	if err := cm.DeleteEntry(ctx, "removed-report"); err != nil {
+	if err := cm.DeleteEntry(ctx, "removed-report", ""); err != nil {
 		t.Fatalf("precondition: DeleteEntry(removed-report): %v", err)
 	}
 

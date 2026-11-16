@@ -77,7 +77,7 @@ func entryOperationsWork(t *testing.T, cm catalog.CatalogManager, ctx context.Co
 	if _, err := cm.OpenEntry(ctx, "closed-one", key); err != nil {
 		t.Fatalf("open private entry by key: %v", err)
 	}
-	if err := cm.DeleteEntry(ctx, "open-one"); err != nil {
+	if err := cm.DeleteEntry(ctx, "open-one", ""); err != nil {
 		t.Fatalf("delete entry: %v", err)
 	}
 }

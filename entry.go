@@ -77,6 +77,9 @@ func reviewedContentChanged(existing, sent Entry) bool {
 	return !sameDocument(existing.Doc, sent.Doc) || existing.Name != sent.Name || existing.Summary != sent.Summary
 }
 func (m *catalogManager) rewriteEntry(ctx context.Context, existing, e Entry) (Entry, error) {
+	if err := entryMayBeChangedBy(ctx, existing, e.SubmittedBy); err != nil {
+		return Entry{}, err
+	}
 	if err := m.fillWard(ctx, &e); err != nil {
 		return Entry{}, err
 	}
@@ -212,9 +215,12 @@ func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visib
 	}
 	return m.GetEntry(ctx, slug)
 }
-func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
+func (m *catalogManager) DeleteEntry(ctx context.Context, slug, deletedBy string) error {
 	existing, err := m.findEntry(ctx, slug)
 	if err != nil {
+		return err
+	}
+	if err := entryMayBeChangedBy(ctx, existing, deletedBy); err != nil {
 		return err
 	}
 	now := m.now()

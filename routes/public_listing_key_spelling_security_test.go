@@ -29,7 +29,7 @@ func TestAnonymousListingStaysPublicUnderEveryQueryKeySpelling(t *testing.T) {
 	put("queued-card", "")
 	put("hidden-card", catalog.VisibilityPrivate)
 	put("removed-card", catalog.VisibilityPublic)
-	if err := cm.DeleteEntry(ctx, "removed-card"); err != nil {
+	if err := cm.DeleteEntry(ctx, "removed-card", ""); err != nil {
 		t.Fatalf("precondition: DeleteEntry(removed-card): %v", err)
 	}
 	for i := 0; i < models.MaxPublicEntryLimit+5; i++ {

@@ -19,7 +19,7 @@ func TestCAT37_DeletedEntrySlugCanBeReused(t *testing.T) {
 	cm, ctx := newManager(t)
 	seed(t, cm, ctx, "ghost-slug", catalog.VisibilityPublic)
 
-	if err := cm.DeleteEntry(ctx, "ghost-slug"); err != nil {
+	if err := cm.DeleteEntry(ctx, "ghost-slug", ""); err != nil {
 		t.Fatalf("DeleteEntry: %v", err)
 	}
 

@@ -130,7 +130,7 @@ func TestSeedEntries_ADeletedSeedIsNotRecreated(t *testing.T) {
 	if _, err := cm.SeedEntries(ctx); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	if err := cm.DeleteEntry(ctx, "first"); err != nil {
+	if err := cm.DeleteEntry(ctx, "first", ""); err != nil {
 		t.Fatalf("delete: %v", err)
 	}
 	created, err := cm.SeedEntries(ctx)

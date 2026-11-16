@@ -57,7 +57,7 @@ func TestARaisedItemNamingNoEntryInThisCatalogIsRefused(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := cm.DeleteEntry(ctx, "gone"); err != nil {
+	if err := cm.DeleteEntry(ctx, "gone", ""); err != nil {
 		t.Fatal(err)
 	}
 	for name, subject := range map[string]string{"unknown": "no-such-entry", "deleted": gone.ID} {
