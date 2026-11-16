@@ -71,6 +71,10 @@ func TestAnEntryIsRefusedWhenItsSlugDocumentOrDatesAreWrong(t *testing.T) {
 		e.Slug = "clinic-"
 	}}, {"no name", func(e *catalog.Entry) {
 		e.Name = ""
+	}}, {"a name with a NUL byte", func(e *catalog.Entry) {
+		e.Name = "a\x00b"
+	}}, {"a summary with a NUL byte", func(e *catalog.Entry) {
+		e.Summary = "a\x00b"
 	}}, {"a document that is not an object", func(e *catalog.Entry) {
 		e.Doc = `["a"]`
 	}}, {"a publish date that is not a date", func(e *catalog.Entry) {
