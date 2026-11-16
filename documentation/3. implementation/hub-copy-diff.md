@@ -8,18 +8,21 @@
 scripts/hub-copy-diff.sh [path-to-hub-modules-catalog]
 ```
 
-The default path is `../projects/hub-steward/code/wakala-api/modules/catalog`, relative to this repository's parent folder. The exit code is 1 when `diff` prints anything, which includes the `Only in backend` lines below. The script and `scripts/hubdiff` are the ones of `mwanachama-backend-git` (G78) with the module path changed.
+The default path is `../projects/hub-steward/code/wakala-api/modules/catalog`, relative to this repository's parent folder. The exit code is 1 when the output has any line starting with `diff `, `Binary files ` or `Only in hub`, and 0 otherwise, so `Only in backend` lines alone (this repository's own tests, `spec` and `routes/testdata`) leave it at 0. The script and `scripts/hubdiff` come from `mwanachama-backend-git` (G78) with the module path changed; the script here carries the fix of hub issue S70 (the exit rule of I13 and M6).
 
 ## What it does
 
 1. Copies the `*.go` and `*.json` files of this repository and of the hub folder into two temporary folders, leaving out `cmd/`, `documentation/`, `scripts/` and `.git/`. The hub never had `cmd/`.
 2. Rewrites the hub's imports: `wakalaserver/modules/shared/` becomes `github.com/aosanya/mwanachama-backend-shared/`, and `wakalaserver/modules/catalog` becomes `github.com/aosanya/mwanachama-backend-catalog`.
 3. Runs every Go file on both sides through `scripts/hubdiff`, which parses it, drops all comments and prints it with `gofmt`, so comments and layout do not show as differences.
-4. Runs `diff -r backend hub`.
+4. Runs `diff -r backend hub` and prints its output.
+5. Exits 1 if that output has a `diff ` line (a file differs, JSON files included), a `Binary files ` line or an `Only in hub` line (the hub has something this repository lacks); otherwise exits 0.
 
 ## Result of 2026-11-16
 
-No `diff` line and no `Only in hub` line. What remains is `Only in backend`, all of it test files, test data or the example specs the hub copy never carried:
+On the live hub folder the script exits 1 today, and that is correct: it prints one `diff routes/routes.go hub/routes/routes.go` (the hub copy lacks the `guardQueries` call of CAT135) and an `Only in backend: query_guard.go` line for `routes/query_guard.go`. The exit stays 1 until the hub copy gets those two changes.
+
+On a scratch copy of the hub folder carrying both CAT135 changes there is no `diff` line and no `Only in hub` line, and the script exits 0. In that scratch copy a changed `.go` file, a changed `.json` file (a renamed key in `catalog.operations.json`) and a file only the hub has each exit 1. What remains is `Only in backend`, all of it test files, test data or the example specs the hub copy never carried:
 
 | Difference | Reason |
 |---|---|
@@ -40,4 +43,4 @@ Files a commit touched lost their comments (the repository rule is no comments i
 
 `record_postgres_race_test.go` (hub d8836484) runs only when `DATABASE_URL` points at localhost, and has not been run against a Postgres yet.
 
-`TestAFloodOfRepeatedStatusesThatBreaksTheStoreNamesNothingAboutIt` failed before this work (GET /suggestions with 40000 statuses answered 200) because the Go toolchain's 10,000-parameter query cap made the dispatcher read the request as unfiltered (hub issue CAT135). The fix is `routes/query_guard.go` and one call in `routes/routes.go`, with `oversized_query_refused_test.go`. The hub copy has the same behaviour and needs the same two changes to stay identical bar the import path; until then `scripts/hub-copy-diff.sh` shows `Only in backend` for `routes/query_guard.go` and a `diff` for `routes/routes.go`.
+`TestAFloodOfRepeatedStatusesThatBreaksTheStoreNamesNothingAboutIt` failed before this work (GET /suggestions with 40000 statuses answered 200) because the Go toolchain's 10,000-parameter query cap made the dispatcher read the request as unfiltered (hub issue CAT135). The fix is `routes/query_guard.go` and one call in `routes/routes.go`, with `oversized_query_refused_test.go`. The hub copy has the same behaviour and needs the same two changes to stay identical bar the import path; until then `scripts/hub-copy-diff.sh` shows `Only in backend` for `routes/query_guard.go` and a `diff` for `routes/routes.go`, and exits 1, which is the correct answer for a real difference.
