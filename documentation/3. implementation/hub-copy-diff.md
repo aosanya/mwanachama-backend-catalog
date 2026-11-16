@@ -40,4 +40,4 @@ Files a commit touched lost their comments (the repository rule is no comments i
 
 `record_postgres_race_test.go` (hub d8836484) runs only when `DATABASE_URL` points at localhost, and has not been run against a Postgres yet.
 
-A test that already failed before this work: `routes` `TestAFloodOfRepeatedStatusesThatBreaksTheStoreNamesNothingAboutIt` (GET /suggestions with 40000 statuses answers 200).
+`TestAFloodOfRepeatedStatusesThatBreaksTheStoreNamesNothingAboutIt` failed before this work (GET /suggestions with 40000 statuses answered 200) because the Go toolchain's 10,000-parameter query cap made the dispatcher read the request as unfiltered (hub issue CAT135). The fix is `routes/query_guard.go` and one call in `routes/routes.go`, with `oversized_query_refused_test.go`. The hub copy has the same behaviour and needs the same two changes to stay identical bar the import path; until then `scripts/hub-copy-diff.sh` shows `Only in backend` for `routes/query_guard.go` and a `diff` for `routes/routes.go`.

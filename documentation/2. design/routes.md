@@ -155,3 +155,20 @@ operations (`record_run` body, `fail_suggestion` and `fulfil_suggestion` args)
 and every response. The meaning is unchanged; a caller that sent `run_id`
 sends `run_ref`. `blueprint_test.go` loads the shipped blueprint, and
 `examples_test.go` counts each object's table and its `_test` twin.
+
+## A query the server cannot parse is refused, not read as no query
+
+Since the Go toolchain capped `net/url` at 10,000 query parameters,
+`url.ParseQuery` returns an error and an empty map for a longer query, and
+`r.URL.Query()` hides the error. The dispatcher binds every query argument from
+`r.URL.Query()`, so a request over the cap arrived with every filter and limit
+missing: `GET /suggestions` with 40,000 `status` values listed every status.
+`routes/query_guard.go` wraps each handler `BuildFor` returns, which every
+constructor (`Build`, `Routes`, `Split`, `PublicRoutes`, `OperatorRoutes`) goes
+through, and answers `400` with "the query string could not be read: too many
+parameters" before the dispatcher runs. A query at the cap is still answered.
+`oversized_query_refused_test.go` pins the refusal on the gated door, on the
+anonymous door and for an unrelated parameter. The root cause is in
+`mwanachama-backend-shared/dispatch` (`bind.go`), where the guard would serve
+every repository at once; this one covers the catalog's routes only.
+

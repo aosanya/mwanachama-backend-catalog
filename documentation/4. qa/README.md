@@ -286,7 +286,10 @@ what the section below lists.
   directly). That failure is the test's precondition; what it pins is that
   neither door then says anything about the database. Both answer the
   dispatcher's opaque `internal error` (a `500`, ~48 ms) — the status is not
-  pinned. Mutation-checked
+  pinned. Since the Go toolchain capped a query at 10,000 parameters the
+  HTTP half no longer reaches the store: it is refused with a `400` by
+  `routes/query_guard.go` (hub issue CAT135, see `routes/oversized_query_refused_test.go`),
+  and only the tool half still shows the store's own error. Mutation-checked
   by writing the call's own error in place of the opaque one in
   `mwanachama-backend-shared/dispatch`'s `handlerFor` and `invokerFor` — each
   half then fails naming `SQL`. Postgres's limit is 65,535 parameters, so the

@@ -40,7 +40,11 @@ func BuildFor(cm catalog.CatalogManager, m Mount) ([]Route, error) {
 	if err != nil {
 		return nil, err
 	}
-	return dispatch.Dispatch(s, dispatch.Deps{Manager: cm, Errors: sentinels, Authorize: m.Authorize, Caller: m.Caller})
+	built, err := dispatch.Dispatch(s, dispatch.Deps{Manager: cm, Errors: sentinels, Authorize: m.Authorize, Caller: m.Caller})
+	if err != nil {
+		return nil, err
+	}
+	return guardQueries(built), nil
 }
 func Routes(cm catalog.CatalogManager) []Route {
 	return RoutesWith(cm, nil)
