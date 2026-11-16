@@ -29,3 +29,7 @@ named in neither is new. Clearing one — fix the code, move the row to
 ## Verifying a change
 
 `go test ./...`. In-memory SQLite; `make test-pg` (`-tags=integration`, `POSTGRES_URL`) covers what only Postgres shows — see [4. qa](../4.%20qa/README.md).
+
+## Hub copy
+
+[hub-copy-diff.md](hub-copy-diff.md) — `scripts/hub-copy-diff.sh` proves the hub's copy of this module and this repository differ by the import path only.
