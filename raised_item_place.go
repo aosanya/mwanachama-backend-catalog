@@ -2,13 +2,12 @@ package mwanachamacatalog
 
 import (
 	"context"
-	"sort"
-
 	"github.com/aosanya/mwanachama-backend-shared/geo"
+	"sort"
+	"strings"
 )
 
 type AreaResolver func(ctx context.Context, pin *geo.Position, address string) (string, error)
-
 type StreetResolver func(ctx context.Context, pin *geo.Position, address string) (string, error)
 
 const nearbyRaisedItemsCap = 200
@@ -16,11 +15,9 @@ const nearbyRaisedItemsCap = 200
 func (m *catalogManager) UseAreaResolver(resolve AreaResolver) {
 	m.resolveArea = resolve
 }
-
 func (m *catalogManager) UseStreetResolver(resolve StreetResolver) {
 	m.resolveStreet = resolve
 }
-
 func (m *catalogManager) streetOf(ctx context.Context, r RaisedItem) (string, error) {
 	if m.resolveStreet == nil {
 		return r.Street, nil
@@ -40,27 +37,36 @@ func (m *catalogManager) streetOf(ctx context.Context, r RaisedItem) (string, er
 	}
 	return r.Street, nil
 }
-
-func (m *catalogManager) placeOf(ctx context.Context, r RaisedItem) (string, error) {
+func (m *catalogManager) derivedArea(ctx context.Context, pin *geo.Geometry, address string) (string, error) {
 	if m.resolveArea == nil {
-		return r.Area, nil
+		return "", nil
 	}
-	if r.Pin != nil {
-		at := r.Pin.Point
+	if pin != nil {
+		at := pin.Point
 		area, err := m.resolveArea(ctx, &at, "")
 		if err != nil || area != "" {
 			return area, err
 		}
 	}
-	if r.Address != "" {
-		area, err := m.resolveArea(ctx, nil, r.Address)
-		if err != nil || area != "" {
-			return area, err
-		}
+	if address != "" {
+		return m.resolveArea(ctx, nil, address)
 	}
-	return r.Area, nil
+	return "", nil
 }
-
+func (m *catalogManager) placeOf(ctx context.Context, r RaisedItem) (string, string, error) {
+	typed := strings.TrimSpace(r.Area)
+	derived, err := m.derivedArea(ctx, r.Pin, r.Address)
+	if err != nil {
+		return "", "", err
+	}
+	if typed == "" {
+		return derived, "", nil
+	}
+	if derived != "" && !strings.EqualFold(derived, typed) {
+		return typed, derived, nil
+	}
+	return typed, "", nil
+}
 func (m *catalogManager) NearbyRaisedItems(ctx context.Context, topic string, at geo.Position, withinMetres float64) ([]RaisedItem, error) {
 	if !m.takesRaisedItems() {
 		return nil, ErrRaisedItemsNotTaken
@@ -89,7 +95,9 @@ func (m *catalogManager) NearbyRaisedItems(ctx context.Context, topic string, at
 			found = append(found, near{c.AsSeenByOthers(), d})
 		}
 	}
-	sort.SliceStable(found, func(i, j int) bool { return found[i].distance < found[j].distance })
+	sort.SliceStable(found, func(i, j int) bool {
+		return found[i].distance < found[j].distance
+	})
 	if len(found) > nearbyRaisedItemsCap {
 		found = found[:nearbyRaisedItemsCap]
 	}

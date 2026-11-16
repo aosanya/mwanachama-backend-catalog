@@ -6,14 +6,12 @@ func (m *catalogManager) takesRaisedItems() bool {
 	_, taken := m.st.Spec().ByRole(roleRaisedItem)
 	return taken
 }
-
 func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
 	r.FiledBy = ""
 	r.Channel = ""
 	r.SubjectID = ""
 	return m.FileRaisedItem(ctx, r)
 }
-
 func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
 	if !m.takesRaisedItems() {
 		return RaisedItem{}, ErrRaisedItemsNotTaken
@@ -27,11 +25,12 @@ func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (Rais
 	if err := m.subjectIsAnEntry(ctx, r.SubjectID); err != nil {
 		return RaisedItem{}, err
 	}
-	area, err := m.placeOf(ctx, r)
+	area, mismatch, err := m.placeOf(ctx, r)
 	if err != nil {
 		return RaisedItem{}, err
 	}
 	r.Area = area
+	r.AreaMismatch = mismatch
 	street, err := m.streetOf(ctx, r)
 	if err != nil {
 		return RaisedItem{}, err
@@ -48,7 +47,6 @@ func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (Rais
 	}
 	return r, nil
 }
-
 func (m *catalogManager) ListRaisedItems(ctx context.Context, raisedBy string) ([]RaisedItem, error) {
 	if !m.takesRaisedItems() {
 		return nil, ErrRaisedItemsNotTaken

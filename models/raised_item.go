@@ -13,6 +13,7 @@ type RaisedItem struct {
 	Pin           *geo.Geometry `json:"pin"`
 	Address       string        `json:"address"`
 	Area          string        `json:"area"`
+	AreaMismatch  string        `json:"area_mismatch"`
 	Street        string        `json:"street"`
 	BoardItemID   string        `json:"board_item_id"`
 	SubjectID     string        `json:"subject_id"`
@@ -23,11 +24,9 @@ type RaisedItem struct {
 func (r RaisedItem) OnBehalfIsWhole() bool {
 	return (r.FiledBy == "") == (r.Channel == "")
 }
-
 func (r RaisedItem) PinIsAPoint() bool {
 	return r.Pin == nil || r.Pin.Kind == geo.KindPoint
 }
-
 func (r RaisedItem) AsSeenByOthers() RaisedItem {
 	seen := r
 	seen.Address = ""
@@ -42,7 +41,6 @@ type FollowKey struct {
 	RaisedItemID string `json:"raised_item_id"`
 	Key          string `json:"key"`
 }
-
 type FollowedRaisedItem struct {
 	Item    RaisedItem `json:"item"`
 	Replies []Reply    `json:"replies"`

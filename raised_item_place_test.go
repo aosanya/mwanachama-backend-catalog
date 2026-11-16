@@ -14,7 +14,7 @@ func pin(lon, lat float64) *geo.Geometry {
 	return &g
 }
 
-func TestTheAreaComesFromThePinElseTheAddressElseThePick(t *testing.T) {
+func TestTheAreaIsTheTypedPickElseThePinElseTheAddress(t *testing.T) {
 	cm, ctx := newManager(t)
 	var asked []string
 	cm.UseAreaResolver(func(_ context.Context, at *geo.Position, address string) (string, error) {
@@ -37,8 +37,9 @@ func TestTheAreaComesFromThePinElseTheAddressElseThePick(t *testing.T) {
 		item catalog.RaisedItem
 		want string
 	}{
-		"pin wins over address and pick":          {catalog.RaisedItem{Pin: pin(36.8, 1.2), Address: "Riverside Road", Area: "picked"}, "north"},
-		"pin outside every area falls to address": {catalog.RaisedItem{Pin: pin(36.8, -1.2), Address: "Riverside Road", Area: "picked"}, "riverside"},
+		"pin wins over address":                   {catalog.RaisedItem{Pin: pin(36.8, 1.2), Address: "Riverside Road"}, "north"},
+		"pin outside every area falls to address": {catalog.RaisedItem{Pin: pin(36.8, -1.2), Address: "Riverside Road"}, "riverside"},
+		"a typed pick is kept over the pin":       {catalog.RaisedItem{Pin: pin(36.8, 1.2), Address: "Riverside Road", Area: "picked"}, "picked"},
 		"unknown address falls to the pick":       {catalog.RaisedItem{Address: "Nowhere Lane", Area: "picked"}, "picked"},
 		"nothing at all is no area":               {catalog.RaisedItem{}, ""},
 	} {

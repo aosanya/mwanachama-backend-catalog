@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/aosanya/mwanachama-backend-catalog/models"
+	"gorm.io/gorm"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
-
-	"github.com/aosanya/mwanachama-backend-catalog/models"
 )
 
-func nowRFC3339() string { return time.Now().UTC().Format(time.RFC3339) }
-
+func nowRFC3339() string {
+	return time.Now().UTC().Format(time.RFC3339)
+}
 func (m *catalogManager) checkEntry(e *Entry) error {
 	at, ok := models.NormalizePublishAt(e.PublishAt)
 	if !ok {
@@ -30,30 +29,26 @@ func (m *catalogManager) checkEntry(e *Entry) error {
 	}
 	return nil
 }
-
 func (m *catalogManager) entries(ctx context.Context) *gorm.DB {
 	return m.q(ctx, roleEntry)
 }
-
-// findEntry reads one non-deleted Entry by slug.
 func (m *catalogManager) findEntry(ctx context.Context, slug string) (Entry, error) {
 	var e Entry
-	err := m.take(
-		m.entries(ctx).Where("slug = ? AND deleted = ?", slug, false),
-		roleEntry, &e, ErrEntryNotFound)
+	err := m.take(m.entries(ctx).Where("slug = ? AND deleted = ?", slug, false), roleEntry, &e, ErrEntryNotFound)
 	return e, err
 }
-
 func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error) {
 	e.Visibility = models.VisibilityPending
 	e.ApprovedAt = ""
+	if err := m.fillWard(ctx, &e); err != nil {
+		return Entry{}, err
+	}
 	if err := m.checkEntry(&e); err != nil {
 		return Entry{}, err
 	}
 	if err := m.checkKind(ctx, e.Doc); err != nil {
 		return Entry{}, err
 	}
-
 	now := m.now()
 	e.ID = newID()
 	e.CreatedAt, e.UpdatedAt = now, now
@@ -66,7 +61,6 @@ func (m *catalogManager) CreateEntry(ctx context.Context, e Entry) (Entry, error
 	}
 	return e, nil
 }
-
 func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error) {
 	existing, err := m.findEntry(ctx, e.Slug)
 	if errors.Is(err, ErrEntryNotFound) {
@@ -79,14 +73,13 @@ func (m *catalogManager) UpsertEntry(ctx context.Context, e Entry) (Entry, error
 	e.PublishAt = existing.PublishAt
 	return m.rewriteEntry(ctx, existing, e)
 }
-
 func reviewedContentChanged(existing, sent Entry) bool {
-	return !sameDocument(existing.Doc, sent.Doc) ||
-		existing.Name != sent.Name ||
-		existing.Summary != sent.Summary
+	return !sameDocument(existing.Doc, sent.Doc) || existing.Name != sent.Name || existing.Summary != sent.Summary
 }
-
 func (m *catalogManager) rewriteEntry(ctx context.Context, existing, e Entry) (Entry, error) {
+	if err := m.fillWard(ctx, &e); err != nil {
+		return Entry{}, err
+	}
 	reviewReset := reviewedContentChanged(existing, e)
 	e.Visibility, e.ApprovedAt = existing.Visibility, existing.ApprovedAt
 	if reviewReset {
@@ -99,12 +92,10 @@ func (m *catalogManager) rewriteEntry(ctx context.Context, existing, e Entry) (E
 	if err := m.checkKind(ctx, e.Doc); err != nil {
 		return Entry{}, err
 	}
-
 	e.ID = existing.ID
 	e.CreatedAt = existing.CreatedAt
 	e.UpdatedAt = m.now()
 	e.Deleted = false
-
 	if err := m.replaceEntry(ctx, e, reviewReset); err != nil {
 		return Entry{}, err
 	}
@@ -115,7 +106,6 @@ func (m *catalogManager) rewriteEntry(ctx context.Context, existing, e Entry) (E
 	}
 	return e, nil
 }
-
 func sameDocument(stored, sent string) bool {
 	if stored == sent {
 		return true
@@ -130,7 +120,6 @@ func sameDocument(stored, sent string) bool {
 	}
 	return canonicalStored == canonicalSent
 }
-
 func canonicalDocument(doc string) (string, bool) {
 	dec := json.NewDecoder(strings.NewReader(doc))
 	dec.UseNumber()
@@ -144,7 +133,6 @@ func canonicalDocument(doc string) (string, bool) {
 	}
 	return string(out), true
 }
-
 func (m *catalogManager) replaceEntry(ctx context.Context, e Entry, reviewReset bool) error {
 	row, err := encode(m.st.Object(roleEntry), e)
 	if err != nil {
@@ -156,11 +144,9 @@ func (m *catalogManager) replaceEntry(ctx context.Context, e Entry, reviewReset 
 	}
 	return m.entries(ctx).Where("id = ?", e.ID).Updates(row).Error
 }
-
 func (m *catalogManager) GetEntry(ctx context.Context, slug string) (Entry, error) {
 	return m.findEntry(ctx, slug)
 }
-
 func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry, error) {
 	keyed := false
 	if key != "" {
@@ -176,7 +162,6 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 	if !e.PublishedBy(m.now()) {
 		return Entry{}, ErrEntryNotFound
 	}
-
 	switch e.Visibility {
 	case models.VisibilityPublic:
 		return withoutWriter(e), nil
@@ -189,12 +174,10 @@ func (m *catalogManager) OpenEntry(ctx context.Context, slug, key string) (Entry
 		return Entry{}, ErrEntryNotFound
 	}
 }
-
 func withoutWriter(e Entry) Entry {
 	e.SubmittedBy = ""
 	return e
 }
-
 func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error) {
 	existing, err := m.findEntry(ctx, e.Slug)
 	if err != nil {
@@ -205,7 +188,6 @@ func (m *catalogManager) UpdateEntry(ctx context.Context, e Entry) (Entry, error
 	}
 	return m.rewriteEntry(ctx, existing, e)
 }
-
 func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visibility) (Entry, error) {
 	if err := m.checksField(roleEntry, "visibility", string(v)); err != nil {
 		return Entry{}, ErrInvalidEntry
@@ -214,22 +196,15 @@ func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visib
 	if err != nil {
 		return Entry{}, err
 	}
-
 	now := m.now()
 	approvedAt := now
 	if v == models.VisibilityPending {
 		approvedAt = ""
 	}
-
-	updates := map[string]any{
-		"visibility":  string(v),
-		"approved_at": approvedAt,
-		"updated_at":  now,
-	}
+	updates := map[string]any{"visibility": string(v), "approved_at": approvedAt, "updated_at": now}
 	if err := m.entries(ctx).Where("id = ?", existing.ID).Updates(updates).Error; err != nil {
 		return Entry{}, err
 	}
-
 	if v != models.VisibilityPrivate {
 		if err := m.retireLinksFor(ctx, slug, now); err != nil {
 			return Entry{}, err
@@ -237,15 +212,13 @@ func (m *catalogManager) SetVisibility(ctx context.Context, slug string, v Visib
 	}
 	return m.GetEntry(ctx, slug)
 }
-
 func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
 	existing, err := m.findEntry(ctx, slug)
 	if err != nil {
 		return err
 	}
 	now := m.now()
-	if err := m.entries(ctx).Where("id = ?", existing.ID).
-		Updates(map[string]any{"deleted": true, "updated_at": now}).Error; err != nil {
+	if err := m.entries(ctx).Where("id = ?", existing.ID).Updates(map[string]any{"deleted": true, "updated_at": now}).Error; err != nil {
 		return err
 	}
 	if err := m.privates(ctx).Where("slug = ?", slug).Delete(&map[string]any{}).Error; err != nil {
@@ -253,10 +226,6 @@ func (m *catalogManager) DeleteEntry(ctx context.Context, slug string) error {
 	}
 	return m.retireLinksFor(ctx, slug, now)
 }
-
-// isUniqueViolation reports whether err is a duplicate-key error. The two
-// drivers word it differently and neither exposes a portable code through
-// GORM.
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false
