@@ -156,7 +156,7 @@ and every response. The meaning is unchanged; a caller that sent `run_id`
 sends `run_ref`. `blueprint_test.go` loads the shipped blueprint, and
 `examples_test.go` counts each object's table and its `_test` twin.
 
-## A query the server cannot parse is refused, not read as no query
+## A query over the parameter cap is refused, not read as no query
 
 Since the Go toolchain capped `net/url` at 10,000 query parameters,
 `url.ParseQuery` returns an error and an empty map for a longer query, and
@@ -167,8 +167,27 @@ missing: `GET /suggestions` with 40,000 `status` values listed every status.
 constructor (`Build`, `Routes`, `Split`, `PublicRoutes`, `OperatorRoutes`) goes
 through, and answers `400` with "the query string could not be read: too many
 parameters" before the dispatcher runs. A query at the cap is still answered.
-`oversized_query_refused_test.go` pins the refusal on the gated door, on the
-anonymous door and for an unrelated parameter. The root cause is in
-`mwanachama-backend-shared/dispatch` (`bind.go`), where the guard would serve
-every repository at once; this one covers the catalog's routes only.
 
+The rule is about the cap and nothing else. `url.ParseQuery` also returns an
+error for a bad percent escape (`?status=%zz`) and for an unencoded semicolon
+(`?a=1;b=2`), but it returns every other pair with it, so `r.URL.Query()` drops
+only the bad pair and the request is read as it always was. The guard leaves
+those requests alone: they are answered, not refused, and the bad pair is
+ignored.
+
+The toolchain exports no error value for the cap, and its text can change.
+`query_guard.go` therefore learns the cap error once, at start-up, by parsing
+a query of a million empty segments, which is over any cap the toolchain can
+carry, and `IsQueryCapError` compares an error with it. A toolchain without a
+cap, or with the cap disabled by `GODEBUG=urlmaxqueryparams=0`, yields no
+error from the probe and the guard refuses nothing, which is correct because
+the dispatcher then receives the whole query. `oversized_query_refused_test.go`
+pins that the guard recognises the cap error the running toolchain returns for
+a real over-cap query, that the three errors above are not taken for it, that
+the two kinds of query are answered as described on the gated and the anonymous
+door, and that a bad pair is dropped while the `limit` beside it is still read.
+
+The root cause is in `mwanachama-backend-shared/dispatch` (`bind.go`), where the
+guard would serve every repository at once; this one covers the catalog's routes
+only. The hub copy of `modules/catalog` needs the same `routes/query_guard.go`
+until hub issue ISS-105 deletes it.
