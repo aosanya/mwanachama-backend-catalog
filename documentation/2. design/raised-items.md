@@ -146,6 +146,7 @@ Raising, filing, the board, Me too and replies are declared in
 | `GET /raised-items/mine` | `catalog.raised_item.list_mine` | the raiser |
 | `POST /board-items`, `GET /board-items` | `catalog.board_item.put`, `.list` | — |
 | `GET /board-items/public` | `catalog.board_item.list_public` | — |
+| `GET /board-items/tally-by-area` | `catalog.board_item.tally_by_area` | — (see [tally-by-ward.md](tally-by-ward.md)) |
 | `PUT`/`DELETE /raised-items/{raisedItemID}/board-item` | `catalog.raised_item.group`, `.ungroup` | — |
 | `PUT /board-items/{boardItemID}/outcome` | `catalog.board_item.set_outcome` | — |
 | `POST`/`GET /endorsements/{subject_id}` | `catalog.endorsement.add`, `.count` | the Me too holder |

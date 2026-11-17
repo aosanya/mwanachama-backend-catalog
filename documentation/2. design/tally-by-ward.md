@@ -4,8 +4,8 @@ MUN1283, TD-3656. A council reads the board as a poll: for each board item, how
 many people are behind it, area by area, against how many people live there.
 `ListBoardItems` gives two totals and no split, and a Me too holds only
 `subject_id`, `holder_id` and `created_at`, so the area of a person who said
-Me too is not on the row. This page decides where it comes from. Nothing is
-built yet.
+Me too is not on the row. This page decides where it comes from. The catalog half is
+built (`board_item_tally.go`); the host half is not.
 
 ## Decision: the area of a person is the host's, read at tally time
 
@@ -65,6 +65,14 @@ For each board item that is not hidden (the set `ListBoardItems` answers):
 3. A person in both counts once, as a raiser. So `raised_by + me_too` is the
    number of people behind the item, and the two columns never overlap.
 4. Each person gets one area (above). Counts are per area.
+
+A person's area is worked out once per tally for everyone: the directory's
+answer first, else the stored `Area` of the earliest raised item of theirs with
+one. So a person who raised under one board item and said Me too on another
+sits in the same area on both. A name the directory places someone in that
+`Areas` does not list is treated as a stored one: its own row, `population`
+`null`. Asking for a board item that is hidden or does not exist answers an
+empty list.
 
 Two numbers already on the board read differently on purpose: `raised_by`
 there counts raised items, not people, and its `me_too` includes raisers. The
