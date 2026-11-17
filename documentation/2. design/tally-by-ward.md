@@ -1,11 +1,13 @@
 # Tally by area
 
-MUN1283, TD-3656. A council reads the board as a poll: for each board item, how
+Built under hub issue MUN1283 (TD-3656): the catalog half in
+`mwanachama-backend-catalog` (commit ab977c1), the host directory in
+`mwanachama-wakala-api` (commit 06964cb). A council reads the board as a poll: for each board item, how
 many people are behind it, area by area, against how many people live there.
 `ListBoardItems` gives two totals and no split, and a Me too holds only
 `subject_id`, `holder_id` and `created_at`, so the area of a person who said
-Me too is not on the row. This page decides where it comes from. The catalog half is
-built (`board_item_tally.go`); the host half is not.
+Me too is not on the row. This page decides where it comes from. Both halves
+are built; no screen calls the tool yet.
 
 ## Decision: the area of a person is the host's, read at tally time
 
@@ -117,7 +119,9 @@ no wildcard of its own.
 - A person nobody can place goes in one row with `area` empty, last, and only
   when its counts are not both zero. It is named so the totals still add up to
   the people behind the item; it is never dropped.
-- `population` is `null`, not `0`, where none is recorded. The module does no
+- `population` is `null` on a row the directory does not list and on the row
+  with no area. On a listed area it is a number: the wakala-api directory
+  answers 0 where the actor module records no figure. The module does no
   division; the reader of both numbers does, as with scope figures today.
 - A board item with nothing grouped and no Me too still appears, with the
   zero rows, as in `ListBoardItems`.
@@ -138,7 +142,13 @@ the distinct person ids. Board items are bounded by the same cap
 - Two areas with one name are one row. Area names are the key, as they already
   are on a raised item.
 
-## Files that change
+## Files that changed
+
+Built, tested in `board_item_tally_test.go` and `routes/board_item_tally_test.go`
+(catalog) and `internal/agencies/area_directory_test.go` (wakala-api). Open: the
+action is in no permission yet, so only the owner reads the tally, and no screen
+or agent calls `forms_catalog_board_item_tally_by_area`. The list below is what
+the design named.
 
 Catalog (`mwanachama-backend-catalog`):
 
@@ -152,7 +162,7 @@ Hosts (the catalog is imported only by `mwanachama-wakala-api`, by `replace`
 in `go.mod`; `mwanachama-backend-forms` and `mwanachama-backend-agency` do not import it):
 
 - `mwanachama-wakala-api/internal/agencies/catalogs.go`: `buildCatalogManager` passes the directory after `NewCatalogManager`, from the instance's `ActorManager`. Nothing is passed today, in this repo, for `UseAreaResolver` either.
-- `mwanachama-wakala-api/internal/agencies/area_directory.go` (new): the directory over the actor manager. Which group type is an area is its choice. `AreasOf` reads `ListGroupsForActor`, `Areas` lists those groups with `LatestGroupPopulation`.
+- `mwanachama-wakala-api/internal/agencies/area_directory.go` (new): the directory over the actor manager. A group is an area when its level has `is_area` set. `AreasOf` names the earliest such group a person is seated in (`ListActorsForGroup`), `Areas` lists those groups with `LatestGroupPopulation`.
 - No edit in `mwanachama-wakala-api/cmd/server/catalog.go`,
   `internal/api/http/forms_catalog_routes.go`,
   `internal/api/http/mcp_tools_forms_catalog.go` or `mcp_tool_actions.go`: the

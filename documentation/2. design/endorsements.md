@@ -16,3 +16,6 @@ raised: the member app's "me too" (member app decision 234, CAT55 here).
 - **Go-only for now.** No operation is declared yet: who may endorse what is
   the host's to wire, and the board item it is counted against is the rest of
   CAT55, not built in this slice.
+- **Counted by area.** The count of people behind a board item, split by area
+  against the area population, is the tally in [tally-by-ward.md](tally-by-ward.md)
+  (hub issue MUN1283).
