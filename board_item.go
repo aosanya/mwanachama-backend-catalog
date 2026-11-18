@@ -1,6 +1,10 @@
 package mwanachamacatalog
 
-import "context"
+import (
+	"context"
+
+	"github.com/aosanya/mwanachama-backend-catalog/models"
+)
 
 func (m *catalogManager) keepsBoard() bool {
 	_, boarded := m.st.Spec().ByRole(roleBoardItem)
@@ -11,6 +15,9 @@ func (m *catalogManager) PutOnBoard(ctx context.Context, b BoardItem) (BoardItem
 		return BoardItem{}, ErrBoardNotKept
 	}
 	if err := m.checks(roleBoardItem, b); err != nil {
+		return BoardItem{}, ErrInvalidBoardItem
+	}
+	if !models.IsBoardItemKind(b.Kind) {
 		return BoardItem{}, ErrInvalidBoardItem
 	}
 	b.ID = newID()

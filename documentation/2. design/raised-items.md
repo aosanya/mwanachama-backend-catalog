@@ -55,6 +55,13 @@ number of publishable raised items grouped under it, and `me_too`, the
 counts no endorsements). Visibility, place, replies and declared operations are
 not here yet.
 
+## A board item's kind (hub issue MUN1417)
+
+A board item carries `kind`, set when it is put on the board: `complaint`,
+`idea` or empty when the staff did not say. `PutOnBoard` refuses any other
+value with `ErrInvalidBoardItem` (`models.IsBoardItemKind`), and
+`ListBoardItems` returns the kind with each item.
+
 ## Outcome and ungrouping
 
 `SetBoardItemOutcome` sets a board item's public `outcome`; an empty string
