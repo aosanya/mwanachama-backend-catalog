@@ -33,7 +33,7 @@ On a scratch copy of the hub folder carrying both CAT135 changes there is no `di
 
 Backend-only tests that the hub changes made stale were updated in the commit that needed it: `raised_item_place_test.go` (a typed area is kept over a pin and an address), `routes/tools_test.go` (64 tools), and the `DeleteEntry` callers (a third argument, the deleter).
 
-`domain_agnostic_test.go` allows three identifiers the hub named with the word agency (`agencyOwnerKey`, `AsAgencyOwner`, `isAgencyOwner`) so that the sources stay identical bar the import path. Renaming them is open as an owner question.
+`domain_agnostic_test.go` allows the identifiers the hub named with the word agency (`agencyOwnerKey`, `AsAgencyOwner` and `isAgencyOwner` in `anonymous.go`, `isAgencyOwner` again in `raised_item.go` and `raised_item_subject.go`) so that the sources stay identical bar the import path. Renaming them is open as an owner question.
 
 ## The hub commits carried over
 

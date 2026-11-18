@@ -21,6 +21,18 @@ function passed, or none linked, the list is the caller's own raises only.
 The ids come from the host, never from the request. A domain filling no
 object for the role builds and answers `ErrRaisedItemsNotTaken`.
 
+## Anonymous items (hub issue MUN1402)
+
+A raised item carries `anonymous`, false unless its raiser chose to stay
+anonymous. The host still keeps who raised it. `AsSeenByOthers` leaves
+`raised_by` empty for an anonymous item. `ListRaisedItemsOfPerson` is staff's
+read of another person's items: it is `ListRaisedItems` for the named person,
+leaving out every anonymous item unless the caller is the host owner
+(`AsAgencyOwner`). `ListRaisedItemsOfSubject` leaves anonymous items out under
+the same rule. The raiser's own `ListRaisedItems` keeps all of them. The
+declared operation that would call `ListRaisedItemsOfPerson` is not in this
+repository; the hub copy has it as `catalog.raised_item.list_of_person`.
+
 Not here yet: where an item happened (whether place and ward are fields or
 document paths waits on the owner), grouping publishable items into board
 items, replies, the public outcome, and declared operations.

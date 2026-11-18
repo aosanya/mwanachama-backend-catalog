@@ -28,9 +28,11 @@ var domainWords = []string{
 }
 
 var identifiersTakenFromTheHub = map[string]bool{
-	"anonymous.go:agencyOwnerKey": true,
-	"anonymous.go:AsAgencyOwner":  true,
-	"anonymous.go:isAgencyOwner":  true,
+	"anonymous.go:agencyOwnerKey":          true,
+	"anonymous.go:AsAgencyOwner":           true,
+	"anonymous.go:isAgencyOwner":           true,
+	"raised_item.go:isAgencyOwner":         true,
+	"raised_item_subject.go:isAgencyOwner": true,
 }
 
 // Identifiers that must never carry a domain word. This is the guard that
