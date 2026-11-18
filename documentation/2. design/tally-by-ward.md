@@ -145,9 +145,9 @@ the distinct person ids. Board items are bounded by the same cap
 ## Files that changed
 
 Built, tested in `board_item_tally_test.go` and `routes/board_item_tally_test.go`
-(catalog) and `internal/agencies/area_directory_test.go` (wakala-api). Open: the
-action is in no permission yet, so only the owner reads the tally, and no screen
-or agent calls `forms_catalog_board_item_tally_by_area`. The list below is what
+(catalog) and `internal/agencies/area_directory_test.go` (wakala-api). The action
+is in the `board.read` permission (MUN1300), so a role other than the owner reads
+the tally. Open: no screen or agent calls `forms_catalog_board_item_tally_by_area`. The list below is what
 the design named.
 
 Catalog (`mwanachama-backend-catalog`):
@@ -168,11 +168,11 @@ in `go.mod`; `mwanachama-backend-forms` and `mwanachama-backend-agency` do not i
   `internal/api/http/mcp_tools_forms_catalog.go` or `mcp_tool_actions.go`: the
   route and the tool come out of `catalogroutes.OperatorRoutesFor` and
   `ToolsFor`, which read `catalog.operations.json`.
-- `mwanachama-backend-agency/models/permissions_catalog.json`: add the action to `board.manage`
-  if a role other than the owner is to read the tally. No catalog action on a
-  board read, `catalog.board_item.list` included, is in any permission today, so
-  without this only the owner reads it. `permission_actions_test.go` does not
-  list `board.manage`, so it needs no edit, only a run.
+- `mwanachama-backend-agency/models/permissions_catalog.json`: the new read-only
+  permission `board.read` holds `catalog.board_item.list` and
+  `catalog.board_item.tally_by_area`, so a role other than the owner reads the
+  tally without being able to group, hide or reassign. `board.manage` is
+  unchanged.
 
 Not changed, but diverged: `projects/hub-steward/code/wakala-api` carries its own
 copy of the catalog (`modules/catalog/`), its own `permissions_catalog.json`
