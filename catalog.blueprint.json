@@ -844,6 +844,16 @@
           "name": "follow_key_hash",
           "type": "string",
           "description": "SHA-256 of the key that lets the raiser follow this item and the replies written to it without signing in, hex-encoded. Empty until a key is issued; the raw key is returned once and never stored, and issuing another retires this one."
+        },
+        {
+          "name": "sender_hash",
+          "type": "string",
+          "description": "HMAC-SHA-256 of the raiser and the period the item was raised in, keyed with a secret the server holds, hex-encoded. Empty while the server holds no secret. No read returns it; it is how a second item from the same raiser in the same period is found and refused."
+        },
+        {
+          "name": "sender_period",
+          "type": "string",
+          "description": "The period the item was raised in, as the number of days the admin had set and the count of such periods since 1970, such as 30:692. Empty while the server holds no secret. No read returns it."
         }
       ],
       "indexes": [
@@ -866,6 +876,13 @@
           "description": "Lists the items raised by one entry's subject.",
           "fields": [
             "subject_id"
+          ]
+        },
+        {
+          "name": "sender",
+          "description": "Finds an earlier item from the same raiser in the same period.",
+          "fields": [
+            "sender_hash"
           ]
         }
       ]

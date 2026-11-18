@@ -11,7 +11,14 @@ func (m *catalogManager) RaiseItem(ctx context.Context, r RaisedItem) (RaisedIte
 	r.Channel = ""
 	r.SubjectID = ""
 	r.Department = ""
-	return m.FileRaisedItem(ctx, r)
+	if !m.takesRaisedItems() {
+		return RaisedItem{}, ErrRaisedItemsNotTaken
+	}
+	stamped, err := m.stampSender(ctx, r)
+	if err != nil {
+		return RaisedItem{}, err
+	}
+	return m.FileRaisedItem(ctx, stamped)
 }
 func (m *catalogManager) FileRaisedItem(ctx context.Context, r RaisedItem) (RaisedItem, error) {
 	if !m.takesRaisedItems() {

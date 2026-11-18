@@ -29,6 +29,7 @@ var ErrRecordHolderSpoke = errors.New("this holder already has a record on this 
 var ErrInvalidEndorsement = errors.New("invalid endorsement")
 var ErrEndorsementsNotCounted = errors.New("endorsements are not counted here")
 var ErrInvalidRaisedItem = errors.New("invalid raised item")
+var ErrWishAlreadySentThisPeriod = errors.New("you have already sent a wish in this period; you can send another when the period has passed")
 var ErrRaisedItemsNotTaken = errors.New("raised items are not taken here")
 var ErrInvalidBoardItem = errors.New("invalid board item")
 var ErrBoardNotKept = errors.New("no board is kept here")

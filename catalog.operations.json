@@ -1687,6 +1687,7 @@
     "ErrRecordsNotKept": 404,
     "ErrRecordHolderSpoke": 409,
     "ErrInvalidRaisedItem": 400,
+    "ErrWishAlreadySentThisPeriod": 409,
     "ErrRaisedItemsNotTaken": 404,
     "ErrBoardItemNotFound": 404,
     "ErrBoardItemClosed": 409,

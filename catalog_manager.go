@@ -135,6 +135,8 @@ type CatalogManager interface {
 	ListRaisedItemsOfPerson(ctx context.Context, raisedBy string) ([]MyRaisedItem, error)
 	ReassignRaisedItem(ctx context.Context, raisedItemID, department string) error
 	ListRaisedItemsOfSubject(ctx context.Context, subjectID string) ([]RaisedItem, error)
+	UseSenderSecret(secret []byte)
+	UseClock(now func() string)
 	UseAreaResolver(resolve AreaResolver)
 	UseAreaDirectory(directory AreaDirectory)
 	UseStreetResolver(resolve StreetResolver)
@@ -175,6 +177,7 @@ type catalogManager struct {
 	st            *store
 	spec          *spec.Spec
 	now           func() string
+	senderSecret  []byte
 	resolveArea   AreaResolver
 	directory     AreaDirectory
 	resolveStreet StreetResolver

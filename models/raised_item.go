@@ -22,6 +22,8 @@ type RaisedItem struct {
 	SubjectID     string        `json:"subject_id"`
 	CreatedAt     string        `json:"created_at"`
 	FollowKeyHash string        `json:"-"`
+	SenderHash    string        `json:"-"`
+	SenderPeriod  string        `json:"-"`
 }
 
 func (r RaisedItem) OnBehalfIsWhole() bool {
@@ -33,6 +35,8 @@ func (r RaisedItem) PinIsAPoint() bool {
 func (r RaisedItem) AsSeenByOthers() RaisedItem {
 	seen := r
 	seen.Address = ""
+	seen.SenderHash = ""
+	seen.SenderPeriod = ""
 	if r.Anonymous {
 		seen.RaisedBy = ""
 	}

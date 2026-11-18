@@ -33,6 +33,24 @@ the same rule. The raiser's own `ListRaisedItems` keeps all of them. The
 declared operation that would call `ListRaisedItemsOfPerson` is not in this
 repository; the hub copy has it as `catalog.raised_item.list_of_person`.
 
+## One wish per sender per period (hub issue MUN1414)
+
+A host passes `UseSenderSecret` a secret only the server holds; the hub reads it
+from `WAKALA_SENDER_SECRET`, and this library has no source of its own. With no
+secret, `RaiseItem` keeps no fingerprint and limits nobody. With one, `RaiseItem`
+stores `sender_hash`, the HMAC-SHA-256 of the raiser and the period, and
+`sender_period`, written `days:count` such as `30:692` (the days the admin set
+and the number of such periods since 1970). A second item whose hash is already
+stored is refused with `ErrWishAlreadySentThisPeriod` (409). The hash cannot be
+reversed to a person without the secret, and a new period gives a new hash, so
+two items of one person cannot be linked. Neither field is returned by any read:
+both are `json:"-"` and `AsSeenByOthers` clears them.
+
+The period is the setting `raised_item.sender_period_days`, 30 when unset. A value
+that is not a whole number of days from 1 is refused with `ErrInvalidSetting` at
+the next `RaiseItem`. `FileRaisedItem` (staff filing) is not limited and keeps no
+fingerprint. Me too is unchanged. `UseClock` replaces the clock, for tests.
+
 Not here yet: where an item happened (whether place and ward are fields or
 document paths waits on the owner), grouping publishable items into board
 items, replies, the public outcome, and declared operations.
