@@ -32,4 +32,4 @@ named in neither is new. Clearing one — fix the code, move the row to
 
 ## Hub copy
 
-[hub-copy-diff.md](hub-copy-diff.md) — `scripts/hub-copy-diff.sh` proves the hub's copy of this module and this repository differ by the import path only.
+[hub-copy-diff.md](hub-copy-diff.md) — `scripts/hub-copy-diff.sh` proves the hub's copy of this module and this repository differ by the import path only as of 2026-11-16. [hub-import-drift.md](hub-import-drift.md) lists every difference found on 2026-11-19 before the hub imports this module, and what was merged here.

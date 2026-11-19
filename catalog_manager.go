@@ -77,6 +77,7 @@ type PublishSchedule struct {
 type ListFilter struct {
 	Visibility Visibility
 	Docs       []DocFilter
+	Kind       string
 	Search     string
 	Limit      int
 	Offset     int
@@ -144,6 +145,7 @@ type CatalogManager interface {
 	NearbyRaisedItems(ctx context.Context, topic string, at geo.Position, withinMetres float64) ([]RaisedItem, error)
 	PutOnBoard(ctx context.Context, b BoardItem) (BoardItem, error)
 	GroupUnderBoardItem(ctx context.Context, raisedItemID, boardItemID string) error
+	GetBoardItem(ctx context.Context, boardItemID string) (BoardItemTally, error)
 	ListBoardItems(ctx context.Context) ([]BoardItemTally, error)
 	ListPublicBoardItems(ctx context.Context, limit, offset int) ([]BoardItemTally, error)
 	TallyBoardItemsByArea(ctx context.Context, boardItemID string) ([]BoardItemAreaTally, error)

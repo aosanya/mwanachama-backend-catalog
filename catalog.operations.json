@@ -58,7 +58,7 @@
       "call": "ListEntries",
       "action": "catalog.entry.list",
       "title": "List entries",
-      "description": "List the entry cards matching the filter, ordered by name. A card never carries the document, so read one entry to see it. A large catalog returns a large answer — 634 cards is around 350KB, past what a tool result can carry — so pass a limit, or narrow with a document path or a search term, unless you genuinely need every card.",
+      "description": "List the entry cards matching the filter, ordered by name. A card never carries the document, so read one entry to see it. A large catalog returns a large answer — 634 cards is around 350KB, past what a tool result can carry — so pass a limit, or narrow with a kind, a document path or a search term, unless you genuinely need every card. Each card carries its kind and form_id.",
       "args": [
         {
           "from": "query",
@@ -97,7 +97,7 @@
       "call": "UpsertEntry",
       "action": "catalog.entry.upsert",
       "title": "Write entry",
-      "description": "Create the entry at this slug or replace the document and card of the one already there. Replacing the document of an approved entry returns it to pending, so never re-send a document that has not changed. Visibility is not set here. An entry someone else wrote is refused unless the caller is the owner of the agency.",
+      "description": "Create the entry at this slug or replace the document and card of the one already there. Replacing the document of an approved entry returns it to pending, so never re-send a document that has not changed. Visibility is not set here. Pass kind (checked against the kinds setting) and form_id (the form its applications are sent on; the forms mount refuses an id that is not a form) to make the entry a service; both are kept in the document. An entry someone else wrote is refused unless the caller is the owner of the agency.",
       "args": [
         {
           "from": "body",
@@ -922,6 +922,27 @@
         }
       ]
     },
+    "list_person_raised_items": {
+      "method": "GET",
+      "path": "/raised-items/by-person",
+      "call": "ListRaisedItemsOfPerson",
+      "action": "catalog.raised_item.list_of_person",
+      "title": "List the items one person raised",
+      "description": "The items one named person raised, newest first, each with the department that holds it and its status. Staff's read of another person's items, the person named in the request rather than taken from the session. An item its raiser kept anonymous is left out unless the caller is the host owner.",
+      "args": [
+        {
+          "from": "query",
+          "as": "raised_by",
+          "required": true,
+          "description": "The actor whose items to list."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
     "list_subject_raised_items": {
       "method": "GET",
       "path": "/raised-items/by-subject",
@@ -971,6 +992,26 @@
       "title": "List board items",
       "description": "Every board item that is not hidden, with how many raised it and how many said Me too, including one with nothing grouped under it. The staff read. Never anonymous.",
       "args": [],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "get_board_item": {
+      "method": "GET",
+      "path": "/board-items/{boardItemID}",
+      "call": "GetBoardItem",
+      "action": "catalog.board_item.read",
+      "title": "Read one board item",
+      "description": "One board item with its outcome, assignee, whether it is hidden, how many raised it and how many said Me too. A hidden item is still read here. The staff read. Never anonymous.",
+      "args": [
+        {
+          "from": "path",
+          "as": "boardItemID",
+          "description": "The board item."
+        }
+      ],
       "returns": [
         {
           "body": true
@@ -1651,6 +1692,27 @@
           "as": "day",
           "required": true,
           "description": "The day, as YYYY-MM-DD."
+        }
+      ],
+      "returns": [
+        {
+          "body": true
+        }
+      ]
+    },
+    "list_person_bookings": {
+      "method": "GET",
+      "path": "/bookings/of-person",
+      "call": "ListHolderBookings",
+      "action": "catalog.booking.list_of_person",
+      "title": "List one person's bookings",
+      "description": "Staff read one person's bookings, standing and cancelled, earliest first. Needs the permission appointment.view_person.",
+      "args": [
+        {
+          "from": "query",
+          "as": "actor_id",
+          "required": true,
+          "description": "The person whose bookings to list."
         }
       ],
       "returns": [

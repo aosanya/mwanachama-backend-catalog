@@ -2,6 +2,8 @@
 
 `mwanachama-backend-catalog` is the custodian of the catalog module. The hub (`projects/hub-steward/code/wakala-api/modules/catalog`) holds a copy made on 2026-11-04 and changed it afterwards. Every change made in that copy exists here, so the two differ by the import path only (hub issue CAT134, one of the ISS-105 moves).
 
+Since 2026-11-19 the hub copy and this repository differ by more than the import path: see [hub-import-drift.md](hub-import-drift.md) for every difference and what was done about it. The statements below describe the state of 2026-11-16.
+
 ## Command
 
 ```
